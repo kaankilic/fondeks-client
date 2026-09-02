@@ -1,0 +1,78 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  @include panel-header;
+}
+
+.title {
+  @include panel-title;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 70px 46px;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
+  text-decoration: none;
+  color: inherit;
+  @include data-row;
+  @include focus-ring;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  @include truncate;
+}
+
+.similarity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meter {
+  flex: 1;
+}
+
+.similarityValue {
+  @include numeric(11px, 600);
+}
+
+.return {
+  @include numeric(12px, 600);
+  color: var(--pos);
+  text-align: right;
+}
+
+.risk {
+  justify-self: center;
+  width: 20px;
+  height: 20px;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include numeric(10px, 600);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+}

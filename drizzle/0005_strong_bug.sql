@@ -1,0 +1,1 @@
+ALTER TABLE "funds" ADD COLUMN "inception_date" date;

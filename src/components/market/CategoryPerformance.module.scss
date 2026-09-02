@@ -1,0 +1,47 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.header {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  @include panel-title;
+}
+
+.subtitle {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.value {
+  @include numeric(12px, 600);
+  color: var(--pos);
+}

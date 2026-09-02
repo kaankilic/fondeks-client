@@ -1,0 +1,151 @@
+@use "abstracts" as *;
+
+/* Founder / issuer mark — a rounded square carrying the brand color. */
+.mark {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border-radius: $radius-md;
+}
+
+.markSm {
+  width: 18px;
+  height: 18px;
+  font-size: 7px;
+  border-radius: 5px;
+}
+
+.markMd {
+  width: 22px;
+  height: 22px;
+  font-size: 7.5px;
+}
+
+.markLg {
+  width: 24px;
+  height: 24px;
+  font-size: 8.5px;
+}
+
+.markHero {
+  width: 38px;
+  height: 38px;
+  font-size: 14px;
+  border-radius: 9px;
+  letter-spacing: 0.02em;
+}
+
+.markXl {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  border-radius: 7px;
+}
+
+/* The fund's TEFAS code, always mono and gold. */
+.code {
+  flex: none;
+  @include numeric(10px, 600);
+  color: var(--brand);
+  background: var(--border);
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-sm;
+  padding: 2px 6px;
+}
+
+.codeSm {
+  font-size: 9px;
+  padding: 1px 5px;
+  border: none;
+  border-radius: 3px;
+}
+
+.codeLg {
+  font-size: 11px;
+  padding: 2px 7px;
+}
+
+.codeHero {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+/* Directional change pill: green up, red down. */
+.pill {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  @include numeric(11px, 500);
+}
+
+.pos {
+  background: var(--pos-bg);
+  color: var(--pos);
+}
+
+.neg {
+  background: var(--neg-bg);
+  color: var(--neg);
+}
+
+/* Risk value 1–7. */
+.risk {
+  justify-self: center;
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include numeric(11px, 600);
+}
+
+.meter {
+  @include meter;
+}
+
+.meterFill {
+  height: 100%;
+  border-radius: 3px;
+  opacity: 0.85;
+}
+
+/* Fund name + category, truncating inside table rows. */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.identityText {
+  min-width: 0;
+}
+
+.identityName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  @include truncate;
+}
+
+.identityMeta {
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--text-dim);
+  @include truncate;
+}
+
+.spark {
+  display: block;
+  overflow: visible;
+}

@@ -1,0 +1,19 @@
+@use "abstracts" as *;
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+
+  @include respond-to("lg") {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+/* Category performance sits above the KAP feed in the narrow rail. */
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}

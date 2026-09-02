@@ -1,0 +1,109 @@
+@use "abstracts" as *;
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.eyebrow {
+  @include eyebrow;
+}
+
+.more {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  text-decoration: none;
+
+  @include focus-ring;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+
+  @include respond-to("sm") {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  @include panel;
+  padding: 15px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color $transition-fast;
+
+  @include focus-ring;
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cardBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.star {
+  font-size: 15px;
+  color: var(--text-faint);
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  height: 32px;
+  @include line-clamp(2);
+}
+
+.cardBottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.metricLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.metricValue {
+  @include numeric(20px, 700);
+  letter-spacing: -0.02em;
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}

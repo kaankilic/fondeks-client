@@ -1,0 +1,76 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  @include panel-header;
+}
+
+.title {
+  @include panel-title;
+}
+
+.tefas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: $radius-md;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tefasOn {
+  background: var(--pos-bg);
+  color: var(--pos);
+}
+
+.tefasOff {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+
+  @include respond-to("sm") {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.cell {
+  padding: 13px 16px;
+  background: var(--surface);
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.value {
+  margin-top: 5px;
+  @include numeric(14px, 700);
+  color: var(--text);
+}
+
+/* Kurucu is a name, not a number — it stays in the text face. */
+.text {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}

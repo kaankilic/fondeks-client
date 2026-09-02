@@ -1,0 +1,129 @@
+@use "abstracts" as *;
+
+/* Card grid for the Rehber index. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+
+  @include respond-to("sm") {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  @include panel;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color $transition-fast, transform $transition-base;
+
+  @include focus-ring;
+
+  &:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category {
+  padding: 3px 8px;
+  border-radius: $radius-md;
+  background: rgba(224, 165, 38, 0.12);
+  border: 1px solid color-mix(in oklab, var(--brand) 35%, transparent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.reading {
+  @include numeric(10px, 500);
+  color: var(--text-faint);
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.summary {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  @include line-clamp(3);
+}
+
+/* Compact widget used on the Keşfet screen. */
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  @include panel-header;
+}
+
+.panelTitle {
+  @include panel-title;
+}
+
+.all {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  text-decoration: none;
+
+  @include focus-ring;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.item {
+  display: block;
+  padding: 12px 18px;
+  text-decoration: none;
+  color: inherit;
+  @include data-row;
+  @include focus-ring;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.itemSummary {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  @include line-clamp(2);
+}

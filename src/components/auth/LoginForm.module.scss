@@ -1,0 +1,156 @@
+@use "abstracts" as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 6px 0 26px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.link {
+  color: var(--brand);
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.label {
+  @include eyebrow;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 7px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+
+  .label {
+    margin-bottom: 0;
+  }
+}
+
+.input {
+  width: 100%;
+  padding: 11px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-lg;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  transition: border-color $transition-fast;
+
+  &::placeholder {
+    color: var(--text-faint);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--brand);
+  }
+}
+
+.password {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  letter-spacing: 0.08em;
+}
+
+/* Reserves the space a field error would occupy, so rows don't jump. */
+.spacer {
+  height: 16px;
+}
+
+.fieldError {
+  margin: 6px 0 8px;
+  font-size: 12px;
+  color: var(--neg);
+}
+
+.alert {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border-radius: $radius-lg;
+  background: var(--neg-bg);
+  border: 1px solid color-mix(in oklab, var(--neg) 35%, transparent);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--neg);
+}
+
+.muted {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.submit {
+  margin-top: 22px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  span {
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+}
+
+.googleMark {
+  width: 16px;
+  height: 16px;
+  border-radius: $radius-sm;
+  background: var(--border);
+}
+
+
+
+/* Not wired up yet: the button stays disabled and says so on the label. */
+.social {
+  position: relative;
+}
+
+.soon {
+  position: absolute;
+  top: -9px;
+  right: 14px;
+  z-index: 1;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid color-mix(in oklab, var(--brand) 55%, transparent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand);
+  pointer-events: none;
+}

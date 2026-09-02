@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
+/*
+ * Fondeks design tokens — ported from the Claude Design canvas
+ * (Fondeks.dc.html). The product is dark-only by design, so these are
+ * defined once rather than per color-scheme.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* surfaces */
+  --page: #080808;
+  --chrome: #0f0f12;
+  --surface: #121215;
+  --surface-raised: #1c1c21;
+  --rail: #0d0d10;
+  --track: #0f0f12;
+
+  /* lines */
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --border-subtle: #1a1a1e;
+
+  /* text */
+  --text: #fafafa;
+  --text-secondary: #e4e4e7;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
+  --text-faint: #52525b;
+
+  /* brand + accents */
+  --brand: #e0a526;
+  --brand-ink: #0b0b0d;
+  --action: #0051c3;
+  --pos: #10b981;
+  --neg: #f87171;
+  --warn: #eab308;
+  --caution: #f97316;
+
+  --pos-bg: rgba(5, 150, 105, 0.12);
+  --neg-bg: rgba(220, 38, 38, 0.12);
+
+  /* Fixed so full-height screens can subtract it, and so the bar never
+     changes height when the search field replaces the nav links. */
+  --nav-height: 60px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--page);
+  --color-chrome: var(--chrome);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-rail: var(--rail);
+  --color-track: var(--track);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-dim: var(--text-dim);
+  --color-text-faint: var(--text-faint);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-action: var(--action);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numeric values are always mono + tabular, per the design system. */
+.num {
+  font-family: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+button {
+  font-family: inherit;
 }

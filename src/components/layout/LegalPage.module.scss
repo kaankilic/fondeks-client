@@ -1,0 +1,25 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  padding: 28px 30px;
+  max-width: 760px;
+}
+
+.lead {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.pending {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: $radius-lg;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}

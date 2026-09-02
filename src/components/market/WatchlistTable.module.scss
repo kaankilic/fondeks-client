@@ -1,0 +1,76 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.header {
+  @include panel-header;
+}
+
+.title {
+  @include panel-title;
+}
+
+.edit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  @include focus-ring;
+}
+
+@mixin watchlist-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) 84px 96px 80px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+}
+
+.headRow {
+  @include watchlist-grid;
+  padding-block: 9px;
+  background: var(--track);
+  border-bottom: 1px solid var(--border);
+}
+
+.colLabel {
+  @include eyebrow;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.row {
+  @include watchlist-grid;
+  @include data-row;
+  text-decoration: none;
+  color: inherit;
+
+  @include focus-ring;
+}
+
+.price {
+  @include numeric(12px, 500);
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.return {
+  @include numeric(12px, 600);
+  text-align: right;
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}

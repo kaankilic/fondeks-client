@@ -1,0 +1,19 @@
+@use "abstracts" as *;
+
+/* Dense table on the left, leaderboard and guide rail on the right. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+
+  @include respond-to("lg") {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}

@@ -1,0 +1,316 @@
+@use "abstracts" as *;
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex: none;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+}
+
+.inner {
+  max-width: $page-width;
+  margin-inline: auto;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 $page-gutter;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 4px;
+  text-decoration: none;
+
+  @include focus-ring;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.wordmark {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* Search toggle + either the nav links or the expanded search field. */
+.middle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Fixed: the links and the search field must occupy the same height. */
+  height: 30px;
+}
+
+.searchToggle {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color $transition-fast, background-color $transition-fast;
+
+  @include focus-ring;
+
+  &:hover {
+    color: var(--text);
+    background: var(--surface-raised);
+  }
+}
+
+.close {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.searchField {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+
+  &::placeholder {
+    color: var(--text-faint);
+  }
+}
+
+.hint {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/*
+ * Results read as a continuation of the header: flush against its bottom edge,
+ * full-bleed, square, with the rows aligned to the page column.
+ */
+.results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.45);
+}
+
+.resultsInner {
+  max-width: $page-width;
+  margin-inline: auto;
+  padding: 6px $page-gutter 10px;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: 22px auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  margin-inline: -12px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-decoration: none;
+  color: inherit;
+
+  @include focus-ring;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--surface-raised);
+  }
+}
+
+.resultMark {
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.resultCode {
+  @include numeric(10px, 600);
+  color: var(--brand);
+  background: var(--border);
+  border-radius: $radius-sm;
+  padding: 2px 6px;
+}
+
+.resultText {
+  min-width: 0;
+}
+
+.resultName {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  @include truncate;
+}
+
+.resultMeta {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--text-dim);
+  @include truncate;
+}
+
+.resultReturn {
+  @include numeric(12px, 600);
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}
+
+.allResults {
+  width: calc(100% + 24px);
+  margin: 0 -12px;
+  padding: 10px 12px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  text-align: left;
+  cursor: pointer;
+
+  @include focus-ring;
+
+  &:hover {
+    background: var(--surface-raised);
+  }
+}
+
+/* Empty state: says what was searched, and what else can be searched. */
+.noResult {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0 14px;
+}
+
+.noResultIcon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+}
+
+.noResultTitle {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.noResultHint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.nav {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 13px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color $transition-fast, background-color $transition-fast;
+
+  @include focus-ring;
+
+  &:hover {
+    color: var(--text-secondary);
+    background: color-mix(in oklab, var(--surface-raised) 60%, transparent);
+  }
+}
+
+.active {
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-raised);
+
+  &:hover {
+    color: var(--text);
+    background: var(--surface-raised);
+  }
+}

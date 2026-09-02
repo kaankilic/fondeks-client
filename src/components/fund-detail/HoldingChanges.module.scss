@@ -1,0 +1,107 @@
+@use "abstracts" as *;
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.dotUp {
+  background: var(--pos);
+}
+
+.dotDown {
+  background: var(--neg);
+}
+
+.title {
+  @include panel-title;
+}
+
+.period {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 104px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  @include data-row;
+}
+
+.stock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ticker {
+  flex: none;
+  padding: 2px 6px;
+  background: var(--border);
+  border-radius: $radius-sm;
+  @include numeric(10px, 600);
+  color: var(--text-secondary);
+}
+
+.name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  @include truncate;
+}
+
+.weight {
+  @include numeric(12px, 500);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.change {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+  @include numeric(11px, 500);
+}
+
+.up {
+  background: var(--pos-bg);
+  color: var(--pos);
+}
+
+.down {
+  background: var(--neg-bg);
+  color: var(--neg);
+}

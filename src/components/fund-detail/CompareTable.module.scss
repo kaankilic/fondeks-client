@@ -1,0 +1,83 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  @include panel-title;
+}
+
+.hint {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+@mixin compare-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+}
+
+.headRow {
+  @include compare-grid;
+  padding-block: 10px;
+  background: var(--track);
+  border-bottom: 1px solid var(--border);
+}
+
+.colLabel {
+  @include eyebrow;
+}
+
+.subject {
+  @include numeric(12px, 700);
+  color: var(--brand);
+  text-align: right;
+}
+
+.peer {
+  @include numeric(12px, 600);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.row {
+  @include compare-grid;
+  border-bottom: 1px solid var(--border-subtle);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.metric {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* The fund being viewed is tinted so the eye lands on its column. */
+.subjectValue {
+  @include numeric(13px, 700);
+  color: var(--text);
+  text-align: right;
+  background: rgba(224, 165, 38, 0.09);
+  padding: 3px 6px;
+  border-radius: $radius-sm;
+}
+
+.peerValue {
+  @include numeric(13px, 500);
+  color: var(--text-muted);
+  text-align: right;
+}

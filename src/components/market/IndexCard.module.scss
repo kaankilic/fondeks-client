@@ -1,0 +1,85 @@
+@use "abstracts" as *;
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+
+  @include respond-to("sm") {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  @include panel;
+  padding: 16px;
+  transition: border-color $transition-fast;
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.name {
+  @include eyebrow;
+  color: var(--text-muted);
+  @include truncate;
+}
+
+.change {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: $radius-sm;
+  @include numeric(11px, 500);
+}
+
+.pos {
+  background: var(--pos-bg);
+  color: var(--pos);
+}
+
+.neg {
+  background: var(--neg-bg);
+  color: var(--neg);
+}
+
+.bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.value {
+  @include numeric(22px, 700);
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.unit {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+}

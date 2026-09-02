@@ -1,0 +1,90 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  @include panel-header;
+}
+
+.title {
+  @include panel-title;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.item {
+  display: block;
+  padding: 13px 18px;
+  text-decoration: none;
+  color: inherit;
+  @include data-row;
+  @include focus-ring;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+/* KAP filings lead with the ticker they belong to. */
+.symbol {
+  @include numeric(10px, 600);
+  color: var(--brand);
+  background: var(--border);
+  border-radius: $radius-sm;
+  padding: 2px 6px;
+}
+
+.publisher {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.time {
+  margin-left: auto;
+  @include numeric(10px, 500);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.headline {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.summary {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  @include line-clamp(2);
+}
+
+/* Compact variant for the narrow rail. */
+.compact {
+  .item {
+    padding: 11px 16px;
+  }
+
+  .headline {
+    font-size: 12.5px;
+  }
+}
+
+.empty {
+  padding: 24px 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+}

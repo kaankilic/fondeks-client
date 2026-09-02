@@ -1,0 +1,232 @@
+@use "abstracts" as *;
+
+/*
+ * Full-bleed workspace, as drawn in the design: the filter rail sits flush
+ * against the left edge, the results run to the right edge.
+ */
+.workspace {
+  display: flex;
+  flex-direction: column;
+  /* Fills the content area, so the rail's surface never stops halfway down. */
+  flex: 1;
+  min-height: 0;
+
+  @include respond-to("lg") {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.rail {
+  flex: none;
+  background: var(--rail);
+  border-bottom: 1px solid var(--border);
+
+  @include respond-to("lg") {
+    width: 280px;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+  }
+}
+
+.railHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.railTitle {
+  @include panel-title;
+}
+
+.reset {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  cursor: pointer;
+
+  @include focus-ring;
+
+  &:disabled {
+    color: var(--text-faint);
+    cursor: default;
+  }
+}
+
+.railBody {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  @include respond-to("lg") {
+    /* Filters stay put while the results scroll past them. */
+    position: sticky;
+    top: 0;
+  }
+}
+
+.groupLabel {
+  @include eyebrow;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  &:has(input:checked) {
+    color: var(--text-secondary);
+  }
+
+  &:has(input:focus-visible) .box {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+.checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.box {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: $radius-sm;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: transparent;
+  transition: background-color $transition-fast, border-color $transition-fast;
+
+  input:checked + & {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: var(--brand-ink);
+  }
+}
+
+.count {
+  margin-left: auto;
+  @include numeric(11px, 400);
+  color: var(--text-dim);
+}
+
+/* Results column */
+.results {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header strip above the table: count, sort, then the active filter chips. */
+.toolbar {
+  padding: 16px $page-gutter;
+  border-bottom: 1px solid var(--border);
+}
+
+.toolbarTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.resultsCount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.resultsQuery {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.sortSelect {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: $radius-md;
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  @include focus-ring;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.chipsLabel {
+  @include eyebrow;
+  margin-right: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-md;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  @include focus-ring;
+
+  &:hover .chipRemove {
+    color: var(--neg);
+  }
+}
+
+.chipRemove {
+  color: var(--text-dim);
+  transition: color $transition-fast;
+}

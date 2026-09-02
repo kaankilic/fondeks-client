@@ -1,0 +1,64 @@
+@use "abstracts" as *;
+
+.article {
+  @include panel;
+  padding: 28px 30px;
+  max-width: 760px;
+}
+
+.lead {
+  margin: 0 0 20px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.paragraph {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text-muted);
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.note {
+  margin: 24px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+
+.related {
+  @include panel;
+  padding: 18px 20px;
+  max-width: 760px;
+}
+
+.relatedTitle {
+  @include eyebrow;
+}
+
+.relatedLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.relatedLink {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+
+  @include focus-ring;
+
+  &:hover {
+    color: var(--brand);
+  }
+}

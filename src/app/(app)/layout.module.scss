@@ -1,0 +1,26 @@
+/* Default: the page scrolls, the footer sits after the content. */
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Fixed frame, used by the filter workspace: the viewport is the frame, and
+ * only the content area scrolls.
+ */
+.fixed {
+  height: 100dvh;
+  overflow: hidden;
+
+  .main {
+    min-height: 0;
+    overflow-y: auto;
+  }
+}

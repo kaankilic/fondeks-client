@@ -1,0 +1,79 @@
+@use "abstracts" as *;
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: $radius-lg;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color $transition-fast, border-color $transition-fast,
+    color $transition-fast;
+
+  @include focus-ring;
+
+  &:disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.block {
+  width: 100%;
+}
+
+.lg {
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
+/* Primary calls to action: "Portföye Ekle", "Giriş Yap", "Fon Ekle". */
+.action {
+  background: var(--action);
+  color: #fff;
+
+  &:hover {
+    background: color-mix(in oklab, var(--action) 86%, white);
+  }
+}
+
+/* Brand-gold, reserved for conversion moments like the signup gate. */
+.brand {
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 700;
+
+  &:hover {
+    background: color-mix(in oklab, var(--brand) 88%, white);
+  }
+}
+
+/* Neutral surface button used for secondary row actions. */
+.secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--surface-raised);
+    border-color: color-mix(in oklab, var(--text-muted) 45%, transparent);
+  }
+}
+
+/* Quietest variant: text on the page ground. */
+.ghost {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text-muted);
+
+  &:hover {
+    color: var(--text-secondary);
+    border-color: var(--text-faint);
+  }
+}

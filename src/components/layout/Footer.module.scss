@@ -1,0 +1,72 @@
+@use "abstracts" as *;
+
+.footer {
+  flex: none;
+  border-top: 1px solid var(--border);
+  background: var(--chrome);
+}
+
+.inner {
+  max-width: $page-width;
+  margin-inline: auto;
+  padding: 22px $page-gutter 26px;
+}
+
+/* SPK-required notice: kept quiet, but always above the fold of the footer. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.noticeIcon {
+  flex: none;
+  /* Nudged down so the glyph sits on the first line, not above it. */
+  margin-top: 2px;
+  color: var(--text-faint);
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.copyright {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color $transition-fast;
+
+  @include focus-ring;
+
+  &:hover {
+    color: var(--brand);
+  }
+}

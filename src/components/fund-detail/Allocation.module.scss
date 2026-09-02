@@ -1,0 +1,53 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  padding: 18px 20px;
+}
+
+.title {
+  @include panel-title;
+}
+
+.bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 16px 0 18px;
+}
+
+.segment {
+  height: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.value {
+  margin-left: auto;
+  @include numeric(12px, 600);
+  color: var(--text-muted);
+}

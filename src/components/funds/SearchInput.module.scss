@@ -1,0 +1,43 @@
+@use "abstracts" as *;
+
+.form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  width: 340px;
+  max-width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-lg;
+  transition: border-color $transition-fast;
+
+  &:focus-within {
+    border-color: var(--brand);
+  }
+}
+
+.compact {
+  width: 100%;
+  padding: 9px 12px;
+}
+
+.icon {
+  flex: none;
+  color: var(--text-dim);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+
+  &::placeholder {
+    color: var(--text-faint);
+  }
+}

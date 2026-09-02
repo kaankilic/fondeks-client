@@ -1,0 +1,83 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788283640247,
+      "tag": "0000_big_wild_child",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788283877390,
+      "tag": "0001_charming_salo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788285356292,
+      "tag": "0002_careful_wraith",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788285398682,
+      "tag": "0003_lyrical_rocket_raccoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788288898388,
+      "tag": "0004_known_roughhouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788290567947,
+      "tag": "0005_strong_bug",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788290656933,
+      "tag": "0006_medical_the_fury",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788291555301,
+      "tag": "0007_fluffy_karen_page",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788291847511,
+      "tag": "0008_eager_firebrand",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788292342935,
+      "tag": "0009_wide_mandrill",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788292350714,
+      "tag": "0010_massive_vampiro",
+      "breakpoints": true
+    }
+  ]
+}

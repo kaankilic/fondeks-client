@@ -1,0 +1,79 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.head {
+  @include panel-header;
+}
+
+.title {
+  @include panel-title;
+}
+
+.period {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  background: var(--border);
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.block {
+  padding: 16px 18px 14px;
+  background: var(--surface);
+}
+
+.label {
+  @include eyebrow;
+}
+
+.value {
+  margin-top: 6px;
+  @include numeric(18px, 700);
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.delta {
+  margin-left: 8px;
+  @include numeric(11px, 600);
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}
+
+.chart {
+  display: block;
+  margin-top: 12px;
+  overflow: visible;
+}
+
+.zero {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  @include numeric(10px, 500);
+  color: var(--text-faint);
+}

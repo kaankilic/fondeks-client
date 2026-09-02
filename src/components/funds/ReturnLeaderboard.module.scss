@@ -1,0 +1,78 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.header {
+  @include panel-header;
+  padding-inline: 16px;
+}
+
+.title {
+  @include panel-title;
+}
+
+.live {
+  @include numeric(10px, 600);
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  text-decoration: none;
+  color: inherit;
+  @include data-row;
+  @include focus-ring;
+}
+
+.rank {
+  @include numeric(12px, 700);
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.rankTop {
+  color: var(--brand);
+}
+
+.fund {
+  min-width: 0;
+}
+
+.fundTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.founder {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  @include truncate;
+}
+
+.meter {
+  margin-top: 6px;
+}
+
+.value {
+  @include numeric(12px, 700);
+  text-align: right;
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}
