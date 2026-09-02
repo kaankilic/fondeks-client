@@ -5,23 +5,23 @@ import { Pool } from "pg";
 
 import { getDatabaseUrl } from "./env";
 import * as schema from "./schema";
+import { withLibpqSsl } from "./ssl";
 
 // Next.js dev reloads modules on every change; reuse one pool across reloads
 // so we don't exhaust the database's connection limit.
 const globalForDb = globalThis as unknown as { __pgPool?: Pool };
 
 function createPool(): Pool {
-  const connectionString = getDatabaseUrl();
+  // Managed providers (Neon, Supabase, RDS) usually require TLS and sign with
+  // their own CA; `withLibpqSsl` makes `sslmode=require` mean "encrypt without
+  // verifying the chain" instead of failing on a self-signed certificate.
+  const connectionString = withLibpqSsl(getDatabaseUrl());
 
   return new Pool({
     connectionString,
     max: Number(process.env.DATABASE_POOL_MAX ?? 10),
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
-    // Managed providers (Neon, Supabase, RDS) usually require TLS.
-    ssl: /sslmode=(require|verify)/.test(connectionString)
-      ? { rejectUnauthorized: false }
-      : undefined,
   });
 }
 
