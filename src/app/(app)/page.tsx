@@ -27,6 +27,9 @@ import type { Fund, FundHighlight } from "@/lib/fondeks/types";
 
 import styles from "./screener.module.scss";
 
+/** Rows the discover page previews before the reader drills into a full list. */
+const PREVIEW_ROWS = 10;
+
 /** Ranked by one-year return, with the issuer as the supporting line. */
 function byReturn(funds: Fund[]): FundHighlight[] {
   return funds.map((fund) => ({
@@ -62,10 +65,10 @@ export default async function DiscoverPage() {
         <FeaturedFunds funds={featured} sparklines={sparklines} />
 
         <div className={styles.split}>
-          <FundTable funds={funds} />
+          <FundTable funds={funds} limit={PREVIEW_ROWS} />
 
           <div className={styles.rail}>
-            <ReturnLeaderboard funds={funds} />
+            <ReturnLeaderboard funds={funds.slice(0, PREVIEW_ROWS)} />
             <GuidePanel guides={guides} />
           </div>
         </div>

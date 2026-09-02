@@ -59,6 +59,7 @@ export function FundTable({
   searchable = true,
   wide = false,
   flush = false,
+  limit,
   sort: controlledSort,
   onSortChange,
 }: {
@@ -73,6 +74,11 @@ export function FundTable({
   wide?: boolean;
   /** Drops the card chrome for screens that run edge to edge. */
   flush?: boolean;
+  /**
+   * Caps the rendered rows. Filtering, search and sorting still run over the
+   * whole list, so the cap is a preview of the top of it — not a smaller list.
+   */
+  limit?: number;
   /** Pass both to drive sorting from outside; omit to keep it internal. */
   sort?: Sort;
   onSortChange?: (sort: Sort) => void;
@@ -105,6 +111,11 @@ export function FundTable({
       return sort.dir === "asc" ? delta : -delta;
     });
   }, [funds, category, query, sort]);
+
+  const visible = useMemo(
+    () => (limit === undefined ? rows : rows.slice(0, limit)),
+    [rows, limit],
+  );
 
   function closeSearch() {
     setSearching(false);
@@ -220,7 +231,7 @@ export function FundTable({
         <span className={`${styles.colLabel} ${styles.alignCenter}`}>Risk</span>
       </div>
 
-      {rows.length === 0 ? (
+      {visible.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>Bu kritere uyan fon bulunamadı</p>
           <p className={styles.emptyHint}>
@@ -228,7 +239,7 @@ export function FundTable({
           </p>
         </div>
       ) : (
-        rows.map((fund) => (
+        visible.map((fund) => (
           <Link
             key={fund.code}
             href={`/fon/${fund.slug}`}
