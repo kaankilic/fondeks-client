@@ -706,3 +706,30 @@ export const getGuide = cache(
     };
   },
 );
+
+/** One indexable fund URL: the canonical slug and when its data last moved. */
+export type SitemapFund = { slug: string; lastModified: Date };
+
+/**
+ * Funds for the sitemap. Deliberately not `getFunds()`: that builds a return
+ * snapshot for every row and sorts it, none of which a URL list needs. Only
+ * listed funds with a price are included, so every URL answers 200 rather than
+ * redirecting or 404ing.
+ */
+export const getSitemapFunds = cache(async (): Promise<SitemapFund[]> => {
+  const rows = await db
+    .select({
+      code: funds.code,
+      name: funds.name,
+      lastModified: sql<string>`max(${fundDailyStats.date})`,
+    })
+    .from(funds)
+    .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
+    .where(eq(funds.isActive, true))
+    .groupBy(funds.code, funds.name);
+
+  return rows.map((row) => ({
+    slug: fundSlug(row.code, row.name),
+    lastModified: new Date(row.lastModified),
+  }));
+});
