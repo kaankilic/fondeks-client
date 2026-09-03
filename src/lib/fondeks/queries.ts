@@ -129,8 +129,27 @@ function toFund(row: SnapshotRow): Fund {
 }
 
 /**
+ * A one-day price move this large is a restatement, not a return.
+ *
+ * Funds are relaunched: the unit price is re-based and the share count steps
+ * with it, so the series either side of that day measures a different thing.
+ * Dividing across one produces figures like NMG's +11.492% year — which TEFAS
+ * publishes too, because it divides the same two prices.
+ *
+ * 1.0 means "the price at least doubled or halved overnight". Of 489k daily
+ * observations, 485,854 move less than 10% and only 52 clear this bar, every
+ * one of them in a fund with between 1 and 72 investors.
+ */
+const SERIES_BREAK_RATIO = 1;
+
+/**
  * One row per fund with its latest price, the reference prices the returns are
  * measured against, and the most recent monthly size and investor count.
+ *
+ * An anchor older than the fund's most recent restatement is dropped rather
+ * than divided against, so that window reports no return instead of a
+ * fabricated one. Each window is judged separately: a break last week spoils
+ * the daily figure and the yearly one, a break ten months ago only the yearly.
  */
 const snapshotQuery = sql`
   select
@@ -138,10 +157,10 @@ const snapshotQuery = sql`
     f.management_fee, f.withholding_tax, f.risk,
     f.buy_value_days, f.sell_value_days, f.on_tefas, f.inception_date,
     lp.price,
-    prev.price as prev_price,
-    m1.price   as m1_price,
-    m3.price   as m3_price,
-    y1.price   as y1_price,
+    case when brk.at is null or brk.at <= prev.date then prev.price end as prev_price,
+    case when brk.at is null or brk.at <= m1.date   then m1.price   end as m1_price,
+    case when brk.at is null or brk.at <= m3.date   then m3.price   end as m3_price,
+    case when brk.at is null or brk.at <= y1.date   then y1.price   end as y1_price,
     lp.total_value,
     lp.investor_count
   from ${funds} f
@@ -152,25 +171,35 @@ const snapshotQuery = sql`
     where p.fund_code = f.code order by p.date desc limit 1
   ) lp on true
   left join lateral (
-    select p.price from ${fundDailyStats} p
+    select p.price, p.date from ${fundDailyStats} p
     where p.fund_code = f.code and p.date < lp.date
     order by p.date desc limit 1
   ) prev on true
   left join lateral (
-    select p.price from ${fundDailyStats} p
+    select p.price, p.date from ${fundDailyStats} p
     where p.fund_code = f.code and p.date <= lp.date - interval '1 month'
     order by p.date desc limit 1
   ) m1 on true
   left join lateral (
-    select p.price from ${fundDailyStats} p
+    select p.price, p.date from ${fundDailyStats} p
     where p.fund_code = f.code and p.date <= lp.date - interval '3 months'
     order by p.date desc limit 1
   ) m3 on true
   left join lateral (
-    select p.price from ${fundDailyStats} p
+    select p.price, p.date from ${fundDailyStats} p
     where p.fund_code = f.code and p.date <= lp.date - interval '1 year'
     order by p.date desc limit 1
   ) y1 on true
+  left join lateral (
+    select max(step.date) as at from (
+      select p.date, p.price,
+             lag(p.price) over (order by p.date) as before
+      from ${fundDailyStats} p
+      where p.fund_code = f.code and p.date > lp.date - interval '1 year'
+    ) step
+    where step.before > 0
+      and abs(step.price / step.before - 1) > ${SERIES_BREAK_RATIO}
+  ) brk on true
 `;
 
 /** How many funds the product actually covers. */
@@ -601,9 +630,19 @@ export const getTopGainers = cache(async (limit = 5): Promise<Fund[]> => {
   return (await getFunds()).slice(0, limit);
 });
 
-/** Weakest one-year performers, worst first. */
-export const getTopLosers = cache(async (limit = 5): Promise<Fund[]> => {
-  return [...(await getFunds())].sort((a, b) => a.y1 - b.y1).slice(0, limit);
+/**
+ * "En Az Kazandıran Fonlar" — the thinnest gains, closest to zero first.
+ *
+ * A fund that lost money did not earn least, it lost, so the panel is bounded
+ * below by zero rather than being the return ranking read backwards. Funds
+ * with no measurable year — a history shorter than the window, which `changePct`
+ * reports as a flat 0 — are excluded too, as an absent figure is not a gain.
+ */
+export const getSmallestGainers = cache(async (limit = 5): Promise<Fund[]> => {
+  return (await getFunds())
+    .filter((fund) => fund.y1 > 0)
+    .sort((a, b) => a.y1 - b.y1)
+    .slice(0, limit);
 });
 
 /** Newest funds by kuruluş tarihi. */
@@ -706,3 +745,30 @@ export const getGuide = cache(
     };
   },
 );
+
+/** One indexable fund URL: the canonical slug and when its data last moved. */
+export type SitemapFund = { slug: string; lastModified: Date };
+
+/**
+ * Funds for the sitemap. Deliberately not `getFunds()`: that builds a return
+ * snapshot for every row and sorts it, none of which a URL list needs. Only
+ * listed funds with a price are included, so every URL answers 200 rather than
+ * redirecting or 404ing.
+ */
+export const getSitemapFunds = cache(async (): Promise<SitemapFund[]> => {
+  const rows = await db
+    .select({
+      code: funds.code,
+      name: funds.name,
+      lastModified: sql<string>`max(${fundDailyStats.date})`,
+    })
+    .from(funds)
+    .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
+    .where(eq(funds.isActive, true))
+    .groupBy(funds.code, funds.name);
+
+  return rows.map((row) => ({
+    slug: fundSlug(row.code, row.name),
+    lastModified: new Date(row.lastModified),
+  }));
+});
