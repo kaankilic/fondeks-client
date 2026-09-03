@@ -21,7 +21,7 @@ import {
   getNewestFunds,
   getSparklines,
   getTopGainers,
-  getTopLosers,
+  getSmallestGainers,
 } from "@/lib/fondeks/queries";
 import type { Fund, FundHighlight } from "@/lib/fondeks/types";
 
@@ -41,12 +41,12 @@ function byReturn(funds: Fund[]): FundHighlight[] {
 }
 
 export default async function DiscoverPage() {
-  const [funds, featured, gainers, losers, growth, newest, guides] =
+  const [funds, featured, gainers, smallestGainers, growth, newest, guides] =
     await Promise.all([
       getFunds(),
       getFeaturedFunds(),
       getTopGainers(),
-      getTopLosers(),
+      getSmallestGainers(),
       getInvestorGrowth(),
       getNewestFunds(4),
       getGuides(3),
@@ -83,7 +83,7 @@ export default async function DiscoverPage() {
           <FundHighlightPanel
             title="En Az Kazandıran Fonlar"
             hint="1 yıllık getiri"
-            items={byReturn(losers)}
+            items={byReturn(smallestGainers)}
           />
 
           <FundHighlightPanel

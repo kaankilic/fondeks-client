@@ -601,9 +601,19 @@ export const getTopGainers = cache(async (limit = 5): Promise<Fund[]> => {
   return (await getFunds()).slice(0, limit);
 });
 
-/** Weakest one-year performers, worst first. */
-export const getTopLosers = cache(async (limit = 5): Promise<Fund[]> => {
-  return [...(await getFunds())].sort((a, b) => a.y1 - b.y1).slice(0, limit);
+/**
+ * "En Az Kazandıran Fonlar" — the thinnest gains, closest to zero first.
+ *
+ * A fund that lost money did not earn least, it lost, so the panel is bounded
+ * below by zero rather than being the return ranking read backwards. Funds
+ * with no measurable year — a history shorter than the window, which `changePct`
+ * reports as a flat 0 — are excluded too, as an absent figure is not a gain.
+ */
+export const getSmallestGainers = cache(async (limit = 5): Promise<Fund[]> => {
+  return (await getFunds())
+    .filter((fund) => fund.y1 > 0)
+    .sort((a, b) => a.y1 - b.y1)
+    .slice(0, limit);
 });
 
 /** Newest funds by kuruluş tarihi. */

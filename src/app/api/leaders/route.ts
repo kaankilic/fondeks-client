@@ -6,7 +6,7 @@ import {
   getInvestorGrowth,
   getNewestFunds,
   getTopGainers,
-  getTopLosers,
+  getSmallestGainers,
 } from "@/lib/fondeks/queries";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     case "gainers":
       return json({ type, items: await getTopGainers(limit) });
     case "losers":
-      return json({ type, items: await getTopLosers(limit) });
+      return json({ type, items: await getSmallestGainers(limit) });
     case "new":
       return json({ type, items: await getNewestFunds(limit) });
     case "investors": {
