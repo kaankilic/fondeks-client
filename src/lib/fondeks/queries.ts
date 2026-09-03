@@ -18,6 +18,7 @@ import {
   news,
   symbols,
 } from "@/db/schema/funds";
+import { formatPercent, formatPercentPrefixed } from "./format";
 import { FALLBACK_LOGO } from "./palette";
 import { fundSlug } from "./slug";
 import type {
@@ -390,9 +391,6 @@ export const getCategoryPerformance = cache(
 /** How many peers the head-to-head table compares against. */
 const COMPARE_PEERS = 2;
 
-const percent = (value: number, digits = 2) =>
-  `%${value.toFixed(digits).replace(".", ",")}`;
-
 export const getFundDetail = cache(
   async (code: string): Promise<FundDetail | null> => {
     const fund = await getFund(code);
@@ -468,7 +466,7 @@ export const getFundDetail = cache(
       {
         label: "1 Yıl Getiri",
         values: compared.map((row) =>
-          row ? `${row.y1 > 0 ? "+" : ""}${row.y1.toFixed(1).replace(".", ",")}%` : "—",
+          row ? formatPercent(row.y1, 1) : "—",
         ),
       },
       {
@@ -478,18 +476,18 @@ export const getFundDetail = cache(
       {
         label: "Yıllık Yönetim Ücreti",
         values: compared.map((row) =>
-          row ? percent(row.managementFee) : "—",
+          row ? formatPercentPrefixed(row.managementFee, 2) : "—",
         ),
       },
       {
         label: "Stopaj Oranı",
-        values: compared.map((row) => (row ? percent(row.withholdingTax, 0) : "—")),
+        values: compared.map((row) => (row ? formatPercentPrefixed(row.withholdingTax, 0) : "—")),
       },
       {
         label: "Volatilite (1Y)",
         values: compareCodes.map((peerCode) => {
           const vol = volatilities.get(peerCode);
-          return vol === null || vol === undefined ? "—" : percent(vol, 1);
+          return vol === null || vol === undefined ? "—" : formatPercentPrefixed(vol, 1);
         }),
       },
       {

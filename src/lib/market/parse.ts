@@ -30,7 +30,9 @@ export function toNumber(value: unknown): number | null {
   const cleaned = value.replace(/[%\s ]/g, "").trim();
   if (!cleaned) return null;
 
-  const turkish = /,\d{1,6}$/.test(cleaned);
+  // A trailing comma group is a decimal, however many digits follow it: the
+  // feed publishes fee rates to nine places.
+  const turkish = /,\d+$/.test(cleaned);
   const normalised = turkish
     ? cleaned.replace(/\./g, "").replace(",", ".")
     : cleaned.replace(/,/g, "");
