@@ -133,6 +133,7 @@ async function main() {
       await tx.insert(fundAllocations).values(
         allocation.map((slice, position) => ({
           fundCode: fund.code,
+          date: today.toISOString().slice(0, 10),
           label: slice.label,
           pct: slice.pct,
           position,

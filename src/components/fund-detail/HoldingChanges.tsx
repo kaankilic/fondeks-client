@@ -5,6 +5,14 @@ import type { HoldingChange } from "@/lib/fondeks/types";
 
 import styles from "./HoldingChanges.module.scss";
 
+/** Two letters for the mark: "Hisse Senedi" → "HS", "Eurobond" → "EU". */
+function initialsFor(label: string): string {
+  const words = label.split(/[\s(]+/).filter(Boolean);
+  const letters =
+    words.length > 1 ? words[0][0] + words[1][0] : label.slice(0, 2);
+  return letters.toLocaleUpperCase("tr");
+}
+
 function HoldingPanel({
   title,
   direction,
@@ -28,17 +36,16 @@ function HoldingPanel({
       </div>
 
       {holdings.map((holding) => (
-        <div key={holding.ticker} className={styles.row}>
+        <div key={holding.label} className={styles.row}>
           <div className={styles.stock}>
             <BrandMark
               logo={{
-                initials: holding.ticker.slice(0, 2),
+                initials: initialsFor(holding.label),
                 background: holding.color ?? FALLBACK_LOGO.background,
               }}
               size="md"
             />
-            <span className={styles.ticker}>{holding.ticker}</span>
-            <span className={styles.name}>{holding.name}</span>
+            <span className={styles.name}>{holding.label}</span>
           </div>
           <span className={styles.weight}>
             {holding.weight.toFixed(1).replace(".", ",")}%

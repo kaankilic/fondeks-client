@@ -144,11 +144,18 @@ export const fundAllocations = pgTable(
     fundCode: varchar({ length: 8 })
       .notNull()
       .references(() => funds.code, { onDelete: "cascade" }),
+    /** The day the breakdown was published. */
+    date: date({ mode: "string" }).notNull(),
     label: text().notNull(),
     pct: numeric({ precision: 5, scale: 2, mode: "number" }).notNull(),
+    /** Rank within the day, heaviest slice first. */
     position: smallint().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.fundCode, table.label] })],
+  (table) => [
+    primaryKey({ columns: [table.fundCode, table.date, table.label] }),
+    // Both readers start from a fund's newest day and walk back.
+    index("fund_allocations_lookup_idx").on(table.fundCode, table.date),
+  ],
 );
 
 /** Portfolio overlap between two funds, 0–100. */

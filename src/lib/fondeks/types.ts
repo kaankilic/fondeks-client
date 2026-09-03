@@ -87,13 +87,20 @@ export type CategoryPerformance = {
   y1: number;
 };
 
+/**
+ * One asset class whose share of a portfolio moved over the period.
+ *
+ * Not a single security: TEFAS publishes no holdings endpoint and KAP no
+ * longer exposes a public API, so movement is measured over the asset classes
+ * that are actually published.
+ */
 export type HoldingChange = {
-  ticker: string;
-  name: string;
+  /** Asset class, e.g. "Hisse Senedi". */
+  label: string;
   color: string | null;
-  /** Share of the portfolio, in percent. */
+  /** Share of the portfolio now, in percent. */
   weight: number;
-  /** Change in weight over the period, in percentage points. */
+  /** Change in that share over the period, in percentage points. */
   change: number;
 };
 

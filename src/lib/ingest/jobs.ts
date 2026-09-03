@@ -225,19 +225,23 @@ export async function backfillDailyStats(days = 400) {
 }
 
 /**
- * How far back to look for a breakdown. `fund_allocations` keeps one current
- * picture per fund rather than a history, so this is not a backfill window —
- * it is slack for funds that did not report yesterday, plus weekends and
- * holidays.
+ * Days of breakdown history a routine run refreshes. Movements are measured
+ * month over month, but that baseline is already stored — a daily run only has
+ * to cover what is new, plus slack for weekends and late reporters.
  */
 const ALLOCATION_WINDOW_DAYS = 10;
 
+/** Enough history on a first run for the month-over-month diff to have a past. */
+export const ALLOCATION_BACKFILL_DAYS = 45;
+
 /**
- * Imports the portfolio breakdown behind "Varlık Dağılımı".
+ * Imports the portfolio breakdown behind "Varlık Dağılımı", and the history
+ * the position movements are measured against.
  *
- * Each fund's newest published day wins and replaces what it had. Replacement
- * is per fund rather than an upsert: the key is (fund, label), so a slice the
- * fund has since exited would never be overwritten and would linger forever.
+ * Every published day in the window is kept, not just the newest: the panels
+ * compare a fund's latest breakdown with the one from a month earlier, so the
+ * older day has to be on disk. The window is recomputed wholesale, so a
+ * restated day replaces what it had instead of merging into it.
  */
 export async function syncAllocations(range?: DateRange) {
   const provider = await getProvider();
@@ -262,45 +266,36 @@ export async function syncAllocations(range?: DateRange) {
         (await db.select({ code: funds.code }).from(funds)).map((row) => row.code),
       );
 
-      // The newest day a fund reported; anything older is a stale picture.
-      const latest = new Map<string, string>();
+      // Grouped by fund and day, keyed by label so a repeated asset class
+      // cannot break the primary key.
+      const byDay = new Map<string, Map<string, number>>();
       for (const slice of slices) {
         if (!known.has(slice.code)) continue;
-        const seen = latest.get(slice.code);
-        if (seen === undefined || slice.date > seen) {
-          latest.set(slice.code, slice.date);
-        }
-      }
-
-      // Keyed by label, so a repeated asset class cannot break the primary key.
-      const byFund = new Map<string, Map<string, number>>();
-      for (const slice of slices) {
-        if (latest.get(slice.code) !== slice.date) continue;
-        const fund = byFund.get(slice.code) ?? new Map<string, number>();
-        fund.set(slice.label, slice.pct);
-        byFund.set(slice.code, fund);
+        const key = `${slice.code}\u0000${slice.date}`;
+        const day = byDay.get(key) ?? new Map<string, number>();
+        day.set(slice.label, slice.pct);
+        byDay.set(key, day);
       }
 
       const rows: (typeof fundAllocations.$inferInsert)[] = [];
-      for (const [fundCode, labels] of byFund) {
-        // Biggest slice first — the widget renders in `position` order.
+      for (const [key, labels] of byDay) {
+        const [fundCode, date] = key.split("\u0000");
+        // Heaviest slice first — the widget renders in `position` order.
         [...labels.entries()]
           .sort(([, a], [, b]) => b - a)
           .forEach(([label, pct], position) =>
-            rows.push({ fundCode, label, pct, position }),
+            rows.push({ fundCode, date, label, pct, position }),
           );
       }
 
-      const codes = [...byFund.keys()];
-
       // One transaction, or a failure between the delete and the inserts would
-      // leave funds with no breakdown at all.
+      // leave the window empty.
       const written = await db.transaction(async (tx) => {
-        if (codes.length > 0) {
-          await tx
-            .delete(fundAllocations)
-            .where(sql`${fundAllocations.fundCode} = any(${sql.param(codes)})`);
-        }
+        await tx
+          .delete(fundAllocations)
+          .where(
+            sql`${fundAllocations.date} between ${window.from} and ${window.to}`,
+          );
 
         let count = 0;
         for (const batch of chunk(rows)) {
@@ -313,7 +308,7 @@ export async function syncAllocations(range?: DateRange) {
       return {
         rowsRead: slices.length,
         rowsWritten: written,
-        funds: byFund.size,
+        days: new Set([...byDay.keys()].map((key) => key.split("\u0000")[1])).size,
         skipped: slices.length - rows.length,
       };
     },

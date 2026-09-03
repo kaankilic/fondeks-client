@@ -9,17 +9,15 @@ import {
   founders,
   fundAllocations,
   fundDailyStats,
-  fundPositions,
   fundSimilarities,
   funds,
   guides,
   indexQuotes,
   marketIndices,
   news,
-  symbols,
 } from "@/db/schema/funds";
 import { formatPercent, formatPercentPrefixed } from "./format";
-import { FALLBACK_LOGO } from "./palette";
+import { allocationColor, FALLBACK_LOGO } from "./palette";
 import { fundSlug } from "./slug";
 import type {
   Allocation,
@@ -431,30 +429,78 @@ export const getCategoryPerformance = cache(
 /** How many peers the head-to-head table compares against. */
 const COMPARE_PEERS = 2;
 
+/** How many movers each of the two position panels lists. */
+const MOVERS_PER_PANEL = 5;
+
+/**
+ * Smallest move worth a row. The panel prints one decimal, so anything under
+ * this renders as "0,0 puan" — a row that says nothing happened.
+ */
+const MIN_MOVE_POINTS = 0.05;
+
+/**
+ * Asset-class movements: a fund's newest breakdown against the most recent one
+ * at least a month older.
+ *
+ * Deliberately not security level. TEFAS publishes no holdings endpoint — its
+ * gateway exposes nineteen paths and none returns securities — and KAP serves
+ * its site through Server Actions with no public API, so the only composition
+ * anyone publishes is by asset class.
+ */
+async function getAllocationMoves(code: string) {
+  const result = await db.execute<{
+    label: string;
+    weight: string;
+    change: string;
+  }>(sql`
+    with latest as (
+      select max(date) as at from ${fundAllocations} where fund_code = ${code}
+    ),
+    baseline as (
+      select max(date) as at from ${fundAllocations}
+      where fund_code = ${code}
+        and date <= (select at from latest) - interval '1 month'
+    ),
+    current_slices as (
+      select label, pct from ${fundAllocations}
+      where fund_code = ${code} and date = (select at from latest)
+    ),
+    earlier_slices as (
+      select label, pct from ${fundAllocations}
+      where fund_code = ${code} and date = (select at from baseline)
+    )
+    select
+      coalesce(c.label, e.label)              as label,
+      coalesce(c.pct, 0)                      as weight,
+      coalesce(c.pct, 0) - coalesce(e.pct, 0) as change
+    from current_slices c
+    full outer join earlier_slices e on e.label = c.label
+    -- With no baseline every slice would read as newly opened.
+    where (select at from baseline) is not null
+      and abs(coalesce(c.pct, 0) - coalesce(e.pct, 0)) >= ${MIN_MOVE_POINTS}
+    order by change desc
+  `);
+
+  return result.rows;
+}
+
 export const getFundDetail = cache(
   async (code: string): Promise<FundDetail | null> => {
     const fund = await getFund(code);
     if (!fund) return null;
 
-    const [positions, allocation, peerRows, prices, monthly] = await Promise.all([
-      db
-        .select({
-          ticker: fundPositions.ticker,
-          name: symbols.name,
-          color: symbols.color,
-          weight: fundPositions.weight,
-          change: fundPositions.changePoints,
-          direction: fundPositions.direction,
-        })
-        .from(fundPositions)
-        .innerJoin(symbols, eq(fundPositions.ticker, symbols.ticker))
-        .where(eq(fundPositions.fundCode, fund.code))
-        .orderBy(asc(fundPositions.rank)),
+    const [moves, allocation, peerRows, prices, monthly] = await Promise.all([
+      getAllocationMoves(fund.code),
 
+      // The breakdown is a history now, so only the newest day is the picture.
       db
         .select({ label: fundAllocations.label, pct: fundAllocations.pct })
         .from(fundAllocations)
-        .where(eq(fundAllocations.fundCode, fund.code))
+        .where(
+          sql`${fundAllocations.fundCode} = ${fund.code} and ${fundAllocations.date} = (
+            select max(date) from ${fundAllocations} where fund_code = ${fund.code}
+          )`,
+        )
         .orderBy(asc(fundAllocations.position)),
 
       db
@@ -538,25 +584,28 @@ export const getFundDetail = cache(
       },
     ];
 
-    const toHolding = (row: (typeof positions)[number]): HoldingChange => ({
-      ticker: row.ticker,
-      name: row.name,
-      color: row.color,
-      weight: row.weight,
-      change: row.change,
+    const toHolding = (
+      row: (typeof moves)[number],
+      index: number,
+    ): HoldingChange => ({
+      label: row.label,
+      color: allocationColor(index),
+      weight: Number(row.weight),
+      change: Number(row.change),
     });
+
+    // The query orders by change descending, so gains lead and the sharpest
+    // cuts are at the far end — reversed, they lead their own panel.
+    const gained = moves.filter((row) => Number(row.change) > 0);
+    const shed = moves.filter((row) => Number(row.change) < 0).reverse();
 
     return {
       fund,
       volatility: volatilities.get(fund.code) ?? null,
       prices,
       monthly,
-      increased: positions
-        .filter((row) => row.direction === "increased")
-        .map(toHolding),
-      decreased: positions
-        .filter((row) => row.direction === "decreased")
-        .map(toHolding),
+      increased: gained.slice(0, MOVERS_PER_PANEL).map(toHolding),
+      decreased: shed.slice(0, MOVERS_PER_PANEL).map(toHolding),
       allocation: allocation as Allocation[],
       similar,
       compare: { codes: compareCodes, rows },
