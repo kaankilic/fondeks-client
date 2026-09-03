@@ -6,18 +6,27 @@
 const tr = (options?: Intl.NumberFormatOptions) =>
   new Intl.NumberFormat("tr-TR", options);
 
-export function formatPercent(value: number): string {
+/**
+ * Fixed decimals with Turkish grouping: "11.492,41", not "11492,41". Hand
+ * rolling this as `toFixed().replace(".", ",")` drops the thousands separator,
+ * which is exactly where a four-digit return becomes unreadable.
+ */
+const decimal = (digits: number) =>
+  tr({ minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+export function formatPercent(value: number, digits = 2): string {
+  // Intl writes its own minus, so only the plus has to be added.
   const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(2).replace(".", ",")}%`;
+  return `${sign}${decimal(digits).format(value)}%`;
 }
 
 /** Percentage written the Turkish way, with the sign in front: "%62,0". */
 export function formatPercentPrefixed(value: number, digits = 1): string {
-  return `%${value.toFixed(digits).replace(".", ",")}`;
+  return `%${decimal(digits).format(value)}`;
 }
 
 export function formatPrice(value: number): string {
-  return value.toFixed(6).replace(".", ",");
+  return decimal(6).format(value);
 }
 
 /** Daily change with its direction arrow, e.g. "▲ +2,45%". */
@@ -26,7 +35,7 @@ export function formatDaily(value: number): string {
 }
 
 export function formatIndexChange(value: number): string {
-  const abs = Math.abs(value).toFixed(2).replace(".", ",");
+  const abs = decimal(2).format(Math.abs(value));
   return `${value >= 0 ? "▲ +" : "▼ "}${abs}%`;
 }
 
@@ -68,7 +77,7 @@ export function formatIndexValue(
 /** Position weight change, in percentage points: "+1,8 puan". */
 export function formatPoints(value: number): string {
   const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(1).replace(".", ",")} puan`;
+  return `${sign}${decimal(1).format(value)} puan`;
 }
 
 export type Direction = "pos" | "neg";
