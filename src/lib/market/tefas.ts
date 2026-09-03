@@ -1,6 +1,11 @@
 import "server-only";
 
-import { ConcurrencyLimiter, requestJson, UpstreamError } from "./http";
+import {
+  ConcurrencyLimiter,
+  RateLimiter,
+  requestJson,
+  UpstreamError,
+} from "./http";
 import {
   pick,
   toCategory,
@@ -218,6 +223,16 @@ export class TefasProvider implements MarketDataProvider {
     envNumber("TEFAS_CONCURRENCY", 3),
   );
 
+  /**
+   * Measured against the live gateway: the tenth request inside a minute comes
+   * back 429 "Because of reaching Throttling limit", and the block clears
+   * about sixty seconds later. Eight leaves room for a retry inside the window.
+   */
+  private readonly rateLimiter = new RateLimiter(
+    envNumber("TEFAS_RATE_LIMIT", 8),
+    envNumber("TEFAS_RATE_WINDOW_MS", 60_000),
+  );
+
   private readonly logSamples = process.env.INGEST_LOG_SAMPLES === "true";
   private readonly sampled = new Set<string>();
 
@@ -225,8 +240,11 @@ export class TefasProvider implements MarketDataProvider {
     const payload = await this.limiter.run(() =>
       requestJson<Envelope>(`${this.base}${path}`, {
         body,
-        timeoutMs: envNumber("TEFAS_TIMEOUT_MS", 20_000),
+        // A 28-day slice is ~9MB and measured 15-40s to build server-side, so
+        // the usual 20s ceiling aborts most of a backfill's chunks.
+        timeoutMs: envNumber("TEFAS_TIMEOUT_MS", 90_000),
         maxRetries: envNumber("TEFAS_MAX_RETRIES", 3),
+        rateLimiter: this.rateLimiter,
         headers: {
           // The gateway 404s JSON-only Accept on some paths; the site sends */*.
           accept: "*/*",
