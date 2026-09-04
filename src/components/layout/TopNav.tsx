@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserMenu } from "@/components/auth/UserMenu";
 import type { SessionUser } from "@/lib/auth/session";
 
+import { Logo } from "./Logo";
 import { NavCenter, type NavItem } from "./NavCenter";
 import styles from "./TopNav.module.scss";
 
@@ -23,9 +24,7 @@ export function TopNav({ user }: { user: SessionUser | null }) {
     <header className={styles.bar}>
       <div className={styles.inner}>
         <Link href="/" className={styles.brand}>
-          <span className={styles.logo} aria-hidden>
-            F
-          </span>
+          <Logo className={styles.logo} size={28} />
           <span className={styles.wordmark}>Fondeks</span>
         </Link>
 

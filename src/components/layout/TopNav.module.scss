@@ -29,17 +29,10 @@
   @include focus-ring;
 }
 
+/* The mark carries its own tile and colors; this only pins it in the row. */
 .logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: var(--brand);
-  color: var(--brand-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 800;
+  display: block;
+  flex: none;
 }
 
 .wordmark {

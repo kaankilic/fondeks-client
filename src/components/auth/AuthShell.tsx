@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { Logo } from "@/components/layout/Logo";
 import { getFundCount } from "@/lib/fondeks/queries";
 
 import styles from "./AuthShell.module.scss";
@@ -15,9 +16,7 @@ export async function AuthShell({ children }: { children: ReactNode }) {
           <div className={styles.glow} aria-hidden />
 
           <div className={styles.wordmarkRow}>
-            <span className={styles.logo} aria-hidden>
-              F
-            </span>
+            <Logo className={styles.logo} size={34} />
             <span className={styles.wordmark}>Fondeks</span>
           </div>
 
