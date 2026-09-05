@@ -58,19 +58,33 @@ export function FundCode({
   return <span className={`${styles.code} ${sizeClass}`}>{code}</span>;
 }
 
-export function ChangePill({ value }: { value: number }) {
+export function ChangePill({
+  value,
+  className = "",
+}: {
+  value: number;
+  /** Lets a table place the pill in one of its grid areas. */
+  className?: string;
+}) {
   return (
-    <span className={`${styles.pill} ${styles[direction(value)]}`}>
+    <span className={`${styles.pill} ${styles[direction(value)]} ${className}`}>
       {formatDaily(value)}
     </span>
   );
 }
 
-export function RiskChip({ risk }: { risk: RiskLevel }) {
+export function RiskChip({
+  risk,
+  className = "",
+}: {
+  risk: RiskLevel;
+  /** Lets a table place the chip in one of its grid areas. */
+  className?: string;
+}) {
   const tone = riskTone(risk);
   return (
     <span
-      className={styles.risk}
+      className={`${styles.risk} ${className}`}
       style={{ color: tone.color, background: tone.background }}
       title={`Risk değeri ${risk} / 7`}
     >
@@ -105,14 +119,17 @@ export function FundIdentity({
   meta,
   markSize = "lg",
   codeSize = "md",
+  className = "",
 }: {
   fund: Fund;
   meta?: ReactNode;
   markSize?: MarkSize;
   codeSize?: "sm" | "md" | "lg";
+  /** Lets a table place the cell in one of its grid areas. */
+  className?: string;
 }) {
   return (
-    <div className={styles.identity}>
+    <div className={`${styles.identity} ${className}`}>
       <BrandMark logo={fundLogo(fund)} size={markSize} />
       <FundCode code={fund.code} size={codeSize} />
       <div className={styles.identityText}>

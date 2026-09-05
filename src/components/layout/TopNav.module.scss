@@ -9,24 +9,43 @@
   border-bottom: 1px solid var(--border);
 }
 
+/*
+ * Phones cannot fit the brand, the links and the account actions on one line,
+ * so the links wrap onto a second row of their own instead of scrolling out of
+ * sight. From `md` the bar is the single row the design draws.
+ */
 .inner {
   max-width: $page-width;
   margin-inline: auto;
-  height: var(--nav-height);
   display: flex;
   align-items: center;
-  gap: 22px;
-  padding: 0 $page-gutter;
+  flex-wrap: wrap;
+  /* Tight enough that the brand, the search and the account actions share the
+     first row down to a 375px iPhone. */
+  gap: 8px;
+  padding: 8px $page-gutter;
+
+  @include respond-to("md") {
+    height: var(--nav-height);
+    flex-wrap: nowrap;
+    gap: 22px;
+    padding: 0 $page-gutter;
+  }
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-right: 4px;
+  /* Pushes the account actions to the far end of the first row. */
+  margin-right: auto;
   text-decoration: none;
 
   @include focus-ring;
+
+  @include respond-to("md") {
+    margin-right: 4px;
+  }
 }
 
 /* The mark carries its own tile and colors; this only pins it in the row. */
@@ -42,21 +61,29 @@
   letter-spacing: -0.02em;
 }
 
-/* Search toggle + either the nav links or the expanded search field. */
+/*
+ * Search toggle + either the nav links or the expanded search field. On phones
+ * the group dissolves so the toggle can stay on the brand row while the links
+ * take a full-width row of their own underneath.
+ */
 .middle {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  /* Fixed: the links and the search field must occupy the same height. */
-  height: 30px;
+  display: contents;
+
+  @include respond-to("md") {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    /* Fixed: the links and the search field must occupy the same height. */
+    height: 30px;
+  }
 }
 
 .searchToggle {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,6 +100,11 @@
     color: var(--text);
     background: var(--surface-raised);
   }
+
+  @include respond-to("md") {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 .close {
@@ -81,12 +113,20 @@
 }
 
 .searchField {
-  flex: 1;
+  /* Second row on phones, alongside the toggle from `md`. */
+  order: 1;
+  flex: 1 0 100%;
   min-width: 0;
-  height: 100%;
+  height: 36px;
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @include respond-to("md") {
+    order: 0;
+    flex: 1;
+    height: 100%;
+  }
 }
 
 .searchInput {
@@ -98,8 +138,9 @@
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: 14px;
   color: var(--text);
+
+  @include field-font(14px);
 
   &::placeholder {
     color: var(--text-faint);
@@ -264,15 +305,28 @@
 }
 
 .nav {
-  height: 100%;
+  /* Second row on phones, where the links have the full width to themselves. */
+  order: 1;
+  flex: 1 0 100%;
+  height: 36px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  /* The narrowest phones scroll the last link in; the edge fade says so. */
   overflow-x: auto;
   scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  @include respond-to("md") {
+    order: 0;
+    flex: initial;
+    gap: 4px;
+    height: 100%;
+    mask-image: none;
   }
 }
 
@@ -280,7 +334,7 @@
   display: flex;
   align-items: center;
   height: 100%;
-  padding: 0 13px;
+  padding: 0 9px;
   border-radius: 7px;
   font-size: 13px;
   font-weight: 500;
@@ -294,6 +348,10 @@
   &:hover {
     color: var(--text-secondary);
     background: color-mix(in oklab, var(--surface-raised) 60%, transparent);
+  }
+
+  @include respond-to("md") {
+    padding: 0 13px;
   }
 }
 

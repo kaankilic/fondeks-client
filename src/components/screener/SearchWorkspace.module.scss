@@ -38,14 +38,46 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* Phones fold the filters away behind this; from `lg` it is inert text. */
+.railToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+
+  @include focus-ring;
+
+  @include respond-to("lg") {
+    cursor: default;
+    pointer-events: none;
+  }
+}
+
+.railChevron {
+  font-size: 9px;
+  color: var(--text-dim);
+
+  @include respond-to("lg") {
+    display: none;
+  }
+}
+
 .railTitle {
   @include panel-title;
 }
 
 .reset {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   padding: 0;
+
+  @include tap-target(34px);
+
   font-size: 12px;
   font-weight: 500;
   color: var(--brand);
@@ -61,15 +93,21 @@
 
 .railBody {
   padding: 18px;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 20px;
 
   @include respond-to("lg") {
     /* Filters stay put while the results scroll past them. */
+    display: flex;
     position: sticky;
     top: 0;
   }
+}
+
+/* Opened from the rail head — phones only, the rail is always open from `lg`. */
+.railBodyOpen {
+  display: flex;
 }
 
 .groupLabel {
@@ -185,9 +223,10 @@
   border-radius: $radius-md;
   padding: 5px 8px;
   font-family: inherit;
-  font-size: 12px;
   color: var(--text-secondary);
   cursor: pointer;
+
+  @include field-font(12px);
 
   @include focus-ring;
 }

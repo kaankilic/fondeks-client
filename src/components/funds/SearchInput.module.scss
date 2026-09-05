@@ -34,8 +34,9 @@
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: 13px;
   color: var(--text);
+
+  @include field-font(13px);
 
   &::placeholder {
     color: var(--text-faint);

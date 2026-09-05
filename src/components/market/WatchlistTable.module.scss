@@ -25,11 +25,11 @@
 }
 
 @mixin watchlist-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) 84px 96px 80px;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 18px;
+  @include fund-row(
+    minmax(0, 1.7fr) 84px 96px 80px,
+    $wide-areas: '"identity price daily y1"',
+    $narrow-areas: '"identity identity y1" "price price daily"'
+  );
 }
 
 .headRow {
@@ -73,4 +73,29 @@
 
 .neg {
   color: var(--neg);
+}
+
+/* Cell placement, shared by the header labels and the rows beneath them. */
+.headRow,
+.row {
+  .cellIdentity {
+    grid-area: identity;
+  }
+
+  .cellPrice {
+    grid-area: price;
+    text-align: left;
+
+    @include respond-to("sm") {
+      text-align: right;
+    }
+  }
+
+  .cellDaily {
+    grid-area: daily;
+  }
+
+  .cellY1 {
+    grid-area: y1;
+  }
 }

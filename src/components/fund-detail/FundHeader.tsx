@@ -48,7 +48,7 @@ export function FundHeader({ fund }: { fund: Fund }) {
         <div className={styles.identity}>
           <BrandMark logo={fundLogo(fund)} size="hero" />
           <FundCode code={fund.code} size="hero" />
-          <div>
+          <div className={styles.identityText}>
             <h1 className={styles.name}>{fund.name}</h1>
             <div className={styles.meta}>
               {fund.founder} · {fund.category}

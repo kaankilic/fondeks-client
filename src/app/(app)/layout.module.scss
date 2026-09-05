@@ -1,3 +1,5 @@
+@use "abstracts" as *;
+
 /* Default: the page scrolls, the footer sits after the content. */
 .shell {
   min-height: 100dvh;
@@ -13,14 +15,17 @@
 
 /*
  * Fixed frame, used by the filter workspace: the viewport is the frame, and
- * only the content area scrolls.
+ * only the content area scrolls. A phone has no room for a frame — the filters
+ * and the results sit above each other there and the page scrolls as one.
  */
 .fixed {
-  height: 100dvh;
-  overflow: hidden;
+  @include respond-to("lg") {
+    height: 100dvh;
+    overflow: hidden;
 
-  .main {
-    min-height: 0;
-    overflow-y: auto;
+    .main {
+      min-height: 0;
+      overflow-y: auto;
+    }
   }
 }

@@ -21,6 +21,11 @@
 }
 
 .link {
+  display: inline-flex;
+  align-items: center;
+
+  @include tap-target(34px);
+
   display: inline-block;
   margin-top: 18px;
   font-size: 13px;

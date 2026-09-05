@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Logo } from "@/components/layout/Logo";
@@ -11,6 +12,12 @@ export async function AuthShell({ children }: { children: ReactNode }) {
 
   return (
     <div className={styles.screen}>
+      {/* The brand panel is desktop-only, so phones get the mark here. */}
+      <Link href="/" className={styles.mobileBrand}>
+        <Logo size={26} />
+        <span className={styles.wordmark}>Fondeks</span>
+      </Link>
+
       <div className={styles.card}>
         <aside className={styles.brand}>
           <div className={styles.glow} aria-hidden />

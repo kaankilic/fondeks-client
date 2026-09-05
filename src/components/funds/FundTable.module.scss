@@ -10,6 +10,16 @@
   position: relative;
   /* Fixed so opening the search never resizes the panel. */
   min-height: 52px;
+  /* Phones give the title its own line, with the tabs underneath it. */
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px 14px;
+
+  @include respond-to("sm") {
+    flex-direction: row;
+    align-items: center;
+    padding: 13px 18px;
+  }
 }
 
 .headerRight {
@@ -23,20 +33,27 @@
  * in place underneath and come back when the search is closed.
  */
 .search {
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  right: 14px;
-  width: min(380px, calc(100% - 150px));
+  /* On phones it takes a line of its own; from `sm` it lays over the tabs. */
+  width: 100%;
   z-index: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 10px;
+  padding: 6px 10px;
+
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: $radius-lg;
   color: var(--text-dim);
+
+  @include respond-to("sm") {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    right: 14px;
+    width: min(380px, calc(100% - 150px));
+    padding: 0 10px;
+  }
 }
 
 .searchInput {
@@ -46,8 +63,9 @@
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: 13px;
   color: var(--text);
+
+  @include field-font(13px);
 
   &::placeholder {
     color: var(--text-faint);
@@ -56,8 +74,8 @@
 
 .searchToggle {
   flex: none;
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,6 +91,11 @@
   &:hover {
     color: var(--text);
     background: var(--surface-raised);
+  }
+
+  @include respond-to("sm") {
+    width: 26px;
+    height: 26px;
   }
 }
 
@@ -90,10 +113,16 @@
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  /* On phones the tabs take the row the title used to share with them. */
+  flex: 1;
+
+  @include respond-to("sm") {
+    flex: initial;
+  }
 }
 
 .tab {
-  padding: 4px 10px;
+  padding: 8px 12px;
   border-radius: $radius-md;
   border: 1px solid var(--border);
   background: var(--surface-raised);
@@ -107,6 +136,10 @@
 
   &:hover {
     color: var(--text-secondary);
+  }
+
+  @include respond-to("md") {
+    padding: 4px 10px;
   }
 }
 
@@ -123,11 +156,7 @@
 
 /* Fon / Kod · Fiyat · Günlük · 1 Yıl · Risk */
 @mixin screener-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) 84px 96px 80px 64px;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
+  @include fund-row(minmax(0, 1.7fr) 84px 96px 80px 64px);
 }
 
 .headRow {
@@ -217,8 +246,10 @@
 .wide {
   .headRow,
   .dataRow {
-    grid-template-columns: minmax(0, 1.9fr) 96px 88px 80px 64px;
-    padding-inline: $page-gutter;
+    @include respond-to("sm") {
+      grid-template-columns: minmax(0, 1.9fr) 96px 88px 80px 64px;
+      padding-inline: $page-gutter;
+    }
   }
 }
 
@@ -243,5 +274,42 @@
 
   &:hover {
     color: var(--neg);
+  }
+}
+
+/*
+ * Cell placement, shared by the header labels and the rows beneath them. On
+ * phones the row folds onto two lines, so price and risk lead the second one.
+ */
+.headRow,
+.dataRow {
+  .cellIdentity {
+    grid-area: identity;
+  }
+
+  .cellPrice {
+    grid-area: price;
+    text-align: left;
+
+    @include respond-to("sm") {
+      text-align: right;
+    }
+  }
+
+  .cellDaily {
+    grid-area: daily;
+  }
+
+  .cellY1 {
+    grid-area: y1;
+  }
+
+  .cellRisk {
+    grid-area: risk;
+    justify-self: start;
+
+    @include respond-to("sm") {
+      justify-self: center;
+    }
   }
 }

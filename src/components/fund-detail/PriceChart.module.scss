@@ -2,7 +2,11 @@
 
 .panel {
   @include panel;
-  padding: 18px 20px;
+  padding: 18px 16px;
+
+  @include respond-to("sm") {
+    padding: 18px 20px;
+  }
 }
 
 .head {
@@ -11,6 +15,12 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
+  /* Phones read the title on its own line, with the ranges under it. */
+  flex-wrap: wrap;
+
+  @include respond-to("sm") {
+    flex-wrap: nowrap;
+  }
 }
 
 .heading {
@@ -41,6 +51,10 @@
 }
 
 .range {
+  display: inline-flex;
+  align-items: center;
+
+  @include tap-target(32px);
   padding: 4px 10px;
   border: none;
   background: none;

@@ -3,9 +3,29 @@
 .screen {
   min-height: 100dvh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  gap: 20px;
+  padding: 24px 18px;
+
+  @include respond-to("sm") {
+    padding: 24px;
+  }
+}
+
+/* Stands in for the brand panel, which only appears from `lg`. */
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+
+  @include focus-ring;
+
+  @include respond-to("lg") {
+    display: none;
+  }
 }
 
 .card {

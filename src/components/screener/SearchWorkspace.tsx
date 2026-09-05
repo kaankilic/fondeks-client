@@ -55,6 +55,9 @@ const SORT_OPTIONS: { value: string; label: string; sort: Sort }[] = [
   },
 ];
 
+/** Ties the phone-only filters toggle to the panel it opens. */
+const FILTERS_ID = "screener-filters";
+
 /** Turkish-aware case folding so "İŞ" matches "iş". */
 function fold(value: string) {
   return value.toLocaleLowerCase("tr");
@@ -70,6 +73,9 @@ export function SearchWorkspace({
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT);
+  // Phones open on the results; the rail is a panel they pull down. From `lg`
+  // the rail is always on screen and this flag stops mattering.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const counts = useMemo(() => {
@@ -135,7 +141,19 @@ export function SearchWorkspace({
     <div className={styles.workspace}>
       <aside className={styles.rail} aria-label="Filtreler">
         <div className={styles.railHead}>
-          <span className={styles.railTitle}>Filtreler</span>
+          <button
+            type="button"
+            className={styles.railToggle}
+            onClick={() => setFiltersOpen((open) => !open)}
+            aria-expanded={filtersOpen}
+            aria-controls={FILTERS_ID}
+          >
+            <span className={styles.railTitle}>Filtreler</span>
+            <span className={styles.railChevron} aria-hidden>
+              {filtersOpen ? "▲" : "▼"}
+            </span>
+          </button>
+
           <button
             type="button"
             className={styles.reset}
@@ -146,7 +164,10 @@ export function SearchWorkspace({
           </button>
         </div>
 
-        <div className={styles.railBody}>
+        <div
+          id={FILTERS_ID}
+          className={`${styles.railBody} ${filtersOpen ? styles.railBodyOpen : ""}`}
+        >
           <SearchInput
             compact
             placeholder="Fon ara…"
@@ -201,9 +222,10 @@ export function SearchWorkspace({
 
           <Button
             block
-            onClick={() =>
-              resultsRef.current?.scrollIntoView({ behavior: "smooth" })
-            }
+            onClick={() => {
+              setFiltersOpen(false);
+              resultsRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
           >
             {results.length} fonu göster
           </Button>

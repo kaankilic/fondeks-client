@@ -16,6 +16,8 @@
   transition: background-color $transition-fast, border-color $transition-fast,
     color $transition-fast;
 
+  /* Comfortable to hit on a phone; the drawn height returns from `md`. */
+  @include tap-target(40px);
   @include focus-ring;
 
   &:disabled {

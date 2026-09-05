@@ -2,8 +2,12 @@
 
 .panel {
   @include panel;
-  padding: 28px 30px;
+  padding: 22px 18px;
   max-width: 760px;
+
+  @include respond-to("sm") {
+    padding: 28px 30px;
+  }
 }
 
 .lead {

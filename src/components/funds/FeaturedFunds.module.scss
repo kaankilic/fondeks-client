@@ -13,6 +13,11 @@
 }
 
 .more {
+  display: inline-flex;
+  align-items: center;
+
+  @include tap-target(34px);
+
   font-size: 12px;
   font-weight: 500;
   color: var(--brand);

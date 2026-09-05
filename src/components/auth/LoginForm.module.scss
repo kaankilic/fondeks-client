@@ -54,9 +54,10 @@
   border: 1px solid var(--border-strong);
   border-radius: $radius-lg;
   font-family: inherit;
-  font-size: 13px;
   color: var(--text);
   transition: border-color $transition-fast;
+
+  @include field-font(13px);
 
   &::placeholder {
     color: var(--text-faint);

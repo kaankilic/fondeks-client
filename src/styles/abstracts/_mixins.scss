@@ -100,3 +100,50 @@
   border-radius: $height * 0.5;
   overflow: hidden;
 }
+
+// ── Mobile ──────────────────────────────────────────────────────────────────
+
+/// Field text: iOS Safari zooms the page whenever a focused input carries text
+/// under 16px, so phones get the floor and the design size returns from `md`.
+@mixin field-font($size) {
+  font-size: 16px;
+
+  @include respond-to("md") {
+    font-size: $size;
+  }
+}
+
+/// Comfortable touch height on phones; the designed height returns from `md`.
+@mixin tap-target($height: 40px) {
+  min-height: $height;
+
+  @include respond-to("md") {
+    min-height: 0;
+  }
+}
+
+/// Fund row: one column per metric on wide screens, two stacked lines on
+/// phones. Both place the same cells by area, so the markup never changes.
+/// The caller supplies the wide column tracks and, where a table carries a
+/// different set of cells, the two area templates — each written as the
+/// literal `grid-template-areas` value.
+@mixin fund-row(
+  $columns,
+  $wide-areas: '"identity price daily y1 risk"',
+  $narrow-areas: '"identity identity y1" "price risk daily"'
+) {
+  display: grid;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 7px;
+  padding: 12px 14px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: #{$narrow-areas};
+
+  @include respond-to("sm") {
+    grid-template-columns: $columns;
+    grid-template-areas: #{$wide-areas};
+    gap: 10px;
+    padding: 10px 18px;
+  }
+}

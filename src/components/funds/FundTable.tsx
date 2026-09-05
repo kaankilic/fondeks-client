@@ -29,6 +29,13 @@ const TABS: { label: string; category: FundCategory | null }[] = [
 
 const ARROW: Record<SortDir, string> = { asc: "↑", desc: "↓" };
 
+/** Grid area per sortable column, so header and rows fold together on phones. */
+const CELL: Record<SortKey, string> = {
+  price: styles.cellPrice,
+  daily: styles.cellDaily,
+  y1: styles.cellY1,
+};
+
 function SearchIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -137,8 +144,8 @@ export function FundTable({
       <button
         type="button"
         className={`${styles.colLabel} ${styles.sortable} ${styles.alignRight} ${
-          active ? styles.sorted : ""
-        }`}
+          CELL[key]
+        } ${active ? styles.sorted : ""}`}
         onClick={() => toggleSort(key)}
         aria-label={
           active
@@ -224,11 +231,17 @@ export function FundTable({
       )}
 
       <div className={styles.headRow}>
-        <span className={styles.colLabel}>Fon / Kod</span>
+        <span className={`${styles.colLabel} ${styles.cellIdentity}`}>
+          Fon / Kod
+        </span>
         {headerCell("price", "Fiyat")}
         {headerCell("daily", "Günlük")}
         {headerCell("y1", "1 Yıl")}
-        <span className={`${styles.colLabel} ${styles.alignCenter}`}>Risk</span>
+        <span
+          className={`${styles.colLabel} ${styles.alignCenter} ${styles.cellRisk}`}
+        >
+          Risk
+        </span>
       </div>
 
       {visible.length === 0 ? (
@@ -246,6 +259,7 @@ export function FundTable({
             className={styles.dataRow}
           >
             <FundIdentity
+              className={styles.cellIdentity}
               fund={fund}
               meta={
                 showFounder
@@ -253,12 +267,18 @@ export function FundTable({
                   : fund.category
               }
             />
-            <span className={styles.price}>{formatPrice(fund.price)}</span>
-            <ChangePill value={fund.daily} />
-            <span className={`${styles.return} ${styles[direction(fund.y1)]}`}>
+            <span className={`${styles.price} ${styles.cellPrice}`}>
+              {formatPrice(fund.price)}
+            </span>
+            <ChangePill value={fund.daily} className={styles.cellDaily} />
+            <span
+              className={`${styles.return} ${styles.cellY1} ${
+                styles[direction(fund.y1)]
+              }`}
+            >
               {formatPercent(fund.y1)}
             </span>
-            <RiskChip risk={fund.risk} />
+            <RiskChip risk={fund.risk} className={styles.cellRisk} />
           </Link>
         ))
       )}
