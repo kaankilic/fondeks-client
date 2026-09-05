@@ -45,8 +45,8 @@ export async function syncFundInceptions(limit = DEFAULT_LIMIT) {
     let missing = 0;
 
     for (const { code } of pending) {
-      const slug = directory.get(code);
-      if (!slug) {
+      const oid = directory.get(code);
+      if (!oid) {
         // A fund TEFAS lists and KAP does not — a feeder or a foreign fund.
         missing += 1;
         continue;
@@ -54,7 +54,7 @@ export async function syncFundInceptions(limit = DEFAULT_LIMIT) {
 
       let inceptionDate: string | null = null;
       try {
-        inceptionDate = await fetchFundInception(slug);
+        inceptionDate = await fetchFundInception(oid);
       } catch (error) {
         // One unreadable record must not cost the rest of the pass; the fund
         // stays null and the next run picks it up again.
