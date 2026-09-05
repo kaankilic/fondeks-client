@@ -122,6 +122,13 @@
   color: var(--text);
 }
 
+/* Dates the figure above it: same place on every screen size. */
+.statNote {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 .pos {
   color: var(--pos);
 }

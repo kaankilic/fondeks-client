@@ -6,6 +6,7 @@ import {
   direction,
   formatAum,
   formatCount,
+  formatDate,
   formatPercent,
   formatPrice,
 } from "@/lib/fondeks/format";
@@ -14,19 +15,30 @@ import type { Fund } from "@/lib/fondeks/types";
 import styles from "./FundHeader.module.scss";
 
 export function FundHeader({ fund }: { fund: Fund }) {
-  const stats: { label: string; value: string; tone?: "pos" | "neg" | "muted" }[] =
-    [
-      { label: "Son Fiyat", value: formatPrice(fund.price) },
-      {
-        label: "Günlük",
-        value: formatPercent(fund.daily),
-        tone: direction(fund.daily),
-      },
-      { label: "1 Ay", value: formatPercent(fund.m1), tone: direction(fund.m1) },
-      { label: "1 Yıl", value: formatPercent(fund.y1), tone: direction(fund.y1) },
-      { label: "Büyüklük", value: formatAum(fund.aum), tone: "muted" },
-      { label: "Yatırımcı", value: formatCount(fund.investors), tone: "muted" },
-    ];
+  const stats: {
+    label: string;
+    value: string;
+    tone?: "pos" | "neg" | "muted";
+    /** Small line under the figure — where it needs a date to be read. */
+    note?: string;
+  }[] = [
+    {
+      label: "Son Fiyat",
+      value: formatPrice(fund.price),
+      // TEFAS publishes a fund's price a day late, so the figure is only
+      // readable next to the session it belongs to.
+      note: formatDate(fund.priceDate),
+    },
+    {
+      label: "Günlük",
+      value: formatPercent(fund.daily),
+      tone: direction(fund.daily),
+    },
+    { label: "1 Ay", value: formatPercent(fund.m1), tone: direction(fund.m1) },
+    { label: "1 Yıl", value: formatPercent(fund.y1), tone: direction(fund.y1) },
+    { label: "Büyüklük", value: formatAum(fund.aum), tone: "muted" },
+    { label: "Yatırımcı", value: formatCount(fund.investors), tone: "muted" },
+  ];
 
   return (
     <div className={styles.header}>
@@ -76,6 +88,9 @@ export function FundHeader({ fund }: { fund: Fund }) {
             >
               {stat.value}
             </div>
+            {stat.note ? (
+              <div className={styles.statNote}>{stat.note}</div>
+            ) : null}
           </div>
         ))}
       </div>

@@ -27,6 +27,8 @@ export type Fund = {
   onTefas: boolean;
   /** Latest unit price in TRY. */
   price: number;
+  /** The session that price is from, ISO date. */
+  priceDate: string;
   /** Percentage returns. */
   daily: number;
   /** Trailing one week. */

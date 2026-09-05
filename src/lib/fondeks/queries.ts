@@ -81,6 +81,7 @@ type SnapshotRow = {
   on_tefas: boolean;
   inception_date: string | null;
   price: string;
+  price_date: string;
   prev_price: string | null;
   w1_price: string | null;
   m1_price: string | null;
@@ -116,6 +117,7 @@ function toFund(row: SnapshotRow): Fund {
     sellValueDays: row.sell_value_days,
     onTefas: row.on_tefas,
     price,
+    priceDate: row.price_date,
     daily: changePct(price, row.prev_price),
     w1: changePct(price, row.w1_price),
     m1: changePct(price, row.m1_price),
@@ -157,6 +159,7 @@ const snapshotQuery = sql`
     f.management_fee, f.withholding_tax, f.risk,
     f.buy_value_days, f.sell_value_days, f.on_tefas, f.inception_date,
     lp.price,
+    to_char(lp.date, 'YYYY-MM-DD') as price_date,
     case when brk.at is null or brk.at <= prev.date then prev.price end as prev_price,
     case when brk.at is null or brk.at <= w1.date   then w1.price   end as w1_price,
     case when brk.at is null or brk.at <= m1.date   then m1.price   end as m1_price,
