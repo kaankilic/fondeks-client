@@ -57,6 +57,16 @@ function fold(value: string) {
 
 export const DEFAULT_SORT: Sort = { key: "y1", dir: "desc" };
 
+/**
+ * Rows drawn before the list asks to be extended.
+ *
+ * Filtering and sorting still run over every fund — this caps what reaches the
+ * DOM, not what the table knows. A full catalogue is over two thousand rows,
+ * and drawing them all costs both the markup they are sent as and a re-layout
+ * on every sort; a screenful and a button reads the same and stays quick.
+ */
+const RENDER_STEP = 50;
+
 export function FundTable({
   funds,
   title = "Tüm Fonlar",
@@ -119,10 +129,21 @@ export function FundTable({
     });
   }, [funds, category, query, sort]);
 
-  const visible = useMemo(
-    () => (limit === undefined ? rows : rows.slice(0, limit)),
-    [rows, limit],
-  );
+  const [drawn, setDrawn] = useState(RENDER_STEP);
+
+  // A new filter, search or sort makes the drawn tail meaningless, so the
+  // count starts again with it — adjusted during render rather than in an
+  // effect, which would draw the old rows once before dropping them.
+  const listing = `${category}|${query}|${sort.key}|${sort.dir}`;
+  const [drawnFor, setDrawnFor] = useState(listing);
+  if (drawnFor !== listing) {
+    setDrawnFor(listing);
+    setDrawn(RENDER_STEP);
+  }
+
+  const cap = limit ?? drawn;
+  const visible = useMemo(() => rows.slice(0, cap), [rows, cap]);
+  const remaining = limit === undefined ? rows.length - visible.length : 0;
 
   function closeSearch() {
     setSearching(false);
@@ -282,6 +303,16 @@ export function FundTable({
           </Link>
         ))
       )}
+
+      {remaining > 0 ? (
+        <button
+          type="button"
+          className={styles.more}
+          onClick={() => setDrawn((shown) => shown + RENDER_STEP)}
+        >
+          {remaining.toLocaleString("tr-TR")} fon daha göster
+        </button>
+      ) : null}
     </section>
   );
 }

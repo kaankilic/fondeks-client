@@ -1,4 +1,7 @@
+import { revalidateTag } from "next/cache";
+
 import { isAuthorizedCron, unauthorized } from "@/lib/api/auth";
+import { CATALOGUE_TAG } from "@/lib/fondeks/queries";
 import { syncFundInceptions } from "@/lib/ingest/inceptions";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +16,11 @@ async function handle(request: Request) {
 
   try {
     const result = await syncFundInceptions();
+
+    // The screens read a cached snapshot; this is what makes a sync
+    // visible on them at once rather than at the end of its window.
+    revalidateTag(CATALOGUE_TAG, "max");
+
     return Response.json(
       { ok: true, ...result.run, missing: result.missing },
       { headers: { "cache-control": "no-store" } },

@@ -225,6 +225,27 @@
   color: var(--neg);
 }
 
+/* Extends the drawn rows; the list itself is already complete. */
+.more {
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  cursor: pointer;
+  transition: background-color $transition-fast;
+
+  @include focus-ring;
+
+  &:hover {
+    background: var(--surface-raised);
+  }
+}
+
 .empty {
   padding: 44px 18px 48px;
   text-align: center;

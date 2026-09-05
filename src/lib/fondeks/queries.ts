@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { asc, count, desc, eq, sql } from "drizzle-orm";
 
@@ -211,18 +212,56 @@ const snapshotQuery = sql`
   ) brk on true
 `;
 
+/**
+ * The snapshot is the same for every visitor and changes once a day, when the
+ * ingest writes the session's prices — but it is not cheap: the anchors and
+ * the restatement check are a lateral join each, per fund, over a year of
+ * daily rows. Measured against a full 2,099-fund catalogue it runs ~650ms, and
+ * every screen that lists funds was paying it on every navigation.
+ *
+ * `cache` alone does not help there: it dedupes within one request, so two
+ * clicks are two runs. Caching it across requests is what makes navigating
+ * between the fund screens feel instant.
+ *
+ * The window is short enough that a fund is never far behind its prices, and
+ * the ingest routes drop the tag when they write, so a sync shows up at once
+ * rather than at the end of it.
+ */
+export const CATALOGUE_TAG = "fund-catalogue";
+
+/**
+ * Long enough in production that a screen is served from memory rather than
+ * from the query; short in development, where the database is seeded and
+ * re-ingested by hand and a stale screen reads as a bug.
+ */
+const CATALOGUE_TTL_SECONDS = process.env.NODE_ENV === "production" ? 900 : 5;
+
+/**
+ * Read once per window and deduped within a request. Arguments are part of the
+ * key, so a per-fund reader caches per fund.
+ */
+function cached<A extends unknown[], T>(
+  key: string,
+  load: (...args: A) => Promise<T>,
+): (...args: A) => Promise<T> {
+  return cache(
+    unstable_cache(load, [key], {
+      tags: [CATALOGUE_TAG],
+      revalidate: CATALOGUE_TTL_SECONDS,
+    }),
+  );
+}
+
 /** How many funds the product actually covers. */
-export const getFundCount = cache(async (): Promise<number> => {
+export const getFundCount = cached("fund-count", async (): Promise<number> => {
   const [row] = await db.select({ total: count() }).from(funds);
   return row?.total ?? 0;
 });
 
 /** All funds, best one-year return first — the product's default order. */
-export const getFunds = cache(async (): Promise<Fund[]> => {
+export const getFunds = cached("fund-snapshot", async (): Promise<Fund[]> => {
   const result = await db.execute<SnapshotRow>(snapshotQuery);
-  return result.rows
-    .map(toFund)
-    .sort((a, b) => b.y1 - a.y1);
+  return result.rows.map(toFund).sort((a, b) => b.y1 - a.y1);
 });
 
 /** "Öne Çıkanlar" — the week's strongest movers, biggest gain first. */
@@ -237,17 +276,21 @@ export const getWatchlist = cache(async (): Promise<Fund[]> => {
   return (await getFunds()).slice(0, 5);
 });
 
-export const getFund = cache(async (code: string): Promise<Fund | null> => {
-  const result = await db.execute<SnapshotRow>(
-    sql`${snapshotQuery} where upper(f.code) = ${code.toUpperCase()}`,
-  );
-  const [row] = result.rows;
-  return row ? toFund(row) : null;
-});
+export const getFund = cached(
+  "fund",
+  async (code: string): Promise<Fund | null> => {
+    const result = await db.execute<SnapshotRow>(
+      sql`${snapshotQuery} where upper(f.code) = ${code.toUpperCase()}`,
+    );
+    const [row] = result.rows;
+    return row ? toFund(row) : null;
+  },
+);
 
 /** Daily price series, oldest first, limited to the last `days` sessions. */
-export const getFundPrices = cache(
-  async (code: string, days = 260): Promise<PricePoint[]> => {
+export const getFundPrices = cached(
+  "fund-prices",
+  async (code: string, days: number = 260): Promise<PricePoint[]> => {
     const rows = await db
       .select({ date: fundDailyStats.date, price: fundDailyStats.price })
       .from(fundDailyStats)
@@ -264,7 +307,8 @@ export const getFundPrices = cache(
  * flow derived as the part of the change in size the fund's own return does
  * not explain.
  */
-export const getFundMonthly = cache(
+export const getFundMonthly = cached(
+  "fund-monthly",
   async (code: string, months = 24): Promise<MonthlyStat[]> => {
     const result = await db.execute<{
       month: string;
@@ -332,8 +376,9 @@ async function getVolatilities(
 }
 
 /** Latest market news or KAP filings, newest first. */
-export const getNews = cache(
-  async (source: NewsSource, limit = 6): Promise<NewsItem[]> => {
+export const getNews = cached(
+  "news",
+  async (source: NewsSource, limit: number = 6): Promise<NewsItem[]> => {
     return db
       .select({
         id: news.id,
@@ -356,29 +401,31 @@ export const getNews = cache(
  * Index cards: the latest quote, its change against the previous one and a
  * sparkline — all read from `index_quotes`, so the three always agree.
  */
-export const getMarketIndices = cache(async (): Promise<MarketIndex[]> => {
-  const rows = await db
-    .select({
-      name: marketIndices.name,
-      symbol: marketIndices.symbol,
-      color: marketIndices.color,
-      unit: marketIndices.unit,
-      decimals: marketIndices.decimals,
-      displayPattern: marketIndices.displayPattern,
-      position: marketIndices.position,
-    })
-    .from(marketIndices)
-    .where(eq(marketIndices.isActive, true))
-    .orderBy(asc(marketIndices.position));
+export const getMarketIndices = cached(
+  "market-indices",
+  async (): Promise<MarketIndex[]> => {
+    const rows = await db
+      .select({
+        name: marketIndices.name,
+        symbol: marketIndices.symbol,
+        color: marketIndices.color,
+        unit: marketIndices.unit,
+        decimals: marketIndices.decimals,
+        displayPattern: marketIndices.displayPattern,
+        position: marketIndices.position,
+      })
+      .from(marketIndices)
+      .where(eq(marketIndices.isActive, true))
+      .orderBy(asc(marketIndices.position));
 
-  if (rows.length === 0) return [];
+    if (rows.length === 0) return [];
 
-  // Last 16 sessions per index, newest first: enough for the card's sparkline.
-  const series = await db.execute<{
-    index_name: string;
-    value: string;
-    rn: number;
-  }>(sql`
+    // Last 16 sessions per index, newest first: enough for the card's sparkline.
+    const series = await db.execute<{
+      index_name: string;
+      value: string;
+      rn: number;
+    }>(sql`
     select index_name, value, rn from (
       select index_name, value,
              row_number() over (partition by index_name order by date desc) as rn
@@ -388,36 +435,38 @@ export const getMarketIndices = cache(async (): Promise<MarketIndex[]> => {
     order by index_name, rn desc
   `);
 
-  const byIndex = new Map<string, number[]>();
-  for (const row of series.rows) {
-    const values = byIndex.get(row.index_name) ?? [];
-    values.push(Number(row.value));
-    byIndex.set(row.index_name, values);
-  }
+    const byIndex = new Map<string, number[]>();
+    for (const row of series.rows) {
+      const values = byIndex.get(row.index_name) ?? [];
+      values.push(Number(row.value));
+      byIndex.set(row.index_name, values);
+    }
 
-  return rows.map((row) => {
-    const values = byIndex.get(row.name) ?? [];
-    const value = values.at(-1) ?? 0;
-    const previous = values.at(-2);
+    return rows.map((row) => {
+      const values = byIndex.get(row.name) ?? [];
+      const value = values.at(-1) ?? 0;
+      const previous = values.at(-2);
 
-    return {
-      name: row.name,
-      symbol: row.symbol,
-      color: row.color,
-      unit: row.unit,
-      decimals: row.decimals,
-      displayPattern: row.displayPattern,
-      value,
-      change:
-        previous && previous !== 0
-          ? Number((((value - previous) / previous) * 100).toFixed(2))
-          : 0,
-      spark: sparkPath(values),
-    };
-  });
-});
+      return {
+        name: row.name,
+        symbol: row.symbol,
+        color: row.color,
+        unit: row.unit,
+        decimals: row.decimals,
+        displayPattern: row.displayPattern,
+        value,
+        change:
+          previous && previous !== 0
+            ? Number((((value - previous) / previous) * 100).toFixed(2))
+            : 0,
+        spark: sparkPath(values),
+      };
+    });
+  },
+);
 
-export const getCategoryPerformance = cache(
+export const getCategoryPerformance = cached(
+  "category-performance",
   async (): Promise<CategoryPerformance[]> => {
     return db
       .select({
@@ -620,8 +669,13 @@ export const getFundDetail = cache(
  * Sparkline paths for the featured cards, drawn from the real price series and
  * downsampled to the shape the 120×42 viewBox expects.
  */
-export const getSparklines = cache(
-  async (codes: string[], sessions = 60, points = 16): Promise<Record<string, string>> => {
+export const getSparklines = cached(
+  "sparklines",
+  async (
+    codes: string[],
+    sessions: number = 60,
+    points: number = 16,
+  ): Promise<Record<string, string>> => {
     if (codes.length === 0) return {};
 
     const result = await db.execute<{ fund_code: string; price: string }>(sql`
@@ -725,8 +779,9 @@ export type InvestorGrowth = { fund: Fund; growth: number; investors: number };
  * Funds whose yatırımcı sayısı grew most over the last month, comparing the
  * latest reading with the closest one about 30 days earlier.
  */
-export const getInvestorGrowth = cache(
-  async (limit = 5): Promise<InvestorGrowth[]> => {
+export const getInvestorGrowth = cached(
+  "investor-growth",
+  async (limit: number = 5): Promise<InvestorGrowth[]> => {
     const result = await db.execute<{
       fund_code: string;
       investor_count: number;
@@ -782,16 +837,20 @@ const guideColumns = {
 };
 
 /** Guide list, newest first. */
-export const getGuides = cache(async (limit?: number): Promise<Guide[]> => {
-  const query = db
-    .select(guideColumns)
-    .from(guides)
-    .orderBy(desc(guides.publishedAt));
+export const getGuides = cached(
+  "guides",
+  async (limit?: number): Promise<Guide[]> => {
+    const query = db
+      .select(guideColumns)
+      .from(guides)
+      .orderBy(desc(guides.publishedAt));
 
-  return limit ? query.limit(limit) : query;
-});
+    return limit ? query.limit(limit) : query;
+  },
+);
 
-export const getGuide = cache(
+export const getGuide = cached(
+  "guide",
   async (slug: string): Promise<GuideDetail | null> => {
     const [row] = await db
       .select({ ...guideColumns, body: guides.body })
@@ -818,20 +877,23 @@ export type SitemapFund = { slug: string; lastModified: Date };
  * listed funds with a price are included, so every URL answers 200 rather than
  * redirecting or 404ing.
  */
-export const getSitemapFunds = cache(async (): Promise<SitemapFund[]> => {
-  const rows = await db
-    .select({
-      code: funds.code,
-      name: funds.name,
-      lastModified: sql<string>`max(${fundDailyStats.date})`,
-    })
-    .from(funds)
-    .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
-    .where(eq(funds.isActive, true))
-    .groupBy(funds.code, funds.name);
+export const getSitemapFunds = cached(
+  "sitemap-funds",
+  async (): Promise<SitemapFund[]> => {
+    const rows = await db
+      .select({
+        code: funds.code,
+        name: funds.name,
+        lastModified: sql<string>`max(${fundDailyStats.date})`,
+      })
+      .from(funds)
+      .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
+      .where(eq(funds.isActive, true))
+      .groupBy(funds.code, funds.name);
 
-  return rows.map((row) => ({
-    slug: fundSlug(row.code, row.name),
-    lastModified: new Date(row.lastModified),
-  }));
-});
+    return rows.map((row) => ({
+      slug: fundSlug(row.code, row.name),
+      lastModified: new Date(row.lastModified),
+    }));
+  },
+);
