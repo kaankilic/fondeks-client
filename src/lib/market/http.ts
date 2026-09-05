@@ -150,6 +150,26 @@ export class ConcurrencyLimiter {
 
 export async function requestJson<T>(
   url: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  return request(url, options, (response) => response.json() as Promise<T>);
+}
+
+/**
+ * The same request, read as text. KAP publishes fund records as pages rather
+ * than as an API, so some of what this project reads is HTML.
+ */
+export async function requestText(
+  url: string,
+  options: RequestOptions = {},
+): Promise<string> {
+  return request(url, { accept: "text/html,*/*", ...options }, (response) =>
+    response.text(),
+  );
+}
+
+async function request<T>(
+  url: string,
   {
     timeoutMs = 20_000,
     maxRetries = 3,
@@ -160,7 +180,9 @@ export async function requestJson<T>(
     method = body === undefined ? "GET" : "POST",
     signal,
     rateLimiter,
-  }: RequestOptions = {},
+    accept = "application/json",
+  }: RequestOptions & { accept?: string } = {},
+  read: (response: Response) => Promise<T>,
 ): Promise<T> {
   let lastError: unknown;
   /** Set when the source throttles us, so the wait matches its window. */
@@ -179,7 +201,7 @@ export async function requestJson<T>(
       const response = await fetch(url, {
         method,
         headers: {
-          accept: "application/json",
+          accept,
           ...(body === undefined
             ? {}
             : { "content-type": "application/json; charset=UTF-8" }),
@@ -206,7 +228,7 @@ export async function requestJson<T>(
         );
       }
 
-      return (await response.json()) as T;
+      return await read(response);
     } catch (error) {
       lastError = error;
       const canRetry = attempt <= maxRetries && isRetryable(error);
