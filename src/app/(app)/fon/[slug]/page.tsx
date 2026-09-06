@@ -13,6 +13,7 @@ import { SimilarFunds } from "@/components/fund-detail/SimilarFunds";
 import { Page, PageBody } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getFund, getFundDetail } from "@/lib/fondeks/queries";
+import { fundDescription } from "@/lib/fondeks/seo";
 import { codeFromSlug } from "@/lib/fondeks/slug";
 
 import styles from "./fon.module.scss";
@@ -23,7 +24,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const fund = await getFund(codeFromSlug(slug));
 
-  return { title: fund ? `${fund.code} — ${fund.name}` : "Fon" };
+  if (!fund) return { title: "Fon" };
+
+  return {
+    title: `${fund.code} — ${fund.name}`,
+    description: fundDescription(fund),
+  };
 }
 
 export default async function FundDetailPage({
