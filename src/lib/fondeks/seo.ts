@@ -27,6 +27,19 @@ import {
 /** Characters a description is written to, before truncation would show. */
 const BUDGET = 158;
 
+/**
+ * Joins what fits and stops there, so a description ends on a whole clause
+ * rather than mid-figure. The first clause is kept whichever length it is:
+ * something that identifies the page beats nothing.
+ */
+function fit(clauses: string[]): string {
+  return clauses.reduce((sentence, clause) => {
+    if (!sentence) return clause;
+    const extended = `${sentence} ${clause}`;
+    return extended.length <= BUDGET ? extended : sentence;
+  }, "");
+}
+
 function fold(value: string): string {
   return value.toLocaleLowerCase("tr");
 }
@@ -102,9 +115,33 @@ export function fundDescription(fund: Fund): string {
   }
 
   // Everything that still fits, in order, so the tail is what matters least.
-  return clauses.reduce((sentence, clause) => {
-    if (!sentence) return clause;
-    const extended = `${sentence} ${clause}`;
-    return extended.length <= BUDGET ? extended : sentence;
-  }, "");
+  return fit(clauses);
+}
+
+/**
+ * A legal page's description, from the same lead the page shows.
+ *
+ * These pages are placeholders: the binding text has to come from counsel, and
+ * each one says so rather than shipping invented terms. A description that
+ * promised a published policy would be the one part of the page claiming
+ * otherwise, so it carries the same caveat — where it fits.
+ */
+export function legalDescription(lead: string): string {
+  return fit([lead, "Metin hazırlanıyor."]);
+}
+
+/**
+ * The market screen's description, named after what it actually shows. The
+ * instruments come from the data rather than a list kept here, so adding one
+ * changes the sentence with it.
+ */
+export function marketDescription(instruments: string[]): string {
+  const named = instruments.slice(0, 4).join(", ");
+
+  return fit([
+    named
+      ? `${named} ve diğer göstergelerin güncel seviyeleri.`
+      : "Piyasa göstergelerinin güncel seviyeleri.",
+    "Fon kategorilerinin ortalama yıllık getirisi ve KAP bildirimleri.",
+  ]);
 }

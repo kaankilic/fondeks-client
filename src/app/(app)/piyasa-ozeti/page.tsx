@@ -15,10 +15,18 @@ import {
   getMarketIndices,
   getNews,
 } from "@/lib/fondeks/queries";
+import { marketDescription } from "@/lib/fondeks/seo";
 
 import styles from "./piyasa.module.scss";
 
-export const metadata: Metadata = { title: "Piyasa Özeti" };
+export async function generateMetadata(): Promise<Metadata> {
+  const indices = await getMarketIndices();
+
+  return {
+    title: "Piyasa Özeti",
+    description: marketDescription(indices.map((index) => index.name)),
+  };
+}
 
 export default async function MarketPage() {
   const [indices, categories, headlines, filings] = await Promise.all([
