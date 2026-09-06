@@ -14,7 +14,8 @@
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "db:seed": "NODE_OPTIONS='--conditions=react-server' tsx src/db/seed.ts",
-    "ingest": "NODE_OPTIONS='--conditions=react-server' tsx src/db/ingest.ts"
+    "ingest": "NODE_OPTIONS='--conditions=react-server' tsx src/db/ingest.ts",
+    "submit-urls": "NODE_OPTIONS='--conditions=react-server' tsx src/db/submit-urls.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

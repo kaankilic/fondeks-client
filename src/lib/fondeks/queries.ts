@@ -239,11 +239,20 @@ const CATALOGUE_TTL_SECONDS = process.env.NODE_ENV === "production" ? 900 : 5;
 /**
  * Read once per window and deduped within a request. Arguments are part of the
  * key, so a per-fund reader caches per fund.
+ *
+ * The cross-request half needs Next's incremental cache, which only exists
+ * inside the server runtime — a CLI script calling these would otherwise die
+ * on "incrementalCache missing". Outside it the reader is still deduped per
+ * call, which is all a one-shot script needs.
  */
+const IN_NEXT_RUNTIME = Boolean(process.env.NEXT_RUNTIME);
+
 function cached<A extends unknown[], T>(
   key: string,
   load: (...args: A) => Promise<T>,
 ): (...args: A) => Promise<T> {
+  if (!IN_NEXT_RUNTIME) return cache(load);
+
   return cache(
     unstable_cache(load, [key], {
       tags: [CATALOGUE_TAG],
