@@ -111,9 +111,21 @@ async function runGoogle(
     };
   }
 
-  // Where the rotation left off. Ordering is the sitemap's, which is stable
-  // for a given catalogue, so consecutive runs walk forward rather than
-  // resubmitting the same head every time.
+  if (urls.length === 0) {
+    return {
+      provider: "google",
+      enabled: true,
+      submitted: 0,
+      failed: 0,
+      note: "no indexable URLs",
+    };
+  }
+
+  // Where the rotation left off: everything submitted so far, over a list held
+  // in a fixed order, so consecutive runs walk forward and wrap round rather
+  // than resubmitting the same head every day. A catalogue of 2,500 URLs at
+  // 200 a day comes round every thirteen runs. A run that fails part way
+  // writes fewer, so it resumes over the ones it did not get to.
   const offset = (await submittedEver(GOOGLE_JOB)) % urls.length;
   const slice = [...urls.slice(offset), ...urls.slice(0, offset)]
     .slice(0, budget)
@@ -121,7 +133,14 @@ async function runGoogle(
 
   const result = await withRun(
     GOOGLE_JOB,
-    { offset, budget, quota },
+    {
+      offset,
+      budget,
+      quota,
+      // The window this run walked, so a gap is visible in the run history.
+      from: slice[0],
+      to: slice[slice.length - 1],
+    },
     async () => {
       const outcome = await submitToGoogle(slice);
       return {

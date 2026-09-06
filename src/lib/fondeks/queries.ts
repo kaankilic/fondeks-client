@@ -898,7 +898,12 @@ export const getSitemapFunds = cached(
       .from(funds)
       .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
       .where(eq(funds.isActive, true))
-      .groupBy(funds.code, funds.name);
+      .groupBy(funds.code, funds.name)
+      // A grouped query returns rows in whatever order the plan produces, and
+      // that order can change between runs. The submission job walks this list
+      // a slice per day, so its place in it has to mean the same thing
+      // tomorrow as it did today.
+      .orderBy(asc(funds.code));
 
     return rows.map((row) => ({
       slug: fundSlug(row.code, row.name),
