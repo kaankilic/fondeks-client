@@ -120,6 +120,13 @@
       "when": 1788770869990,
       "tag": "0016_famous_azazel",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788772172416,
+      "tag": "0017_elite_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

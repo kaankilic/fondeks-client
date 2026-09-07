@@ -28,6 +28,7 @@ const STATIC_PAGES: {
 }[] = [
   { path: "/", changeFrequency: "daily", priority: 1 },
   { path: "/emeklilik-fonlari", changeFrequency: "daily", priority: 0.8 },
+  { path: "/borsa-yatirim-fonlari", changeFrequency: "daily", priority: 0.8 },
   { path: "/piyasa-ozeti", changeFrequency: "daily", priority: 0.8 },
   { path: "/rehber", changeFrequency: "weekly", priority: 0.6 },
   { path: "/gizlilik", changeFrequency: "yearly", priority: 0.3 },

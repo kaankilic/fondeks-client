@@ -57,8 +57,16 @@ export async function GET(request: Request) {
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    const delta = a[sort] - b[sort];
-    return dir === "asc" ? delta : -delta;
+    const left = a[sort];
+    const right = b[sort];
+
+    // An unknown figure has no place in the order, so it goes to the end
+    // rather than sorting as a zero would.
+    if (left === null || right === null) {
+      return left === right ? 0 : left === null ? 1 : -1;
+    }
+
+    return dir === "asc" ? left - right : right - left;
   });
 
   return json({

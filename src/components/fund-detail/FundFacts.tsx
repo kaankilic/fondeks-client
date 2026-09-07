@@ -49,13 +49,17 @@ export function FundFacts({ fund }: { fund: Fund }) {
     <section className={styles.panel}>
       <div className={styles.head}>
         <span className={styles.title}>Fon Bilgileri</span>
-        <span
-          className={`${styles.tefas} ${
-            fund.onTefas ? styles.tefasOn : styles.tefasOff
-          }`}
-        >
-          {fund.onTefas ? "TEFAS'ta işlem görür" : "TEFAS'ta işlem görmez"}
-        </span>
+        {/* Null is not a "no": an ETF is bought on BIST, so TEFAS says
+            nothing about it and the badge stays off the page entirely. */}
+        {fund.onTefas === null ? null : (
+          <span
+            className={`${styles.tefas} ${
+              fund.onTefas ? styles.tefasOn : styles.tefasOff
+            }`}
+          >
+            {fund.onTefas ? "TEFAS'ta işlem görür" : "TEFAS'ta işlem görmez"}
+          </span>
+        )}
       </div>
 
       <div className={styles.grid}>

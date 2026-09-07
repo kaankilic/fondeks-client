@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { UNKNOWN } from "@/lib/fondeks/constants";
 import { formatAum, formatCount, formatPercent } from "@/lib/fondeks/format";
 import type { MonthlyStat } from "@/lib/fondeks/types";
 
@@ -173,10 +174,17 @@ export function MonthlyTrends({ monthly }: { monthly: MonthlyStat[] }) {
   const previous = recent[recent.length - 2];
 
   const valueChange = changePercent(latest.totalValue, previous.totalValue);
-  const investorChange = changePercent(
-    latest.investorCount,
-    previous.investorCount,
+  // An ETF has no holder count to report, so the panel says so rather than
+  // drawing six months of zeroes.
+  const investorMonths = recent.flatMap((row) =>
+    row.investorCount === null
+      ? []
+      : [{ month: row.month, value: row.investorCount }],
   );
+  const investorChange =
+    latest.investorCount === null || previous.investorCount === null
+      ? null
+      : changePercent(latest.investorCount, previous.investorCount);
 
   const flowSign = latest.netFlow >= 0 ? "+" : "−";
   const formatFlow = (value: number) =>
@@ -219,8 +227,14 @@ export function MonthlyTrends({ monthly }: { monthly: MonthlyStat[] }) {
 
         <div className={styles.block}>
           <div className={styles.label}>Yatırımcı Sayısı</div>
-          <div className={styles.value}>
-            {formatCount(latest.investorCount)}
+          <div
+            className={`${styles.value} ${
+              latest.investorCount === null ? styles.unknown : ""
+            }`}
+          >
+            {latest.investorCount === null
+              ? UNKNOWN
+              : formatCount(latest.investorCount)}
             {investorChange === null ? null : (
               <span
                 className={`${styles.delta} ${
@@ -231,14 +245,13 @@ export function MonthlyTrends({ monthly }: { monthly: MonthlyStat[] }) {
               </span>
             )}
           </div>
-          <BarChart
-            bars={recent.map((row) => ({
-              month: row.month,
-              value: row.investorCount,
-            }))}
-            format={formatCount}
-            color="var(--action)"
-          />
+          {investorMonths.length > 0 ? (
+            <BarChart
+              bars={investorMonths}
+              format={formatCount}
+              color="var(--action)"
+            />
+          ) : null}
         </div>
 
         <div className={styles.block}>

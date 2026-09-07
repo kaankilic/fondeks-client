@@ -3,6 +3,8 @@
  * comma decimal separator, explicit sign on percentages, tabular mono.
  */
 
+import { UNKNOWN } from "./constants";
+
 const tr = (options?: Intl.NumberFormatOptions) =>
   new Intl.NumberFormat("tr-TR", options);
 
@@ -55,6 +57,11 @@ export function formatAum(value: number): string {
 
 export function formatCount(value: number): string {
   return tr().format(value);
+}
+
+/** A count the source does not publish reads as a word, not as a zero. */
+export function formatCountOrUnknown(value: number | null): string {
+  return value === null ? UNKNOWN : tr().format(value);
 }
 
 /**

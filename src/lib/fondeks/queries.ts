@@ -20,6 +20,7 @@ import {
   symbols,
 } from "@/db/schema/funds";
 import {
+  ETF_FUND_TYPE,
   PAGED_FUND_TYPES,
   PENSION_FUND_TYPE,
   PRODUCT_FUND_TYPE,
@@ -88,7 +89,7 @@ type SnapshotRow = {
   risk: number | null;
   buy_value_days: number | null;
   sell_value_days: number | null;
-  on_tefas: boolean;
+  on_tefas: boolean | null;
   inception_date: string | null;
   price: string;
   price_date: string;
@@ -135,7 +136,7 @@ function toFund(row: SnapshotRow): Fund {
     y1: changePct(price, row.y1_price),
     inceptionDate: row.inception_date,
     aum: Number(row.total_value ?? 0),
-    investors: row.investor_count ?? 0,
+    investors: row.investor_count,
     risk: row.risk as RiskLevel | null,
   };
 }
@@ -310,6 +311,15 @@ export const getPensionFunds = cached(
   },
 );
 
+/** Borsa yatırım fonları — the same arrangement, one universe over. */
+export const getEtfFunds = cached(
+  "etf-snapshot",
+  async (): Promise<Fund[]> => {
+    const result = await db.execute<SnapshotRow>(snapshotOf(ETF_FUND_TYPE));
+    return byReturn(result.rows);
+  },
+);
+
 /** "Öne Çıkanlar" — the week's strongest movers, biggest gain first. */
 export const getFeaturedFunds = cache(async (limit = 3): Promise<Fund[]> => {
   return [...(await getFunds())]
@@ -386,7 +396,7 @@ export const getFundMonthly = cached(
       return {
         month: row.month,
         totalValue: value,
-        investorCount: row.investor_count ?? 0,
+        investorCount: row.investor_count,
         netFlow: previous
           ? Number((value - previousValue * (1 + priceReturn)).toFixed(2))
           : 0,
@@ -725,9 +735,12 @@ export const getFundDetail = cache(
       },
       {
         label: "Yatırımcı Sayısı",
-        values: compared.map((row) =>
-          row ? row.investors.toLocaleString("tr-TR") : "—",
-        ),
+        values: compared.map((row) => {
+          if (!row) return "—";
+          return row.investors === null
+            ? UNKNOWN
+            : row.investors.toLocaleString("tr-TR");
+        }),
       },
     ];
 
@@ -890,10 +903,12 @@ export const getInvestorGrowth = cached(
       growth: string | null;
     }>(sql`
       with latest as (
-        select distinct on (fund_code) fund_code, date, investor_count
-        from ${fundDailyStats}
-        where investor_count is not null
-        order by fund_code, date desc
+        select distinct on (d.fund_code) d.fund_code, d.date, d.investor_count
+        from ${fundDailyStats} d
+        join ${funds} f on f.code = d.fund_code
+        where d.investor_count is not null
+          and f.fund_type = ${PRODUCT_FUND_TYPE}
+        order by d.fund_code, d.date desc
       )
       select l.fund_code, l.investor_count,
              (l.investor_count::numeric / nullif(p.investor_count, 0) - 1) * 100

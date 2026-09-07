@@ -157,6 +157,27 @@ const ALLOCATION_LABELS: Record<string, string> = {
   d: "Diğer",
 };
 
+/**
+ * `tefasDurum` is a real tri-state and stays one. True and false are the
+ * platform's answer for a mutual fund; null is what an ETF gets, because the
+ * question does not apply — a borsa yatırım fonu is traded on BIST through a
+ * broker, so reading the absence as "yes" would put a false claim on its page.
+ */
+function onTefas(row: RawRow): boolean | null {
+  const value = pick(row, [...MAPPING.onTefas]);
+  return typeof value === "boolean" ? value : null;
+}
+
+/**
+ * TEFAS publishes `kisiSayisi: 0` for every ETF, every day. An ETF is held in
+ * brokerage accounts rather than in a fund register, so nobody counts its
+ * holders — the zero is an absence, not a reading, and it is stored as one.
+ */
+function investorCount(row: RawRow, fundType: FundType): number | null {
+  const value = toInteger(pick(row, [...MAPPING.investors]));
+  return fundType === "BYF" && value === 0 ? null : value;
+}
+
 function envNumber(name: string, fallback: number): number {
   const value = Number(process.env[name]);
   return Number.isFinite(value) && value > 0 ? value : fallback;
@@ -331,9 +352,17 @@ export class TefasProvider implements MarketDataProvider {
    * same filter and answer in the same shape, so the split is the same for
    * each; the concurrency and rate limiters decide how many actually run.
    */
-  private listings(path: string, range: DateRange): Promise<RawRow[]>[] {
-    return fundTypes().flatMap((fundType) =>
-      splitRange(range).map((chunk) => this.call(path, listBody(chunk, fundType))),
+  private listings(
+    path: string,
+    range: DateRange,
+  ): Promise<{ fundType: FundType; rows: RawRow[] }[]> {
+    return Promise.all(
+      fundTypes().flatMap((fundType) =>
+        splitRange(range).map(async (chunk) => ({
+          fundType,
+          rows: await this.call(path, listBody(chunk, fundType)),
+        })),
+      ),
     );
   }
 
@@ -378,7 +407,7 @@ export class TefasProvider implements MarketDataProvider {
             typeCode: String(pick(row, [...MAPPING.typeCode]) ?? "") || null,
             managementFee: toNumber(pick(row, [...MAPPING.managementFee])),
             // `tefasDurum` is a real tri-state: true, false, or unknown.
-            onTefas: pick(row, [...MAPPING.onTefas]) !== false,
+            onTefas: onTefas(row),
           },
         ];
       }),
@@ -386,36 +415,34 @@ export class TefasProvider implements MarketDataProvider {
   }
 
   async fetchDailyStats(range: DateRange): Promise<DailyStat[]> {
-    const results = await Promise.all(
-      this.listings(ENDPOINTS.dailyList, range),
+    const results = await this.listings(ENDPOINTS.dailyList, range);
+
+    return results.flatMap(({ fundType, rows }) =>
+      rows.flatMap((row) => {
+        const code = pick(row, [...MAPPING.code]);
+        const date = toIsoDate(pick(row, [...MAPPING.date]));
+        const price = toNumber(pick(row, [...MAPPING.price]));
+
+        if (typeof code !== "string" || !date || price === null) return [];
+
+        return [
+          {
+            code: code.trim().toUpperCase(),
+            date,
+            price,
+            totalValue: toNumber(pick(row, [...MAPPING.totalValue])),
+            investorCount: investorCount(row, fundType),
+            shareCount: toNumber(pick(row, [...MAPPING.shares])),
+          },
+        ];
+      }),
     );
-
-    return results.flat().flatMap((row) => {
-      const code = pick(row, [...MAPPING.code]);
-      const date = toIsoDate(pick(row, [...MAPPING.date]));
-      const price = toNumber(pick(row, [...MAPPING.price]));
-
-      if (typeof code !== "string" || !date || price === null) return [];
-
-      return [
-        {
-          code: code.trim().toUpperCase(),
-          date,
-          price,
-          totalValue: toNumber(pick(row, [...MAPPING.totalValue])),
-          investorCount: toInteger(pick(row, [...MAPPING.investors])),
-          shareCount: toNumber(pick(row, [...MAPPING.shares])),
-        },
-      ];
-    });
   }
 
   async fetchAllocations(range: DateRange): Promise<AllocationSlice[]> {
-    const results = await Promise.all(
-      this.listings(ENDPOINTS.allocation, range),
-    );
+    const results = await this.listings(ENDPOINTS.allocation, range);
 
-    return results.flat().flatMap((row) => {
+    return results.flatMap(({ rows }) => rows).flatMap((row) => {
       const code = pick(row, [...MAPPING.code]);
       const date = toIsoDate(pick(row, [...MAPPING.date]));
       if (typeof code !== "string" || !date) return [];

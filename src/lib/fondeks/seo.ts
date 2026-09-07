@@ -108,7 +108,7 @@ export function fundDescription(fund: Fund): string {
       : `Risk ${fund.risk}/7, ${fee}.`,
   );
 
-  if (fund.investors > 0) {
+  if (fund.investors !== null && fund.investors > 0) {
     clauses.push(`${formatCount(fund.investors)} yatırımcı.`);
   }
 

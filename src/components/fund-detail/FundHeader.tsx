@@ -6,7 +6,7 @@ import { UNKNOWN } from "@/lib/fondeks/constants";
 import {
   direction,
   formatAum,
-  formatCount,
+  formatCountOrUnknown,
   formatDate,
   formatPercent,
   formatPrice,
@@ -38,7 +38,11 @@ export function FundHeader({ fund }: { fund: Fund }) {
     { label: "1 Ay", value: formatPercent(fund.m1), tone: direction(fund.m1) },
     { label: "1 Yıl", value: formatPercent(fund.y1), tone: direction(fund.y1) },
     { label: "Büyüklük", value: formatAum(fund.aum), tone: "muted" },
-    { label: "Yatırımcı", value: formatCount(fund.investors), tone: "muted" },
+    {
+      label: "Yatırımcı",
+      value: formatCountOrUnknown(fund.investors),
+      tone: "muted",
+    },
   ];
 
   return (

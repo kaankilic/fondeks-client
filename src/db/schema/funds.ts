@@ -67,8 +67,12 @@ export const funds = pgTable("funds", {
    * read YAT; the rest are ingested and waiting.
    */
   fundType: varchar({ length: 3 }).notNull().default("YAT"),
-  /** Whether the fund trades on TEFAS. */
-  onTefas: boolean().notNull().default(true),
+  /**
+   * Whether the fund trades on TEFAS. Null where the question does not apply —
+   * an ETF is bought on BIST through a broker, and the platform says nothing
+   * about it either way.
+   */
+  onTefas: boolean(),
   /** Source's own fund-type code, kept for traceability. */
   tefasTypeCode: varchar({ length: 16 }),
   /** False once the source stops publishing the fund. */

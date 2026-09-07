@@ -27,7 +27,8 @@ export type FundCatalogEntry = {
   risk?: number | null;
   buyValueDays?: number | null;
   sellValueDays?: number | null;
-  onTefas?: boolean;
+  /** Tri-state: the platform's yes, its no, or "does not apply". */
+  onTefas?: boolean | null;
 };
 
 /** One fund on one trading day, exactly as the source publishes it. */

@@ -10,6 +10,7 @@ import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import {
   direction,
   formatCount,
+  formatCountOrUnknown,
   formatDate,
   formatPercent,
 } from "@/lib/fondeks/format";
@@ -106,7 +107,7 @@ export default async function DiscoverPage() {
               tone: direction(fund.m3),
               detail: `${
                 fund.inceptionDate ? formatDate(fund.inceptionDate) : "—"
-              } · ${formatCount(fund.investors)} yatırımcı`,
+              } · ${formatCountOrUnknown(fund.investors)} yatırımcı`,
             }))}
           />
         </HighlightGrid>

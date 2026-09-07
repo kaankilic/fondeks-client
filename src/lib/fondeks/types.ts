@@ -23,8 +23,8 @@ export type Fund = {
   /** Alış / satış valörü, T+n iş günü. Null where unpublished. */
   buyValueDays: number | null;
   sellValueDays: number | null;
-  /** Whether the fund trades on TEFAS. */
-  onTefas: boolean;
+  /** Whether the fund trades on TEFAS; null where the question does not apply. */
+  onTefas: boolean | null;
   /** Latest unit price in TRY. */
   price: number;
   /** The session that price is from, ISO date. */
@@ -38,8 +38,8 @@ export type Fund = {
   y1: number;
   /** Fon toplam değeri (latest month), in TRY. */
   aum: number;
-  /** Yatırımcı sayısı (latest month). */
-  investors: number;
+  /** Yatırımcı sayısı (latest month). Null where the source counts no holders. */
+  investors: number | null;
   /** Null where no source publishes the fund's risk value. */
   risk: RiskLevel | null;
   /** Kuruluş tarihi, ISO date. */
@@ -66,7 +66,7 @@ export type PricePoint = {
 export type MonthlyStat = {
   month: string;
   totalValue: number;
-  investorCount: number;
+  investorCount: number | null;
   netFlow: number;
 };
 

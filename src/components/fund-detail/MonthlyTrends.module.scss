@@ -48,6 +48,13 @@ $tip-height: 42px;
   letter-spacing: -0.02em;
 }
 
+/* A figure the source does not publish reads as a word, and a quieter one. */
+.unknown {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
 .delta {
   margin-left: 8px;
   @include numeric(11px, 600);

@@ -58,13 +58,14 @@ export const PRODUCT_FUND_TYPE: FundType = "YAT";
 /** The universe behind /emeklilik-fonlari. */
 export const PENSION_FUND_TYPE: FundType = "EMK";
 
-/**
- * The universes with pages of their own, and so the ones the sitemap offers.
- * BYF is ingested and reachable by URL, but nothing links to it yet.
- */
+/** The universe behind /borsa-yatirim-fonlari. */
+export const ETF_FUND_TYPE: FundType = "BYF";
+
+/** The universes with pages of their own, and so the ones the sitemap offers. */
 export const PAGED_FUND_TYPES: FundType[] = [
   PRODUCT_FUND_TYPE,
   PENSION_FUND_TYPE,
+  ETF_FUND_TYPE,
 ];
 
 /**

@@ -13,6 +13,7 @@ import styles from "./TopNav.module.scss";
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Keşfet", match: ["/", "/arama", "/fon"] },
   { href: "/emeklilik-fonlari", label: "Emeklilik Fonları" },
+  { href: "/borsa-yatirim-fonlari", label: "Borsa Fonları" },
   { href: "/piyasa-ozeti", label: "Piyasa Özeti" },
   { href: "/izleme", label: "İzleme Listem" },
   { href: "/rehber", label: "Rehber" },
