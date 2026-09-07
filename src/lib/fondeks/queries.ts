@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
-import { and, asc, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -19,7 +19,13 @@ import {
   news,
   symbols,
 } from "@/db/schema/funds";
-import { PRODUCT_FUND_TYPE, UNKNOWN } from "./constants";
+import {
+  PAGED_FUND_TYPES,
+  PENSION_FUND_TYPE,
+  PRODUCT_FUND_TYPE,
+  UNKNOWN,
+  type FundType,
+} from "./constants";
 import { formatPercent, formatPercentPrefixed } from "./format";
 import { allocationColor, FALLBACK_LOGO } from "./palette";
 import { fundSlug } from "./slug";
@@ -157,7 +163,7 @@ const SERIES_BREAK_RATIO = 1;
  * fabricated one. Each window is judged separately: a break last week spoils
  * the daily figure and the yearly one, a break ten months ago only the yearly.
  */
-const snapshotQuery = sql`
+const snapshotBase = sql`
   select
     f.code, f.name, f.founder, fo.initials, fo.color, f.category, f.isin,
     f.management_fee, f.withholding_tax, f.risk,
@@ -213,8 +219,11 @@ const snapshotQuery = sql`
     where step.before > 0
       and abs(step.price / step.before - 1) > ${SERIES_BREAK_RATIO}
   ) brk on true
-  where f.fund_type = ${PRODUCT_FUND_TYPE}
 `;
+
+/** The snapshot narrowed to one TEFAS universe. */
+const snapshotOf = (fundType: FundType) =>
+  sql`${snapshotBase} where f.fund_type = ${fundType}`;
 
 /**
  * The snapshot is the same for every visitor and changes once a day, when the
@@ -274,11 +283,32 @@ export const getFundCount = cached("fund-count", async (): Promise<number> => {
   return row?.total ?? 0;
 });
 
+/** Ordered the way every list wants them: best one-year return first. */
+const byReturn = (rows: SnapshotRow[]): Fund[] =>
+  rows.map(toFund).sort((a, b) => b.y1 - a.y1);
+
 /** All funds, best one-year return first — the product's default order. */
 export const getFunds = cached("fund-snapshot", async (): Promise<Fund[]> => {
-  const result = await db.execute<SnapshotRow>(snapshotQuery);
-  return result.rows.map(toFund).sort((a, b) => b.y1 - a.y1);
+  const result = await db.execute<SnapshotRow>(
+    snapshotOf(PRODUCT_FUND_TYPE),
+  );
+  return byReturn(result.rows);
 });
+
+/**
+ * Emeklilik yatırım fonları. A separate reader rather than a filter over
+ * `getFunds`, so the pension section neither loads the securities catalogue
+ * nor caches under its key.
+ */
+export const getPensionFunds = cached(
+  "pension-snapshot",
+  async (): Promise<Fund[]> => {
+    const result = await db.execute<SnapshotRow>(
+      snapshotOf(PENSION_FUND_TYPE),
+    );
+    return byReturn(result.rows);
+  },
+);
 
 /** "Öne Çıkanlar" — the week's strongest movers, biggest gain first. */
 export const getFeaturedFunds = cache(async (limit = 3): Promise<Fund[]> => {
@@ -296,7 +326,7 @@ export const getFund = cached(
   "fund",
   async (code: string): Promise<Fund | null> => {
     const result = await db.execute<SnapshotRow>(
-      sql`${snapshotQuery} and upper(f.code) = ${code.toUpperCase()}`,
+      sql`${snapshotBase} where upper(f.code) = ${code.toUpperCase()}`,
     );
     const [row] = result.rows;
     return row ? toFund(row) : null;
@@ -963,7 +993,7 @@ export const getSitemapFunds = cached(
       .where(
         and(
           eq(funds.isActive, true),
-          eq(funds.fundType, PRODUCT_FUND_TYPE),
+          inArray(funds.fundType, PAGED_FUND_TYPES),
         ),
       )
       .groupBy(funds.code, funds.name)

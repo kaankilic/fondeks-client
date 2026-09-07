@@ -20,7 +20,10 @@ export type SortKey = "price" | "daily" | "y1";
 export type SortDir = "asc" | "desc";
 export type Sort = { key: SortKey; dir: SortDir };
 
-const TABS: { label: string; category: FundCategory | null }[] = [
+export type CategoryTab = { label: string; category: FundCategory | null };
+
+/** The securities catalogue's own shortcuts, and the default set. */
+const TABS: CategoryTab[] = [
   { label: "Tümü", category: null },
   { label: "Hisse", category: "Hisse Senedi" },
   { label: "Serbest", category: "Serbest" },
@@ -72,6 +75,7 @@ export function FundTable({
   title = "Tüm Fonlar",
   header,
   showTabs = true,
+  tabs = TABS,
   showFounder = false,
   searchable = true,
   wide = false,
@@ -85,6 +89,8 @@ export function FundTable({
   /** Replaces the whole header strip — used by the search results screen. */
   header?: ReactNode;
   showTabs?: boolean;
+  /** The shortcuts above the rows; a universe with other categories says so. */
+  tabs?: CategoryTab[];
   showFounder?: boolean;
   /** Shows the magnifier that filters this list in place. */
   searchable?: boolean;
@@ -192,7 +198,7 @@ export function FundTable({
           <div className={styles.headerRight}>
             {showTabs ? (
               <div className={styles.tabs}>
-                {TABS.map((tab) => (
+                {tabs.map((tab) => (
                   <button
                     key={tab.label}
                     type="button"

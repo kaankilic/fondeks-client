@@ -1,4 +1,4 @@
-import type { FundCategory } from "./constants";
+import type { FundCategory, SecurityCategory } from "./constants";
 
 /**
  * Seed data lifted from the design canvas. `src/db/seed.ts` is the only
@@ -30,7 +30,7 @@ export const FUND_FIXTURES: {
   code: string;
   name: string;
   founder: string;
-  category: FundCategory;
+  category: SecurityCategory;
   isin: string;
   /** Kuruluş tarihi. */
   inception: string;
@@ -144,7 +144,7 @@ export const AFT_ALLOCATION = [
 
 /** Allocation shape per category, for every fund other than AFT. */
 export const ALLOCATION_TEMPLATES: Record<
-  FundCategory,
+  SecurityCategory,
   { label: string; pct: number }[]
 > = {
   "Hisse Senedi": [

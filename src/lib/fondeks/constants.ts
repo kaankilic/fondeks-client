@@ -2,6 +2,7 @@
  * Shared, client-safe constants. Kept out of the schema and the data layer so
  * both can import them without dragging server-only code into the browser.
  */
+/** The asset-class buckets a securities mutual fund falls into. */
 export const FUND_CATEGORIES = [
   "Hisse Senedi",
   "Kıymetli Maden",
@@ -11,7 +12,32 @@ export const FUND_CATEGORIES = [
   "Borçlanma",
 ] as const;
 
-export type FundCategory = (typeof FUND_CATEGORIES)[number];
+/**
+ * Buckets only a pension fund carries. A BES fund is classified by the role it
+ * plays in a plan as much as by what it holds — a Standart or an OKS Standart
+ * fund is the default a contributor lands in, a Katkı fund holds the state's
+ * contribution, a Başlangıç fund the first instalments — and none of those has
+ * an asset class that would place it among the categories above.
+ */
+export const PENSION_CATEGORIES = [
+  "Standart",
+  "Başlangıç",
+  "Katkı",
+  "Fon Sepeti",
+  "Karma",
+  "Katılım",
+  "Endeks",
+] as const;
+
+/** A securities fund's category — the closed set the screener's tabs read. */
+export type SecurityCategory = (typeof FUND_CATEGORIES)[number];
+
+export const ALL_CATEGORIES = [
+  ...FUND_CATEGORIES,
+  ...PENSION_CATEGORIES,
+] as const;
+
+export type FundCategory = (typeof ALL_CATEGORIES)[number];
 
 /**
  * The universes TEFAS files funds under, by its own `fonTipi`: securities
@@ -23,13 +49,23 @@ export const FUND_TYPES = ["YAT", "EMK", "BYF"] as const;
 export type FundType = (typeof FUND_TYPES)[number];
 
 /**
- * The universe every fund screen covers today. Pension funds and ETFs are kept
- * current in the database so a section for them starts with history rather
- * than with an empty table, but they are not mixed into the fund lists: they
- * are bought differently, and half their fund types have no home in
- * `FUND_CATEGORIES`.
+ * The universe the fund lists cover — Keşfet, the screener, İzleme Listem.
+ * Pension funds are bought inside a plan rather than off a shelf, so they are
+ * not mixed in; they have their own section instead.
  */
 export const PRODUCT_FUND_TYPE: FundType = "YAT";
+
+/** The universe behind /emeklilik-fonlari. */
+export const PENSION_FUND_TYPE: FundType = "EMK";
+
+/**
+ * The universes with pages of their own, and so the ones the sitemap offers.
+ * BYF is ingested and reachable by URL, but nothing links to it yet.
+ */
+export const PAGED_FUND_TYPES: FundType[] = [
+  PRODUCT_FUND_TYPE,
+  PENSION_FUND_TYPE,
+];
 
 /**
  * Shown in place of a künye figure no source publishes — a fund's stopaj rate,

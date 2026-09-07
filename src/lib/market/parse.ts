@@ -101,6 +101,18 @@ const CATEGORY_KEYWORDS: [RegExp, FundCategory][] = [
   [/değişken|degisken/i, "Değişken"],
   [/para piyasası|para piyasasi|likit/i, "Para Piyasası"],
   [/borçlanma|borclanma|tahvil|bono/i, "Borçlanma"],
+
+  // Pension-only types, read after the asset classes above so that a "Katılım
+  // Hisse Senedi Fonu" stays equity and an "Altın Katılım Fonu" stays gold.
+  // Order matters here too: "Başlangıç Katılım Fonu" is a Başlangıç fund and
+  // "OKS Katılım Standart Fon" a Standart one, so the narrower word wins.
+  [/başlangıç|baslangic/i, "Başlangıç"],
+  [/standart/i, "Standart"],
+  [/katkı|katki/i, "Katkı"],
+  [/fon sepeti/i, "Fon Sepeti"],
+  [/karma/i, "Karma"],
+  [/endeks/i, "Endeks"],
+  [/kira sertifika|katılım|katilim/i, "Katılım"],
 ];
 
 /**

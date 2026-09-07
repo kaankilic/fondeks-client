@@ -15,9 +15,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { FUND_CATEGORIES } from "@/lib/fondeks/constants";
+import { ALL_CATEGORIES } from "@/lib/fondeks/constants";
 
-export const fundCategory = pgEnum("fund_category", FUND_CATEGORIES);
+export const fundCategory = pgEnum("fund_category", ALL_CATEGORIES);
 
 /** Whether the manager added to or trimmed a position over the period. */
 export const positionDirection = pgEnum("position_direction", [
