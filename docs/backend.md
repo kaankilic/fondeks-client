@@ -142,9 +142,23 @@ secret, so any scheduler can drive them.
 | `collect-positions` | `0 */6 * * *` | applies finished batches, rebuilds movers |
 | `sync-inceptions` | `30 5 * * 1` | fills fund launch dates from KAP |
 | `submit-urls` | `0 20 * * *` | announces the sitemap's URLs to IndexNow and Google |
+| `revalidate` | on demand | drops the catalogue cache, syncing nothing |
 
 Auth is `Authorization: Bearer $CRON_SECRET` or `x-cron-secret`, compared in
 constant time. Vercel Cron sends the Bearer form automatically.
+
+`revalidate` is the odd one out: it is not scheduled, and the sync routes above
+never need it because each already drops the tag itself. It exists for the
+other way in — `yarn ingest …` run directly against the database, from a
+machine with no way to reach `revalidateTag`, which is a call that only means
+something inside the running app. Without it the site serves the pre-ingest
+snapshot until the cache window expires, which reads as an ingest that did
+nothing. End such a run with:
+
+```bash
+curl -fsS -X POST -H "Authorization: Bearer $CRON_SECRET" \
+  https://fondeks.com/api/cron/revalidate
+```
 
 Re-reading a few days each run is deliberate: writes are upserts keyed on
 `(fund_code, date)`, so a late or corrected publish is repaired instead of
