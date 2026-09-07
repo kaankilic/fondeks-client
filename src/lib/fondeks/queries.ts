@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
-import { asc, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -19,7 +19,7 @@ import {
   news,
   symbols,
 } from "@/db/schema/funds";
-import { UNKNOWN } from "./constants";
+import { PRODUCT_FUND_TYPE, UNKNOWN } from "./constants";
 import { formatPercent, formatPercentPrefixed } from "./format";
 import { allocationColor, FALLBACK_LOGO } from "./palette";
 import { fundSlug } from "./slug";
@@ -213,6 +213,7 @@ const snapshotQuery = sql`
     where step.before > 0
       and abs(step.price / step.before - 1) > ${SERIES_BREAK_RATIO}
   ) brk on true
+  where f.fund_type = ${PRODUCT_FUND_TYPE}
 `;
 
 /**
@@ -266,7 +267,10 @@ function cached<A extends unknown[], T>(
 
 /** How many funds the product actually covers. */
 export const getFundCount = cached("fund-count", async (): Promise<number> => {
-  const [row] = await db.select({ total: count() }).from(funds);
+  const [row] = await db
+    .select({ total: count() })
+    .from(funds)
+    .where(eq(funds.fundType, PRODUCT_FUND_TYPE));
   return row?.total ?? 0;
 });
 
@@ -292,7 +296,7 @@ export const getFund = cached(
   "fund",
   async (code: string): Promise<Fund | null> => {
     const result = await db.execute<SnapshotRow>(
-      sql`${snapshotQuery} where upper(f.code) = ${code.toUpperCase()}`,
+      sql`${snapshotQuery} and upper(f.code) = ${code.toUpperCase()}`,
     );
     const [row] = result.rows;
     return row ? toFund(row) : null;
@@ -956,7 +960,12 @@ export const getSitemapFunds = cached(
       })
       .from(funds)
       .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
-      .where(eq(funds.isActive, true))
+      .where(
+        and(
+          eq(funds.isActive, true),
+          eq(funds.fundType, PRODUCT_FUND_TYPE),
+        ),
+      )
       .groupBy(funds.code, funds.name)
       // A grouped query returns rows in whatever order the plan produces, and
       // that order can change between runs. The submission job walks this list

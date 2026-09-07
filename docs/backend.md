@@ -229,6 +229,13 @@ Query strings are validated with Zod; responses carry
 - A process-wide concurrency limiter (`TEFAS_CONCURRENCY`, default 3) so a
   400-day backfill cannot hammer the source.
 - Long ranges are split into 90-day windows.
+- Each sync covers three TEFAS universes — `YAT` (2.099 menkul kıymet fonu),
+  `EMK` (400 emeklilik yatırım fonu) and `BYF` (37 borsa yatırım fonu) — which
+  is one request per universe per window. `TEFAS_FUND_TYPES` narrows that to a
+  subset when the rate limit matters. Every fund is stamped with its universe;
+  the product's screens read `PRODUCT_FUND_TYPE`, so pension funds and ETFs
+  stay current in the database without appearing in the fund lists until a
+  section for them exists.
 - Rows for unknown fund codes are skipped and counted, never fatal.
 - Funds the source stops listing are marked `is_active = false`, keeping history.
 

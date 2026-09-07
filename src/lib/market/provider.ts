@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { FundCategory } from "@/lib/fondeks/constants";
+import type { FundCategory, FundType } from "@/lib/fondeks/constants";
 
 /**
  * The contract every market-data source implements. The app and the ingest
@@ -16,6 +16,8 @@ export type FundCatalogEntry = {
   founderInitials?: string | null;
   founderColor?: string | null;
   category: FundCategory;
+  /** Which TEFAS universe the fund was listed under. */
+  fundType?: FundType | null;
   /** The source's own type code, kept for traceability. */
   typeCode?: string | null;
   isin?: string | null;

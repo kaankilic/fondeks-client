@@ -78,6 +78,7 @@ export class FixtureProvider implements MarketDataProvider {
       category: fund.category,
       isin: fund.isin,
       inceptionDate: fund.inception,
+      fundType: "YAT",
       managementFee: fund.managementFee,
       withholdingTax: fund.withholdingTax,
       risk: fund.risk,

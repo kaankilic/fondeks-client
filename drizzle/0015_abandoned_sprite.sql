@@ -1,0 +1,1 @@
+ALTER TABLE "funds" ADD COLUMN "fund_type" varchar(3) DEFAULT 'YAT' NOT NULL;

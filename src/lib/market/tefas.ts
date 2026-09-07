@@ -14,6 +14,7 @@ import {
   toNumber,
   type RawRow,
 } from "./parse";
+import { FUND_TYPES, type FundType } from "@/lib/fondeks/constants";
 import type {
   AllocationSlice,
   DailyStat,
@@ -40,8 +41,30 @@ import type {
 
 const DEFAULT_BASE = "https://www.tefas.gov.tr/api/funds";
 
-/** The universe the product covers: TEFAS securities mutual funds. */
-const FUND_TYPE = "YAT";
+/**
+ * The universes to read, as TEFAS's own `fonTipi`. Every endpoint below takes
+ * it and answers in the same shape, so a type is one more pass rather than one
+ * more adapter. `TEFAS_FUND_TYPES` narrows the list — a full sync of all three
+ * is three times the requests against a gateway that allows eight a minute, so
+ * being able to run one universe at a time is worth the knob.
+ */
+function fundTypes(): FundType[] {
+  const configured = process.env.TEFAS_FUND_TYPES?.trim();
+  if (!configured) return [...FUND_TYPES];
+
+  const wanted = configured
+    .split(",")
+    .map((value) => value.trim().toUpperCase());
+  const known = FUND_TYPES.filter((type) => wanted.includes(type));
+
+  if (known.length === 0) {
+    throw new Error(
+      `TEFAS_FUND_TYPES has no known type; expected some of ${FUND_TYPES.join(", ")}`,
+    );
+  }
+
+  return known;
+}
 
 /** Endpoint paths, taken from the site bundle's API module. */
 const ENDPOINTS = {
@@ -173,9 +196,9 @@ function toTefasDate(iso: string): string {
  * The listing endpoints share one filter object and reject a partial one, so
  * every field is sent — nulls and empty strings included, as the site does.
  */
-function listBody(range: DateRange) {
+function listBody(range: DateRange, fundType: FundType) {
   return {
-    fonTipi: FUND_TYPE,
+    fonTipi: fundType,
     fonKodu: null,
     aramaMetni: null,
     fonTurKod: null,
@@ -279,15 +302,20 @@ export class TefasProvider implements MarketDataProvider {
     return rows;
   }
 
-  /** Issuer code → legal name; the catalogue only carries the code. */
-  private async founderNames(): Promise<Map<string, string>> {
-    const rows = await this.call(ENDPOINTS.founders, {
-      fonTipi: FUND_TYPE,
-      dil: "TR",
-    });
+  /**
+   * Issuer code → legal name; the catalogue only carries the code. Each
+   * universe names its own issuers — pension funds are founded by insurers the
+   * securities catalogue never mentions — so every one is asked.
+   */
+  private async founderNames(types: FundType[]): Promise<Map<string, string>> {
+    const responses = await Promise.all(
+      types.map((fonTipi) =>
+        this.call(ENDPOINTS.founders, { fonTipi, dil: "TR" }),
+      ),
+    );
 
     const names = new Map<string, string>();
-    for (const row of rows) {
+    for (const row of responses.flat()) {
       const code = pick(row, [...MAPPING.founderCode]);
       const name = pick(row, [...MAPPING.founderName]);
       if (typeof code === "string" && typeof name === "string") {
@@ -298,42 +326,68 @@ export class TefasProvider implements MarketDataProvider {
     return names;
   }
 
+  /**
+   * One request per universe per date chunk. Both listing endpoints take the
+   * same filter and answer in the same shape, so the split is the same for
+   * each; the concurrency and rate limiters decide how many actually run.
+   */
+  private listings(path: string, range: DateRange): Promise<RawRow[]>[] {
+    return fundTypes().flatMap((fundType) =>
+      splitRange(range).map((chunk) => this.call(path, listBody(chunk, fundType))),
+    );
+  }
+
   async listFunds(): Promise<FundCatalogEntry[]> {
-    const [rows, founders] = await Promise.all([
-      this.call(ENDPOINTS.catalog, { fonTipi: FUND_TYPE, dil: "TR" }),
-      this.founderNames(),
+    const types = fundTypes();
+    const [catalogues, founders] = await Promise.all([
+      Promise.all(
+        types.map((fonTipi) =>
+          this.call(ENDPOINTS.catalog, { fonTipi, dil: "TR" }),
+        ),
+      ),
+      this.founderNames(types),
     ]);
 
-    return rows.flatMap((row) => {
-      const code = pick(row, [...MAPPING.code]);
-      const name = pick(row, [...MAPPING.name]);
-      if (typeof code !== "string" || typeof name !== "string") return [];
+    // A code belongs to one fund, but nothing upstream promises the universes
+    // are disjoint; the first listing to claim a code keeps it.
+    const seen = new Set<string>();
 
-      const founderCode = pick(row, [...MAPPING.founderCode]);
-      const founder =
-        (typeof founderCode === "string"
-          ? founders.get(founderCode.trim())
-          : undefined) ?? "Bilinmiyor";
+    return catalogues.flatMap((rows, index) =>
+      rows.flatMap((row) => {
+        const code = pick(row, [...MAPPING.code]);
+        const name = pick(row, [...MAPPING.name]);
+        if (typeof code !== "string" || typeof name !== "string") return [];
 
-      return [
-        {
-          code: code.trim().toUpperCase(),
-          name: name.trim(),
-          founder,
-          category: toCategory(pick(row, [...MAPPING.type])),
-          typeCode: String(pick(row, [...MAPPING.typeCode]) ?? "") || null,
-          managementFee: toNumber(pick(row, [...MAPPING.managementFee])),
-          // `tefasDurum` is a real tri-state: true, false, or unknown.
-          onTefas: pick(row, [...MAPPING.onTefas]) !== false,
-        },
-      ];
-    });
+        const normalised = code.trim().toUpperCase();
+        if (seen.has(normalised)) return [];
+        seen.add(normalised);
+
+        const founderCode = pick(row, [...MAPPING.founderCode]);
+        const founder =
+          (typeof founderCode === "string"
+            ? founders.get(founderCode.trim())
+            : undefined) ?? "Bilinmiyor";
+
+        return [
+          {
+            code: normalised,
+            name: name.trim(),
+            founder,
+            category: toCategory(pick(row, [...MAPPING.type])),
+            fundType: types[index],
+            typeCode: String(pick(row, [...MAPPING.typeCode]) ?? "") || null,
+            managementFee: toNumber(pick(row, [...MAPPING.managementFee])),
+            // `tefasDurum` is a real tri-state: true, false, or unknown.
+            onTefas: pick(row, [...MAPPING.onTefas]) !== false,
+          },
+        ];
+      }),
+    );
   }
 
   async fetchDailyStats(range: DateRange): Promise<DailyStat[]> {
-    const chunks = splitRange(range);
     const results = await Promise.all(
-      chunks.map((chunk) => this.call(ENDPOINTS.dailyList, listBody(chunk))),
+      this.listings(ENDPOINTS.dailyList, range),
     );
 
     return results.flat().flatMap((row) => {
@@ -357,9 +411,8 @@ export class TefasProvider implements MarketDataProvider {
   }
 
   async fetchAllocations(range: DateRange): Promise<AllocationSlice[]> {
-    const chunks = splitRange(range);
     const results = await Promise.all(
-      chunks.map((chunk) => this.call(ENDPOINTS.allocation, listBody(chunk))),
+      this.listings(ENDPOINTS.allocation, range),
     );
 
     return results.flat().flatMap((row) => {

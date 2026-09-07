@@ -62,6 +62,11 @@ export const funds = pgTable("funds", {
   buyValueDays: smallint(),
   /** Satış valörü — redemption lag in business days (T+n). */
   sellValueDays: smallint(),
+  /**
+   * Which TEFAS universe the fund belongs to — YAT, EMK or BYF. The screens
+   * read YAT; the rest are ingested and waiting.
+   */
+  fundType: varchar({ length: 3 }).notNull().default("YAT"),
   /** Whether the fund trades on TEFAS. */
   onTefas: boolean().notNull().default(true),
   /** Source's own fund-type code, kept for traceability. */
