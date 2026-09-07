@@ -12,6 +12,10 @@ loadEnv({ path: ".env", quiet: true });
  *   yarn ingest allocations [--days 45]
  *   yarn ingest indices [--days 60]
  *   yarn ingest positions [--period yyyy-mm-01]
+ *   yarn ingest collect
+ *   yarn ingest documents [--period yyyy-mm-01] [--limit n]
+ *   yarn ingest reextract [--period yyyy-mm-01] [--codes AFT,BHE] [--limit n]
+ *   yarn ingest reports [--period yyyy-mm-01]
  *   yarn ingest backfill [--days 400]
  *   yarn ingest status
  *
@@ -21,6 +25,32 @@ loadEnv({ path: ".env", quiet: true });
 function flag(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
   return index === -1 ? undefined : process.argv[index + 1];
+}
+
+type PositionsResult = Awaited<
+  ReturnType<typeof import("@/lib/ingest/holdings").syncPositions>
+>;
+
+/**
+ * The two providers do different amounts of work in a submit pass: offline it
+ * finishes, against KAP it hands off to a batch that lands later.
+ */
+function describePositions(result: PositionsResult): string {
+  if (result.mode === "locked") {
+    return "skipped — another run holds the job lock";
+  }
+
+  if (result.mode === "queued") {
+    return (
+      `discovered ${result.discovery.rowsWritten} filings in ` +
+      `${result.window.from}..${result.window.to}, recorded ` +
+      `${result.documents.rowsWritten} report document(s), submitted ` +
+      `${result.submission.rowsWritten} for extraction across ` +
+      `${result.batches.length} batch(es)`
+    );
+  }
+
+  return `${result.holdings.rowsWritten} holdings, ${result.positions.rowsWritten} movers`;
 }
 
 async function main() {
@@ -95,8 +125,9 @@ async function main() {
         console.log(
           `backfill: ${catalog.run.rowsWritten} funds, ${stats.run.rowsWritten} daily rows, ` +
             `${breakdown.run.rowsWritten} allocation slices, ` +
-            `${quotes.run.rowsWritten} index quotes, ${movers.positions.rowsWritten} movers`,
+            `${quotes.run.rowsWritten} index quotes`,
         );
+        console.log(`  positions: ${describePositions(movers)}`);
         break;
       }
 
@@ -115,9 +146,91 @@ async function main() {
       case "positions": {
         const period = flag("period") ?? holdings.periodOf();
         const result = await holdings.syncPositions(period);
+        console.log(`positions ${period}: ${describePositions(result)}`);
+
+        if (result.mode === "queued") {
+          console.log(
+            "  extraction runs asynchronously — `yarn ingest collect` applies it once the batches end",
+          );
+        }
+        break;
+      }
+
+      case "collect": {
+        const result = await holdings.collectPositions();
+
+        if (result.locked) {
+          console.log("collect: skipped — another run holds the job lock");
+          break;
+        }
+
+        const applied = result.positions
+          .map((entry) => `${entry.period}: ${entry.rowsWritten} movers`)
+          .join(", ");
+
         console.log(
-          `positions ${period}: ${result.holdings.rowsWritten} holdings, ` +
-            `${result.positions.rowsWritten} movers`,
+          `collect: read ${result.collection.rowsRead} results, wrote ` +
+            `${result.collection.rowsWritten} holdings` +
+            (result.pendingBatches
+              ? `, ${result.pendingBatches} batch(es) still running`
+              : ""),
+        );
+        if (applied) console.log(`  rebuilt ${applied}`);
+        break;
+      }
+
+      case "documents": {
+        const period = flag("period") ?? holdings.periodOf();
+        const limit = flag("limit");
+        const result = await holdings.recordReportDocuments(
+          period,
+          limit === undefined ? undefined : Number(limit),
+        );
+
+        console.log(
+          `documents ${period}: located ${result.run.rowsWritten} of ` +
+            `${result.run.rowsRead} report(s)` +
+            (result.missing ? `, ${result.missing} not published yet` : ""),
+        );
+        break;
+      }
+
+      case "reextract": {
+        const period = flag("period") ?? holdings.periodOf();
+        const codes = flag("codes")?.split(",").filter(Boolean);
+        const limit = flag("limit");
+
+        const result = await holdings.reextractPositions({
+          period,
+          codes,
+          limit: limit === undefined ? undefined : Number(limit),
+        });
+
+        if (!result) {
+          console.log("reextract: skipped — another run holds the job lock");
+          break;
+        }
+
+        console.log(
+          `reextract ${period}${codes ? ` (${codes.join(", ")})` : ""}: ` +
+            `resubmitted ${result.submission.rowsWritten} report(s) across ` +
+            `${result.batches.length} batch(es)`,
+        );
+        console.log(
+          "  `yarn ingest collect` applies the new extraction once the batches end",
+        );
+        break;
+      }
+
+      case "reports": {
+        const period = flag("period") ?? holdings.periodOf();
+        const progress = await holdings.periodProgress(period);
+        const counts = Object.entries(progress);
+
+        console.log(
+          counts.length
+            ? `reports ${period}: ${counts.map(([status, count]) => `${status}=${count}`).join(" ")}`
+            : `reports ${period}: none discovered yet`,
         );
         break;
       }
@@ -141,8 +254,11 @@ async function main() {
 
       default:
         console.log(
-          "usage: yarn ingest <catalog|daily|range|allocations|indices|positions|backfill|status> " +
-            "[--days n] [--from d] [--to d] [--period yyyy-mm-01]",
+          "usage: yarn ingest " +
+            "<catalog|daily|range|allocations|indices|positions|collect|" +
+            "documents|reextract|reports|backfill|status> " +
+            "[--days n] [--from d] [--to d] [--period yyyy-mm-01] " +
+            "[--codes AFT,BHE] [--limit n]",
         );
     }
   } finally {

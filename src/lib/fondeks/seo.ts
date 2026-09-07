@@ -101,9 +101,11 @@ export function fundDescription(fund: Fund): string {
     `Son fiyat ${formatPrice(fund.price)} TL (${formatDate(fund.priceDate)}).`,
   );
 
+  const fee = `yönetim ücreti ${formatPercentPrefixed(fund.managementFee, 2)}`;
   clauses.push(
-    `Risk ${fund.risk}/7, yönetim ücreti ` +
-      `${formatPercentPrefixed(fund.managementFee, 2)}.`,
+    fund.risk === null
+      ? `${fee[0].toLocaleUpperCase("tr")}${fee.slice(1)}.`
+      : `Risk ${fund.risk}/7, ${fee}.`,
   );
 
   if (fund.investors > 0) {

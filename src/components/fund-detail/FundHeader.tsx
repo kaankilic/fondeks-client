@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BrandMark, FundCode, fundLogo } from "@/components/funds/primitives";
 import { Button } from "@/components/ui/Button";
+import { UNKNOWN } from "@/lib/fondeks/constants";
 import {
   direction,
   formatAum,
@@ -65,7 +66,9 @@ export function FundHeader({ fund }: { fund: Fund }) {
             <div className={styles.meta}>
               {fund.founder} · {fund.category}
               {fund.isin ? ` · ${fund.isin}` : ""} · Risk{" "}
-              <span className={styles.risk}>{fund.risk}/7</span>
+              <span className={styles.risk}>
+                {fund.risk === null ? UNKNOWN : `${fund.risk}/7`}
+              </span>
             </div>
           </div>
         </div>

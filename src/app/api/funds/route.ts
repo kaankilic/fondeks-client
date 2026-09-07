@@ -37,8 +37,13 @@ export async function GET(request: Request) {
 
   const filtered = (await getFunds()).filter((fund) => {
     if (category && fund.category !== category) return false;
-    if (minRisk !== undefined && fund.risk < minRisk) return false;
-    if (maxRisk !== undefined && fund.risk > maxRisk) return false;
+    // A fund with no published risk value cannot be claimed to sit inside a
+    // requested band, so asking for one leaves it out.
+    if (minRisk !== undefined || maxRisk !== undefined) {
+      if (fund.risk === null) return false;
+      if (minRisk !== undefined && fund.risk < minRisk) return false;
+      if (maxRisk !== undefined && fund.risk > maxRisk) return false;
+    }
     if (minReturn !== undefined && fund.y1 < minReturn) return false;
     if (
       needle &&

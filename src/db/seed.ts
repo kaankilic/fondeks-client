@@ -43,7 +43,7 @@ async function main() {
     periodOf,
     previousPeriod,
     seedPreviousHoldings,
-    syncFundHoldings,
+    syncFixtureHoldings,
   } = await import("@/lib/ingest/holdings");
 
   const {
@@ -180,7 +180,7 @@ async function main() {
 
   await db.delete(fundHoldingSnapshots);
   await seedPreviousHoldings(previousPeriod(periodOf()));
-  const holdings = await syncFundHoldings();
+  const holdings = await syncFixtureHoldings();
   const positions = await computeFundPositions();
 
   // Accounts are never wiped by the seed; the demo user is only added once.

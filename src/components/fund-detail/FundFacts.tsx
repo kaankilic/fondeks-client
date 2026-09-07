@@ -1,3 +1,4 @@
+import { UNKNOWN } from "@/lib/fondeks/constants";
 import { formatPercentPrefixed } from "@/lib/fondeks/format";
 import { riskTone } from "@/lib/fondeks/palette";
 import type { Fund } from "@/lib/fondeks/types";
@@ -5,12 +6,12 @@ import type { Fund } from "@/lib/fondeks/types";
 import styles from "./FundFacts.module.scss";
 
 /** Settlement lag, written the way fund factsheets write it. */
-function valueDate(days: number): string {
-  return `T+${days}`;
+function valueDate(days: number | null): string {
+  return days === null ? UNKNOWN : `T+${days}`;
 }
 
 export function FundFacts({ fund }: { fund: Fund }) {
-  const tone = riskTone(fund.risk);
+  const tone = fund.risk === null ? null : riskTone(fund.risk);
 
   const facts = [
     { label: "Kurucu", value: fund.founder, text: true },
@@ -20,15 +21,28 @@ export function FundFacts({ fund }: { fund: Fund }) {
     },
     {
       label: "Stopaj Oranı",
-      value: formatPercentPrefixed(fund.withholdingTax, 0),
+      value:
+        fund.withholdingTax === null
+          ? UNKNOWN
+          : formatPercentPrefixed(fund.withholdingTax, 0),
+      unknown: fund.withholdingTax === null,
     },
     {
       label: "Risk Değeri",
-      value: `${fund.risk} / 7`,
-      color: tone.color,
+      value: fund.risk === null ? UNKNOWN : `${fund.risk} / 7`,
+      color: tone?.color,
+      unknown: fund.risk === null,
     },
-    { label: "Alış Valörü", value: valueDate(fund.buyValueDays) },
-    { label: "Satış Valörü", value: valueDate(fund.sellValueDays) },
+    {
+      label: "Alış Valörü",
+      value: valueDate(fund.buyValueDays),
+      unknown: fund.buyValueDays === null,
+    },
+    {
+      label: "Satış Valörü",
+      value: valueDate(fund.sellValueDays),
+      unknown: fund.sellValueDays === null,
+    },
   ];
 
   return (
@@ -49,7 +63,9 @@ export function FundFacts({ fund }: { fund: Fund }) {
           <div key={fact.label} className={styles.cell}>
             <div className={styles.label}>{fact.label}</div>
             <div
-              className={`${styles.value} ${fact.text ? styles.text : ""}`}
+              className={`${styles.value} ${fact.text ? styles.text : ""} ${
+                fact.unknown ? styles.unknown : ""
+              }`}
               style={fact.color ? { color: fact.color } : undefined}
             >
               {fact.value}

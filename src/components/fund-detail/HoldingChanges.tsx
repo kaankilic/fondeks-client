@@ -5,7 +5,7 @@ import type { HoldingChange } from "@/lib/fondeks/types";
 
 import styles from "./HoldingChanges.module.scss";
 
-/** Two letters for the mark: "Hisse Senedi" → "HS", "Eurobond" → "EU". */
+/** Two letters for the mark: "Hisse Senedi" → "HS", "ASELSAN" → "AS". */
 function initialsFor(label: string): string {
   const words = label.split(/[\s(]+/).filter(Boolean);
   const letters =

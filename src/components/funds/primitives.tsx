@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { UNKNOWN } from "@/lib/fondeks/constants";
 import { riskTone, type Logo } from "@/lib/fondeks/palette";
 import { direction, formatDaily } from "@/lib/fondeks/format";
 import { SPARK_VIEWBOX } from "@/lib/fondeks/series";
@@ -77,10 +78,23 @@ export function RiskChip({
   risk,
   className = "",
 }: {
-  risk: RiskLevel;
+  risk: RiskLevel | null;
   /** Lets a table place the chip in one of its grid areas. */
   className?: string;
 }) {
+  // No published risk value: a neutral chip, never a made-up level.
+  if (risk === null) {
+    return (
+      <span
+        className={`${styles.risk} ${className}`}
+        style={{ color: "var(--text-dim)", background: "var(--track)" }}
+        title={`Risk değeri ${UNKNOWN}`}
+      >
+        ?
+      </span>
+    );
+  }
+
   const tone = riskTone(risk);
   return (
     <span

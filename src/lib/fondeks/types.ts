@@ -18,11 +18,11 @@ export type Fund = {
   isin: string | null;
   /** Yıllık yönetim ücreti, %. */
   managementFee: number;
-  /** Stopaj oranı, %. */
-  withholdingTax: number;
-  /** Alış / satış valörü, T+n iş günü. */
-  buyValueDays: number;
-  sellValueDays: number;
+  /** Stopaj oranı, %. Null where no source publishes it. */
+  withholdingTax: number | null;
+  /** Alış / satış valörü, T+n iş günü. Null where unpublished. */
+  buyValueDays: number | null;
+  sellValueDays: number | null;
   /** Whether the fund trades on TEFAS. */
   onTefas: boolean;
   /** Latest unit price in TRY. */
@@ -40,7 +40,8 @@ export type Fund = {
   aum: number;
   /** Yatırımcı sayısı (latest month). */
   investors: number;
-  risk: RiskLevel;
+  /** Null where no source publishes the fund's risk value. */
+  risk: RiskLevel | null;
   /** Kuruluş tarihi, ISO date. */
   inceptionDate: string | null;
 };
@@ -97,7 +98,7 @@ export type CategoryPerformance = {
  * that are actually published.
  */
 export type HoldingChange = {
-  /** Asset class, e.g. "Hisse Senedi". */
+  /** A held security, e.g. "ASELSAN", or the asset class it falls back to. */
   label: string;
   color: string | null;
   /** Share of the portfolio now, in percent. */
@@ -120,7 +121,7 @@ export type SimilarFund = {
   /** Portfolio overlap, 0–100. */
   similarity: number;
   y1: number;
-  risk: RiskLevel;
+  risk: RiskLevel | null;
 };
 
 export type CompareRow = {

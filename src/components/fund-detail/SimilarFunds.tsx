@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandMark, FundCode, Meter } from "@/components/funds/primitives";
+import { UNKNOWN } from "@/lib/fondeks/constants";
 import { formatPercent } from "@/lib/fondeks/format";
 import type { SimilarFund } from "@/lib/fondeks/types";
 
@@ -46,8 +47,13 @@ export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
             </div>
 
             <span className={styles.return}>{formatPercent(fund.y1)}</span>
-            <span className={styles.risk} title={`Risk ${fund.risk} / 7`}>
-              {fund.risk}
+            <span
+              className={styles.risk}
+              title={
+                fund.risk === null ? `Risk ${UNKNOWN}` : `Risk ${fund.risk} / 7`
+              }
+            >
+              {fund.risk ?? "?"}
             </span>
           </Link>
         );

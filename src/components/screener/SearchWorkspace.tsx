@@ -102,8 +102,15 @@ export function SearchWorkspace({
       ) {
         return false;
       }
-      if (fund.risk < filters.risk[0] || fund.risk > filters.risk[1]) {
-        return false;
+      // Untouched, the slider is not a filter — funds with no published risk
+      // value stay. Narrowed, it is one, and they cannot answer it.
+      const narrowed =
+        filters.risk[0] !== RISK_MIN || filters.risk[1] !== RISK_MAX;
+      if (narrowed) {
+        if (fund.risk === null) return false;
+        if (fund.risk < filters.risk[0] || fund.risk > filters.risk[1]) {
+          return false;
+        }
       }
       return fund.y1 >= filters.minReturn;
     });

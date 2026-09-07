@@ -49,14 +49,19 @@ export const funds = pgTable("funds", {
   inceptionDate: date({ mode: "string" }),
   /** Yıllık yönetim ücreti, percent per year. */
   managementFee: numeric({ precision: 5, scale: 3, mode: "number" }).notNull(),
-  /** Stopaj oranı, percent withheld on gains. */
-  withholdingTax: numeric({ precision: 5, scale: 2, mode: "number" }).notNull(),
+  /**
+   * Stopaj oranı, percent withheld on gains. Null where no source publishes
+   * it — the app says "Bilinmiyor" rather than inventing a rate. The four
+   * fields below are the same: a künye value the catalogue feed does not
+   * carry, so they stay empty until something fills them.
+   */
+  withholdingTax: numeric({ precision: 5, scale: 2, mode: "number" }),
   /** Risk değeri on the TEFAS 1–7 scale. */
-  risk: smallint().notNull(),
+  risk: smallint(),
   /** Alış valörü — settlement lag in business days (T+n). */
-  buyValueDays: smallint().notNull(),
+  buyValueDays: smallint(),
   /** Satış valörü — redemption lag in business days (T+n). */
-  sellValueDays: smallint().notNull(),
+  sellValueDays: smallint(),
   /** Whether the fund trades on TEFAS. */
   onTefas: boolean().notNull().default(true),
   /** Source's own fund-type code, kept for traceability. */
@@ -236,6 +241,99 @@ export const fundHoldingSnapshots = pgTable(
     index("fund_holding_snapshots_period_idx").on(table.period),
   ],
 );
+
+/**
+ * Where one KAP portfolio report is in the pipeline.
+ *
+ *   discovered ─┬─ skipped                (a fund we don't track)
+ *               └─ queued ─┬─ extracted   (holdings written)
+ *                          ├─ no_detail   (filing omits its holdings table)
+ *                          └─ failed      (retried on the next run)
+ *
+ * `no_detail` is terminal and distinct from `failed` on purpose: nothing was
+ * wrong with the extraction, the filing simply carries no security-level table,
+ * and retrying it every month would buy the same answer at the same price.
+ */
+export const kapReportStatus = pgEnum("kap_report_status", [
+  "discovered",
+  "skipped",
+  "queued",
+  "extracted",
+  "no_detail",
+  "failed",
+]);
+
+/**
+ * Monthly "Portföy Dağılım Raporu" filings seen on KAP.
+ *
+ * The row exists from the moment a filing is discovered, before anything has
+ * been read out of it, which is what makes "has this fund reported yet?"
+ * answerable and stops a report being paid for twice. `fund_code` carries no
+ * foreign key on purpose: KAP files for every fund in the country, and a gap in
+ * our own catalogue should not make a filing undiscoverable.
+ */
+export const kapPortfolioReports = pgTable(
+  "kap_portfolio_reports",
+  {
+    /** KAP's own disclosure id — globally unique and stable. */
+    disclosureIndex: integer().primaryKey(),
+    fundCode: varchar({ length: 8 }).notNull(),
+    fundTitle: text().notNull(),
+    /** First day of the month the report covers. */
+    period: date({ mode: "string" }).notNull(),
+    publishedAt: timestamp({ withTimezone: true }).notNull(),
+    /** Filed after its deadline — still valid, just late. */
+    isLate: boolean().notNull().default(false),
+    status: kapReportStatus().notNull().default("discovered"),
+    /**
+     * The filing's PDF, kept as KAP's own copy rather than as bytes of ours.
+     *
+     * `objId` is the durable identity — KAP's attachment id, stable for the
+     * life of the disclosure — and `url` is the location it resolved to, which
+     * is derived from it and recorded so a person can open the report. Holding
+     * the reference rather than the file is what makes a second extraction
+     * pass cheap: a later job re-reads the same document straight from KAP
+     * without walking the disclosure listing again.
+     */
+    documentObjId: varchar({ length: 64 }),
+    documentName: text(),
+    documentUrl: text(),
+    /** The extraction batch this was submitted in, once queued. */
+    batchId: varchar({ length: 64 }),
+    /** Equity positions written from this report. */
+    holdingsCount: integer(),
+    /** Why extraction failed, or which rows the check rejected. */
+    note: text(),
+    discoveredAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    extractedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [
+    index("kap_portfolio_reports_period_idx").on(table.period, table.status),
+    index("kap_portfolio_reports_fund_idx").on(table.fundCode, table.period),
+    index("kap_portfolio_reports_batch_idx").on(table.batchId),
+  ],
+);
+
+export type KapPortfolioReportRow = typeof kapPortfolioReports.$inferSelect;
+
+/** An extraction batch in flight, so a later run can collect what it left. */
+export const kapExtractionBatches = pgTable(
+  "kap_extraction_batches",
+  {
+    /** The provider's batch id. */
+    id: varchar({ length: 64 }).primaryKey(),
+    period: date({ mode: "string" }).notNull(),
+    /** Provider status: in_progress, canceling or ended. */
+    status: varchar({ length: 24 }).notNull(),
+    requestCount: integer().notNull(),
+    /** Set once the results have been read and applied. */
+    collectedAt: timestamp({ withTimezone: true }),
+    submittedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("kap_extraction_batches_period_idx").on(table.period)],
+);
+
+export type KapExtractionBatchRow = typeof kapExtractionBatches.$inferSelect;
 
 export const categoryPerformance = pgTable("category_performance", {
   category: fundCategory().primaryKey(),

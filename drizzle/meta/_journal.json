@@ -85,6 +85,27 @@
       "when": 1788429652998,
       "tag": "0011_slim_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788440381450,
+      "tag": "0012_orange_gressill",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788450801901,
+      "tag": "0013_clumsy_scarlet_spider",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788769592540,
+      "tag": "0014_handy_groot",
+      "breakpoints": true
     }
   ]
 }

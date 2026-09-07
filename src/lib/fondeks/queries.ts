@@ -10,13 +10,16 @@ import {
   founders,
   fundAllocations,
   fundDailyStats,
+  fundPositions,
   fundSimilarities,
   funds,
   guides,
   indexQuotes,
   marketIndices,
   news,
+  symbols,
 } from "@/db/schema/funds";
+import { UNKNOWN } from "./constants";
 import { formatPercent, formatPercentPrefixed } from "./format";
 import { allocationColor, FALLBACK_LOGO } from "./palette";
 import { fundSlug } from "./slug";
@@ -75,10 +78,10 @@ type SnapshotRow = {
   category: Fund["category"];
   isin: string | null;
   management_fee: string;
-  withholding_tax: string;
-  risk: number;
-  buy_value_days: number;
-  sell_value_days: number;
+  withholding_tax: string | null;
+  risk: number | null;
+  buy_value_days: number | null;
+  sell_value_days: number | null;
   on_tefas: boolean;
   inception_date: string | null;
   price: string;
@@ -113,7 +116,7 @@ function toFund(row: SnapshotRow): Fund {
     category: row.category,
     isin: row.isin,
     managementFee: Number(row.management_fee),
-    withholdingTax: Number(row.withholding_tax),
+    withholdingTax: row.withholding_tax === null ? null : Number(row.withholding_tax),
     buyValueDays: row.buy_value_days,
     sellValueDays: row.sell_value_days,
     onTefas: row.on_tefas,
@@ -127,7 +130,7 @@ function toFund(row: SnapshotRow): Fund {
     inceptionDate: row.inception_date,
     aum: Number(row.total_value ?? 0),
     investors: row.investor_count ?? 0,
-    risk: row.risk as RiskLevel,
+    risk: row.risk as RiskLevel | null,
   };
 }
 
@@ -499,21 +502,53 @@ const MOVERS_PER_PANEL = 5;
  */
 const MIN_MOVE_POINTS = 0.05;
 
+type MoveRow = {
+  label: string;
+  color: string | null;
+  weight: string;
+  change: string;
+};
+
+/**
+ * Security-level movements: what the manager added to and trimmed between two
+ * monthly portfolio reports.
+ *
+ * This is the panel as designed — "artırdı: ASELS" rather than "artırdı: hisse
+ * senedi". It is available because section III of a fund's KAP "Portföy Dağılım
+ * Raporu" lists its positions individually; `fund_positions` is the diff of two
+ * consecutive ones. A fund only has rows once two reports have been extracted,
+ * so this falls back to asset classes rather than showing an empty panel.
+ */
+async function getSecurityMoves(code: string) {
+  const result = await db.execute<MoveRow>(sql`
+    select
+      coalesce(s.name, p.ticker) as label,
+      s.color                    as color,
+      p.weight                   as weight,
+      p.change_points            as change
+    from ${fundPositions} p
+    left join ${symbols} s on s.ticker = p.ticker
+    where p.fund_code = ${code}
+      and p.period = (
+        select max(period) from ${fundPositions} where fund_code = ${code}
+      )
+      and abs(p.change_points) >= ${MIN_MOVE_POINTS}
+    order by p.change_points desc
+  `);
+
+  return result.rows;
+}
+
 /**
  * Asset-class movements: a fund's newest breakdown against the most recent one
  * at least a month older.
  *
- * Deliberately not security level. TEFAS publishes no holdings endpoint — its
- * gateway exposes nineteen paths and none returns securities — and KAP serves
- * its site through Server Actions with no public API, so the only composition
- * anyone publishes is by asset class.
+ * The fallback for a fund whose portfolio reports have not both been read yet —
+ * every fund publishes a breakdown daily, but only monthly filings name the
+ * securities behind it.
  */
 async function getAllocationMoves(code: string) {
-  const result = await db.execute<{
-    label: string;
-    weight: string;
-    change: string;
-  }>(sql`
+  const result = await db.execute<MoveRow>(sql`
     with latest as (
       select max(date) as at from ${fundAllocations} where fund_code = ${code}
     ),
@@ -532,6 +567,7 @@ async function getAllocationMoves(code: string) {
     )
     select
       coalesce(c.label, e.label)              as label,
+      null::text                              as color,
       coalesce(c.pct, 0)                      as weight,
       coalesce(c.pct, 0) - coalesce(e.pct, 0) as change
     from current_slices c
@@ -550,7 +586,15 @@ export const getFundDetail = cache(
     const fund = await getFund(code);
     if (!fund) return null;
 
-    const [moves, allocation, peerRows, prices, monthly] = await Promise.all([
+    const [
+      securityMoves,
+      allocationMoves,
+      allocation,
+      peerRows,
+      prices,
+      monthly,
+    ] = await Promise.all([
+      getSecurityMoves(fund.code),
       getAllocationMoves(fund.code),
 
       // The breakdown is a history now, so only the newest day is the picture.
@@ -595,7 +639,7 @@ export const getFundDetail = cache(
       color: peer.color ?? FALLBACK_LOGO.background,
       similarity: peer.similarity,
       y1: returnsByCode.get(peer.code)?.y1 ?? 0,
-      risk: peer.risk as RiskLevel,
+      risk: peer.risk as RiskLevel | null,
     }));
 
     const compareCodes = [
@@ -612,13 +656,14 @@ export const getFundDetail = cache(
     const rows: CompareRow[] = [
       {
         label: "1 Yıl Getiri",
-        values: compared.map((row) =>
-          row ? formatPercent(row.y1, 1) : "—",
-        ),
+        values: compared.map((row) => (row ? formatPercent(row.y1, 1) : "—")),
       },
       {
         label: "Risk Değeri",
-        values: compared.map((row) => (row ? `${row.risk} / 7` : "—")),
+        values: compared.map((row) => {
+          if (!row) return "—";
+          return row.risk === null ? UNKNOWN : `${row.risk} / 7`;
+        }),
       },
       {
         label: "Yıllık Yönetim Ücreti",
@@ -628,13 +673,20 @@ export const getFundDetail = cache(
       },
       {
         label: "Stopaj Oranı",
-        values: compared.map((row) => (row ? formatPercentPrefixed(row.withholdingTax, 0) : "—")),
+        values: compared.map((row) => {
+          if (!row) return "—";
+          return row.withholdingTax === null
+            ? UNKNOWN
+            : formatPercentPrefixed(row.withholdingTax, 0);
+        }),
       },
       {
         label: "Volatilite (1Y)",
         values: compareCodes.map((peerCode) => {
           const vol = volatilities.get(peerCode);
-          return vol === null || vol === undefined ? "—" : formatPercentPrefixed(vol, 1);
+          return vol === null || vol === undefined
+            ? "—"
+            : formatPercentPrefixed(vol, 1);
         }),
       },
       {
@@ -645,12 +697,19 @@ export const getFundDetail = cache(
       },
     ];
 
+    // Securities when both of the fund's monthly reports have been read, asset
+    // classes otherwise. Never both: the two measure different things over
+    // different windows, and a mixed panel would read as one list.
+    const moves = securityMoves.length > 0 ? securityMoves : allocationMoves;
+
     const toHolding = (
       row: (typeof moves)[number],
       index: number,
     ): HoldingChange => ({
       label: row.label,
-      color: allocationColor(index),
+      // A stock carries its own brand colour; asset classes are coloured by
+      // position, and so is a stock we have no colour for.
+      color: row.color ?? allocationColor(index),
       weight: Number(row.weight),
       change: Number(row.change),
     });

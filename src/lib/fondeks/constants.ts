@@ -13,6 +13,12 @@ export const FUND_CATEGORIES = [
 
 export type FundCategory = (typeof FUND_CATEGORIES)[number];
 
+/**
+ * Shown in place of a künye figure no source publishes — a fund's stopaj rate,
+ * its valör or its risk value. An invented default would read as fact.
+ */
+export const UNKNOWN = "Bilinmiyor";
+
 /** TEFAS risk scale. */
 export const RISK_MIN = 1;
 export const RISK_MAX = 7;
