@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
 
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
-export const metadata: Metadata = { title: "Kayıt Ol" };
+const TITLE = "Kayıt Ol";
+const DESCRIPTION =
+  "Ücretsiz Fondeks hesabı oluştur, fon analizlerine ve izleme listesine eriş.";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  keywords: ["fondeks kayıt", "hesap oluştur", "ücretsiz kayıt"],
+  openGraph: ogMeta(TITLE, DESCRIPTION),
+  twitter: twitterMeta(TITLE, DESCRIPTION),
+};
 
 export default function RegisterPage() {
   return (

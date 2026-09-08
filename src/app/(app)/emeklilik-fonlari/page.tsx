@@ -4,12 +4,24 @@ import { FundTable, type CategoryTab } from "@/components/funds/FundTable";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
 import { getPensionFunds } from "@/lib/fondeks/queries";
+import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+
+const TITLE = "Emeklilik Fonları";
+const DESCRIPTION =
+  "Bireysel emeklilik sistemindeki yatırım fonlarının güncel fiyatları, " +
+  "getirileri ve fon büyüklükleri — kategoriye göre filtrelenebilir liste.";
 
 export const metadata: Metadata = {
-  title: "Emeklilik Fonları",
-  description:
-    "Bireysel emeklilik sistemindeki yatırım fonlarının güncel fiyatları, " +
-    "getirileri ve fon büyüklükleri — kategoriye göre filtrelenebilir liste.",
+  title: TITLE,
+  description: DESCRIPTION,
+  keywords: [
+    "emeklilik fonu",
+    "BES",
+    "bireysel emeklilik",
+    "emeklilik yatırım fonu",
+  ],
+  openGraph: ogMeta(TITLE, DESCRIPTION),
+  twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 
 /**

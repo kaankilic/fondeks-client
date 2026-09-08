@@ -15,16 +15,27 @@ import {
   getMarketIndices,
   getNews,
 } from "@/lib/fondeks/queries";
-import { marketDescription } from "@/lib/fondeks/seo";
+import { marketDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 import styles from "./piyasa.module.scss";
 
 export async function generateMetadata(): Promise<Metadata> {
   const indices = await getMarketIndices();
+  const title = "Piyasa Özeti";
+  const description = marketDescription(indices.map((index) => index.name));
 
   return {
-    title: "Piyasa Özeti",
-    description: marketDescription(indices.map((index) => index.name)),
+    title,
+    description,
+    keywords: [
+      "piyasa özeti",
+      "borsa endeks",
+      "BIST 100",
+      "piyasa haberleri",
+      "KAP",
+    ],
+    openGraph: ogMeta(title, description),
+    twitter: twitterMeta(title, description),
   };
 }
 

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getGuide, getGuides } from "@/lib/fondeks/queries";
+import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 import styles from "./guide.module.scss";
 
@@ -14,7 +15,14 @@ export async function generateMetadata({
   const guide = await getGuide(slug);
 
   if (!guide) return { title: "Rehber" };
-  return { title: guide.title, description: guide.summary };
+
+  return {
+    title: guide.title,
+    description: guide.summary,
+    keywords: [guide.title, guide.category, "yatırım rehberi"],
+    openGraph: ogMeta(guide.title, guide.summary),
+    twitter: twitterMeta(guide.title, guide.summary),
+  };
 }
 
 export default async function GuidePage({

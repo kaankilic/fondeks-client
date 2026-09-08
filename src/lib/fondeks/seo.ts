@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import type { Fund } from "./types";
 import {
   formatAum,
@@ -137,6 +139,32 @@ export function legalDescription(lead: string): string {
  * instruments come from the data rather than a list kept here, so adding one
  * changes the sentence with it.
  */
+const SITE_NAME = "Fondeks";
+
+export function ogMeta(
+  title: string,
+  description: string,
+): NonNullable<Metadata["openGraph"]> {
+  return {
+    title,
+    description,
+    siteName: SITE_NAME,
+    locale: "tr_TR",
+    type: "website",
+  };
+}
+
+export function twitterMeta(
+  title: string,
+  description: string,
+): NonNullable<Metadata["twitter"]> {
+  return {
+    card: "summary_large_image",
+    title,
+    description,
+  };
+}
+
 export function marketDescription(instruments: string[]): string {
   const named = instruments.slice(0, 4).join(", ");
 

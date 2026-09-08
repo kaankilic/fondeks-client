@@ -4,12 +4,19 @@ import { FundTable, type CategoryTab } from "@/components/funds/FundTable";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
 import { getEtfFunds } from "@/lib/fondeks/queries";
+import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+
+const TITLE = "Borsa Yatırım Fonları";
+const DESCRIPTION =
+  "Borsa İstanbul'da işlem gören yatırım fonlarının güncel fiyatları, " +
+  "getirileri ve fon büyüklükleri — kategoriye göre filtrelenebilir liste.";
 
 export const metadata: Metadata = {
-  title: "Borsa Yatırım Fonları",
-  description:
-    "Borsa İstanbul'da işlem gören yatırım fonlarının güncel fiyatları, " +
-    "getirileri ve fon büyüklükleri — kategoriye göre filtrelenebilir liste.",
+  title: TITLE,
+  description: DESCRIPTION,
+  keywords: ["borsa yatırım fonu", "BYF", "ETF", "BIST fon", "hisse fonu"],
+  openGraph: ogMeta(TITLE, DESCRIPTION),
+  twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 
 /**

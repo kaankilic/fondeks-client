@@ -13,7 +13,7 @@ import { SimilarFunds } from "@/components/fund-detail/SimilarFunds";
 import { Page, PageBody } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getFund, getFundDetail } from "@/lib/fondeks/queries";
-import { fundDescription } from "@/lib/fondeks/seo";
+import { fundDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 import { codeFromSlug } from "@/lib/fondeks/slug";
 
 import styles from "./fon.module.scss";
@@ -26,9 +26,15 @@ export async function generateMetadata({
 
   if (!fund) return { title: "Fon" };
 
+  const title = `${fund.code} — ${fund.name}`;
+  const description = fundDescription(fund);
+
   return {
-    title: `${fund.code} — ${fund.name}`,
-    description: fundDescription(fund),
+    title,
+    description,
+    keywords: [fund.code, fund.name, fund.category, fund.founder, "fon analizi"],
+    openGraph: ogMeta(title, description),
+    twitter: twitterMeta(title, description),
   };
 }
 
