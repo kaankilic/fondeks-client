@@ -431,7 +431,7 @@ async function getVolatilities(
   );
 }
 
-/** Latest market news or KAP filings, newest first. */
+/** KAP filings from the database, newest first. */
 export const getNews = cached(
   "news",
   async (source: NewsSource, limit: number = 6): Promise<NewsItem[]> => {
@@ -450,6 +450,26 @@ export const getNews = cached(
       .where(eq(news.source, source))
       .orderBy(desc(news.publishedAt))
       .limit(limit);
+  },
+);
+
+/** Live market headlines from the Foreks RSS feed, cached for 15 minutes. */
+export const getForeksNews = cached(
+  "foreks-news",
+  async (limit: number = 6): Promise<NewsItem[]> => {
+    const { fetchForeksNews } = await import("@/lib/market/foreks-rss");
+    const items = await fetchForeksNews();
+
+    return items.slice(0, limit).map((item, i) => ({
+      id: `rss-${i}`,
+      source: "haber" as const,
+      title: item.title,
+      summary: item.summary,
+      symbol: null,
+      publisher: "ForInvest",
+      url: item.link,
+      publishedAt: item.publishedAt,
+    }));
   },
 );
 

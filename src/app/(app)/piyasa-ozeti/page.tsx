@@ -13,6 +13,7 @@ import { NewsPanel } from "@/components/news/NewsPanel";
 import { MARKET_SESSION } from "@/lib/fondeks/constants";
 import {
   getCategoryPerformance,
+  getForeksNews,
   getMarketIndices,
   getNews,
 } from "@/lib/fondeks/queries";
@@ -45,7 +46,7 @@ export default async function MarketPage() {
   const [indices, categories, headlines, filings] = await Promise.all([
     getMarketIndices(),
     getCategoryPerformance(),
-    getNews("haber", 6),
+    getForeksNews(6),
     getNews("kap", 6),
   ]);
 
