@@ -10,7 +10,7 @@ import {
 import { CategoryPerformance } from "@/components/market/CategoryPerformance";
 import { IndexCards } from "@/components/market/IndexCards";
 import { NewsPanel } from "@/components/news/NewsPanel";
-import { MARKET_SESSION } from "@/lib/fondeks/constants";
+import { getMarketSession } from "@/lib/fondeks/constants";
 import {
   getCategoryPerformance,
   getForeksNews,
@@ -43,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MarketPage() {
+  const session = getMarketSession();
   const [indices, categories, headlines, filings] = await Promise.all([
     getMarketIndices(),
     getCategoryPerformance(),
@@ -66,9 +67,9 @@ export default async function MarketPage() {
 
       <SubHeader
         title="Piyasa Özeti"
-        subtitle={`${MARKET_SESSION.date} · ${MARKET_SESSION.close}`}
+        subtitle={`${session.date} · ${session.close}`}
       >
-        <MarketStatus open={MARKET_SESSION.open} />
+        <MarketStatus open={session.open} />
       </SubHeader>
 
       <PageBody>

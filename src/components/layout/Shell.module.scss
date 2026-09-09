@@ -72,6 +72,11 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--pos);
+
+  &.closed {
+    background: var(--neg-bg);
+    color: var(--neg);
+  }
 }
 
 .statusDot {

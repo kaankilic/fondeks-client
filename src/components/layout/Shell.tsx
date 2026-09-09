@@ -39,7 +39,9 @@ export function PageBody({ children }: { children: ReactNode }) {
 
 export function MarketStatus({ open }: { open: boolean }) {
   return (
-    <span className={styles.status}>
+    <span
+      className={`${styles.status}${open ? "" : ` ${styles.closed}`}`}
+    >
       <span className={styles.statusDot} aria-hidden />
       {open ? "Piyasa Açık" : "Piyasa Kapalı"}
     </span>

@@ -78,9 +78,41 @@ export const UNKNOWN = "Bilinmiyor";
 export const RISK_MIN = 1;
 export const RISK_MAX = 7;
 
-/** Trading session shown in the Piyasa Özeti header. */
-export const MARKET_SESSION = {
-  date: "25 Ağustos 2026, Salı",
-  close: "Kapanış 18:10",
-  open: true,
+const TR_MONTHS = [
+  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+] as const;
+
+const TR_DAYS = [
+  "Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi",
+] as const;
+
+export type MarketSession = {
+  date: string;
+  close: string;
+  open: boolean;
 };
+
+export function getMarketSession(): MarketSession {
+  const now = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Europe/Istanbul" }),
+  );
+
+  const day = now.getDate();
+  const month = TR_MONTHS[now.getMonth()];
+  const year = now.getFullYear();
+  const weekday = TR_DAYS[now.getDay()];
+  const date = `${day} ${month} ${year}, ${weekday}`;
+
+  const weekdayNum = now.getDay();
+  const isWeekday = weekdayNum >= 1 && weekdayNum <= 5;
+
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const openAt = 9 * 60;
+  const closeAt = 18 * 60 + 15;
+  const open = isWeekday && minutes >= openAt && minutes < closeAt;
+
+  const close = open ? "Kapanış 18:15" : "Kapalı";
+
+  return { date, close, open };
+}
