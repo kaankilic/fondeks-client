@@ -127,7 +127,7 @@ export class EvdsProvider implements IndexProvider {
 
   private readonly base =
     process.env.EVDS_BASE_URL?.trim() ||
-    "https://evds2.tcmb.gov.tr/service/evds";
+    "https://evds3.tcmb.gov.tr/igmevdsms-dis";
 
   isConfigured(): boolean {
     return Boolean(this.key);
