@@ -86,7 +86,7 @@ export const INDEX_FIXTURES: {
   { name: "BIST 100", symbol: "B", color: "#0B4DA2", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.MK.F.BILESIK" },
   { name: "BIST 30", symbol: "B", color: "#12386B", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.MK.F.ENDEKS30" },
   { name: "USD / TRY", symbol: "$", color: "#2E7D5B", unit: "", decimals: 4, source: "tcmb", sourceSymbol: "USD" },
-  { name: "Gram Altın", symbol: "Au", color: "#B9821A", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.MK.KUL.YTL" },
+  { name: "Gram Altın", symbol: "Au", color: "#B9821A", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.ALTINPIYASA.KAP02/1000" },
   { name: "EUR / TRY", symbol: "€", color: "#3B5BA5", unit: "", decimals: 4, source: "tcmb", sourceSymbol: "EUR" },
   { name: "Gösterge Faiz", symbol: "%", color: "#7A2E8E", unit: "", decimals: 2, displayPattern: "%%v", source: "evds", sourceSymbol: "TP.APIFON4" },
 ];

@@ -134,10 +134,14 @@ export class EvdsProvider implements IndexProvider {
   }
 
   async fetchSeries(
-    series: string,
+    rawSymbol: string,
     range: { from: string; to: string },
   ): Promise<IndexQuote[]> {
     if (!this.key) throw new Error("TCMB_EVDS_API_KEY is not set");
+
+    // sourceSymbol may carry a divisor: "TP.ALTINPIYASA.KAP02/1000"
+    const [series, divisorStr] = rawSymbol.split("/");
+    const divisor = divisorStr ? Number(divisorStr) : 1;
 
     const toEvds = (iso: string) => {
       const [year, month, day] = iso.split("-");
@@ -160,11 +164,11 @@ export class EvdsProvider implements IndexProvider {
       const date = item["Tarih"] ?? item["TARIH"];
       if (!raw || !date) return [];
 
-      const value = Number(String(raw).replace(",", "."));
+      const value = Number(String(raw).replace(",", ".")) / divisor;
       const [day, month, year] = String(date).split("-");
       if (!Number.isFinite(value) || !year) return [];
 
-      return [{ name: series, date: `${year}-${month}-${day}`, value }];
+      return [{ name: rawSymbol, date: `${year}-${month}-${day}`, value }];
     });
   }
 
