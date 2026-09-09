@@ -3,7 +3,12 @@ import "server-only";
 import { sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { fundDailyStats, founders, funds } from "@/db/schema/funds";
+import {
+  fundAllocations,
+  fundDailyStats,
+  founders,
+  funds,
+} from "@/db/schema/funds";
 import { getProvider, type DateRange } from "@/lib/market/provider";
 import { FALLBACK_LOGO } from "@/lib/fondeks/palette";
 
@@ -217,4 +222,100 @@ export async function syncRecentDays(days = 3) {
 /** First-run history load. */
 export async function backfillDailyStats(days = 400) {
   return syncDailyStats({ from: isoDaysAgo(days), to: today() });
+}
+
+/**
+ * How far back to look for a breakdown. `fund_allocations` keeps one current
+ * picture per fund rather than a history, so this is not a backfill window —
+ * it is slack for funds that did not report yesterday, plus weekends and
+ * holidays.
+ */
+const ALLOCATION_WINDOW_DAYS = 10;
+
+/**
+ * Imports the portfolio breakdown behind "Varlık Dağılımı".
+ *
+ * Each fund's newest published day wins and replaces what it had. Replacement
+ * is per fund rather than an upsert: the key is (fund, label), so a slice the
+ * fund has since exited would never be overwritten and would linger forever.
+ */
+export async function syncAllocations(range?: DateRange) {
+  const provider = await getProvider();
+  const fetchAllocations = provider.fetchAllocations?.bind(provider);
+
+  if (!fetchAllocations) {
+    throw new Error(`${provider.name} does not publish portfolio breakdowns`);
+  }
+
+  const window = range ?? {
+    from: isoDaysAgo(ALLOCATION_WINDOW_DAYS),
+    to: today(),
+  };
+
+  return withRun(
+    "fund-allocations",
+    { provider: provider.name, ...window },
+    async () => {
+      const slices = await fetchAllocations(window);
+
+      const known = new Set(
+        (await db.select({ code: funds.code }).from(funds)).map((row) => row.code),
+      );
+
+      // The newest day a fund reported; anything older is a stale picture.
+      const latest = new Map<string, string>();
+      for (const slice of slices) {
+        if (!known.has(slice.code)) continue;
+        const seen = latest.get(slice.code);
+        if (seen === undefined || slice.date > seen) {
+          latest.set(slice.code, slice.date);
+        }
+      }
+
+      // Keyed by label, so a repeated asset class cannot break the primary key.
+      const byFund = new Map<string, Map<string, number>>();
+      for (const slice of slices) {
+        if (latest.get(slice.code) !== slice.date) continue;
+        const fund = byFund.get(slice.code) ?? new Map<string, number>();
+        fund.set(slice.label, slice.pct);
+        byFund.set(slice.code, fund);
+      }
+
+      const rows: (typeof fundAllocations.$inferInsert)[] = [];
+      for (const [fundCode, labels] of byFund) {
+        // Biggest slice first — the widget renders in `position` order.
+        [...labels.entries()]
+          .sort(([, a], [, b]) => b - a)
+          .forEach(([label, pct], position) =>
+            rows.push({ fundCode, label, pct, position }),
+          );
+      }
+
+      const codes = [...byFund.keys()];
+
+      // One transaction, or a failure between the delete and the inserts would
+      // leave funds with no breakdown at all.
+      const written = await db.transaction(async (tx) => {
+        if (codes.length > 0) {
+          await tx
+            .delete(fundAllocations)
+            .where(sql`${fundAllocations.fundCode} = any(${sql.param(codes)})`);
+        }
+
+        let count = 0;
+        for (const batch of chunk(rows)) {
+          const result = await tx.insert(fundAllocations).values(batch);
+          count += result.rowCount ?? batch.length;
+        }
+        return count;
+      });
+
+      return {
+        rowsRead: slices.length,
+        rowsWritten: written,
+        funds: byFund.size,
+        skipped: slices.length - rows.length,
+      };
+    },
+  );
 }

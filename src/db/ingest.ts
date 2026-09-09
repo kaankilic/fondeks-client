@@ -9,6 +9,7 @@ loadEnv({ path: ".env", quiet: true });
  *   yarn ingest catalog
  *   yarn ingest daily [--days 3]
  *   yarn ingest range --from 2026-01-01 --to 2026-03-31
+ *   yarn ingest allocations
  *   yarn ingest indices [--days 60]
  *   yarn ingest positions [--period yyyy-mm-01]
  *   yarn ingest backfill [--days 400]
@@ -64,6 +65,15 @@ async function main() {
         break;
       }
 
+      case "allocations": {
+        const result = await jobs.syncAllocations();
+        console.log(
+          `allocations: read ${result.run.rowsRead}, wrote ${result.run.rowsWritten} ` +
+            `for ${result.funds} funds in ${result.run.durationMs}ms`,
+        );
+        break;
+      }
+
       case "backfill": {
         const days = Number(flag("days") ?? 400);
         const catalog = await jobs.syncFundCatalog();
@@ -72,9 +82,11 @@ async function main() {
           from: jobs.isoDaysAgo(Math.min(days, 120)),
           to: jobs.today(),
         });
+        const breakdown = await jobs.syncAllocations();
         const movers = await holdings.syncPositions();
         console.log(
           `backfill: ${catalog.run.rowsWritten} funds, ${stats.run.rowsWritten} daily rows, ` +
+            `${breakdown.run.rowsWritten} allocation slices, ` +
             `${quotes.run.rowsWritten} index quotes, ${movers.positions.rowsWritten} movers`,
         );
         break;
@@ -121,7 +133,7 @@ async function main() {
 
       default:
         console.log(
-          "usage: yarn ingest <catalog|daily|range|indices|positions|backfill|status> " +
+          "usage: yarn ingest <catalog|daily|range|allocations|indices|positions|backfill|status> " +
             "[--days n] [--from d] [--to d] [--period yyyy-mm-01]",
         );
     }
