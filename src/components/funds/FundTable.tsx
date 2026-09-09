@@ -58,7 +58,7 @@ function fold(value: string) {
   return value.toLocaleLowerCase("tr");
 }
 
-export const DEFAULT_SORT: Sort = { key: "y1", dir: "desc" };
+export const DEFAULT_SORT: Sort = { key: "daily", dir: "desc" };
 
 /**
  * Rows drawn before the list asks to be extended.
