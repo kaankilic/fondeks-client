@@ -363,7 +363,7 @@ export const news = pgTable(
     symbol: varchar({ length: 10 }),
     /** Who published it — an outlet for haber, the filer for KAP. */
     publisher: text(),
-    url: text(),
+    url: text().unique(),
     publishedAt: timestamp({ withTimezone: true }).notNull(),
   },
   (table) => [index("news_published_idx").on(table.publishedAt)],

@@ -31,6 +31,7 @@ export function NewsPanel({
         <p className={styles.empty}>Şu an gösterilecek başlık yok.</p>
       ) : (
         items.map((item) => {
+          const publishedAt = new Date(item.publishedAt);
           const body = (
             <>
               <div className={styles.meta}>
@@ -42,9 +43,9 @@ export function NewsPanel({
                 ) : null}
                 <time
                   className={styles.time}
-                  dateTime={item.publishedAt.toISOString()}
+                  dateTime={publishedAt.toISOString()}
                 >
-                  {formatRelativeTime(item.publishedAt)}
+                  {formatRelativeTime(publishedAt)}
                 </time>
               </div>
 
@@ -62,7 +63,7 @@ export function NewsPanel({
               href={item.url}
               className={styles.item}
               target="_blank"
-              rel="noreferrer"
+              rel="nofollow noreferrer"
             >
               {body}
             </a>

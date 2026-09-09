@@ -11,6 +11,7 @@ loadEnv({ path: ".env", quiet: true });
  *   yarn ingest range --from 2026-01-01 --to 2026-03-31
  *   yarn ingest allocations [--days 45]
  *   yarn ingest indices [--days 60]
+ *   yarn ingest news
  *   yarn ingest positions [--period yyyy-mm-01]
  *   yarn ingest collect
  *   yarn ingest documents [--period yyyy-mm-01] [--limit n]
@@ -58,6 +59,7 @@ async function main() {
   const { providerName } = await import("@/lib/market/provider");
   const jobs = await import("@/lib/ingest/jobs");
   const indices = await import("@/lib/ingest/indices");
+  const newsIngest = await import("@/lib/ingest/news");
   const holdings = await import("@/lib/ingest/holdings");
   const { getRecentRuns } = await import("@/lib/ingest/runs");
   const { pool } = await import("./index");
@@ -139,6 +141,14 @@ async function main() {
         });
         console.log(
           `indices: read ${result.run.rowsRead}, wrote ${result.run.rowsWritten}`,
+        );
+        break;
+      }
+
+      case "news": {
+        const result = await newsIngest.syncForeksNews();
+        console.log(
+          `news: read ${result.run.rowsRead}, wrote ${result.run.rowsWritten}`,
         );
         break;
       }
@@ -255,7 +265,7 @@ async function main() {
       default:
         console.log(
           "usage: yarn ingest " +
-            "<catalog|daily|range|allocations|indices|positions|collect|" +
+            "<catalog|daily|range|allocations|indices|news|positions|collect|" +
             "documents|reextract|reports|backfill|status> " +
             "[--days n] [--from d] [--to d] [--period yyyy-mm-01] " +
             "[--codes AFT,BHE] [--limit n]",
