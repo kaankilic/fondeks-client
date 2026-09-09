@@ -27,7 +27,8 @@ export function FeaturedFunds({
 
       <div className={styles.grid}>
         {funds.map((fund) => {
-          const tone = direction(fund.y1);
+          // Ranked on the week, so the card reports the week.
+          const tone = direction(fund.w1);
           const spark = sparklines[fund.code];
           return (
             <Link
@@ -49,9 +50,9 @@ export function FeaturedFunds({
 
               <div className={styles.cardBottom}>
                 <div>
-                  <div className={styles.metricLabel}>1 Yıl</div>
+                  <div className={styles.metricLabel}>1 Hafta</div>
                   <div className={`${styles.metricValue} ${styles[tone]}`}>
-                    {formatPercent(fund.y1)}
+                    {formatPercent(fund.w1)}
                   </div>
                 </div>
                 {spark ? (

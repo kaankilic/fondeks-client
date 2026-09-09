@@ -29,6 +29,8 @@ export type Fund = {
   price: number;
   /** Percentage returns. */
   daily: number;
+  /** Trailing one week. */
+  w1: number;
   m1: number;
   m3: number;
   y1: number;

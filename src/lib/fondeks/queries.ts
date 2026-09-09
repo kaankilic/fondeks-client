@@ -84,6 +84,7 @@ type SnapshotRow = {
   inception_date: string | null;
   price: string;
   prev_price: string | null;
+  w1_price: string | null;
   m1_price: string | null;
   m3_price: string | null;
   y1_price: string | null;
@@ -118,6 +119,7 @@ function toFund(row: SnapshotRow): Fund {
     onTefas: row.on_tefas,
     price,
     daily: changePct(price, row.prev_price),
+    w1: changePct(price, row.w1_price),
     m1: changePct(price, row.m1_price),
     m3: changePct(price, row.m3_price),
     y1: changePct(price, row.y1_price),
@@ -158,6 +160,7 @@ const snapshotQuery = sql`
     f.buy_value_days, f.sell_value_days, f.on_tefas, f.inception_date,
     lp.price,
     case when brk.at is null or brk.at <= prev.date then prev.price end as prev_price,
+    case when brk.at is null or brk.at <= w1.date   then w1.price   end as w1_price,
     case when brk.at is null or brk.at <= m1.date   then m1.price   end as m1_price,
     case when brk.at is null or brk.at <= m3.date   then m3.price   end as m3_price,
     case when brk.at is null or brk.at <= y1.date   then y1.price   end as y1_price,
@@ -175,6 +178,11 @@ const snapshotQuery = sql`
     where p.fund_code = f.code and p.date < lp.date
     order by p.date desc limit 1
   ) prev on true
+  left join lateral (
+    select p.price, p.date from ${fundDailyStats} p
+    where p.fund_code = f.code and p.date <= lp.date - interval '7 days'
+    order by p.date desc limit 1
+  ) w1 on true
   left join lateral (
     select p.price, p.date from ${fundDailyStats} p
     where p.fund_code = f.code and p.date <= lp.date - interval '1 month'
@@ -216,8 +224,11 @@ export const getFunds = cache(async (): Promise<Fund[]> => {
     .sort((a, b) => b.y1 - a.y1);
 });
 
-export const getFeaturedFunds = cache(async (): Promise<Fund[]> => {
-  return (await getFunds()).slice(0, 3);
+/** "Öne Çıkanlar" — the week's strongest movers, biggest gain first. */
+export const getFeaturedFunds = cache(async (limit = 3): Promise<Fund[]> => {
+  return [...(await getFunds())]
+    .sort((a, b) => b.w1 - a.w1)
+    .slice(0, limit);
 });
 
 /** Placeholder for a per-user list: the strongest funds until accounts own one. */
