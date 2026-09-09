@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { AuthShell } from "@/components/auth/AuthShell";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { JsonLd } from "@/components/layout/JsonLd";
+import { webPageSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Kayıt Ol";
@@ -18,8 +20,11 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <AuthShell>
-      <RegisterForm />
-    </AuthShell>
+    <>
+      <JsonLd data={webPageSchema(TITLE, DESCRIPTION, "/kayit")} />
+      <AuthShell>
+        <RegisterForm />
+      </AuthShell>
+    </>
   );
 }

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 
 import { FundTable, type CategoryTab } from "@/components/funds/FundTable";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
 import { getEtfFunds } from "@/lib/fondeks/queries";
+import { breadcrumbSchema, fundCollectionSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Borsa Yatırım Fonları";
@@ -35,6 +37,21 @@ export default async function EtfFundsPage() {
 
   return (
     <Page>
+      <JsonLd
+        data={fundCollectionSchema(
+          TITLE,
+          DESCRIPTION,
+          "/borsa-yatirim-fonlari",
+          funds,
+        )}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: TITLE, href: "/borsa-yatirim-fonlari" },
+        ])}
+      />
+
       <SubHeader
         title="Borsa Yatırım Fonları"
         subtitle={`${formatCount(funds.length)} fon · getiriye göre sıralı`}

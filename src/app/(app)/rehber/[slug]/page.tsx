@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getGuide, getGuides } from "@/lib/fondeks/queries";
+import { breadcrumbSchema, guideArticleSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 import styles from "./guide.module.scss";
@@ -37,6 +39,15 @@ export default async function GuidePage({
 
   return (
     <Page>
+      <JsonLd data={guideArticleSchema(guide)} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: "Rehber", href: "/rehber" },
+          { name: guide.title, href: `/rehber/${guide.slug}` },
+        ])}
+      />
+
       <SubHeader
         title={guide.title}
         subtitle={`${guide.category} · ${guide.readingMinutes} dk okuma`}

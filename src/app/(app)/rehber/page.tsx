@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 
 import { GuideGrid } from "@/components/guides/GuideList";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getGuides } from "@/lib/fondeks/queries";
+import { breadcrumbSchema, guideListSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Rehber";
@@ -27,6 +29,14 @@ export default async function GuideIndexPage() {
 
   return (
     <Page>
+      <JsonLd data={guideListSchema(guides)} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: "Rehber", href: "/rehber" },
+        ])}
+      />
+
       <SubHeader
         title="Rehber"
         subtitle="Fonların nasıl çalıştığını anlatan kısa içerikler"

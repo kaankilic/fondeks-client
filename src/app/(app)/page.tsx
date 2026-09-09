@@ -6,6 +6,7 @@ import {
 import { FundTable } from "@/components/funds/FundTable";
 import { ReturnLeaderboard } from "@/components/funds/ReturnLeaderboard";
 import { GuidePanel } from "@/components/guides/GuideList";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import {
   direction,
@@ -24,6 +25,7 @@ import {
   getTopGainers,
   getSmallestGainers,
 } from "@/lib/fondeks/queries";
+import { fundCollectionSchema } from "@/lib/fondeks/schema";
 import type { Fund, FundHighlight } from "@/lib/fondeks/types";
 
 import styles from "./screener.module.scss";
@@ -57,6 +59,15 @@ export default async function DiscoverPage() {
 
   return (
     <Page>
+      <JsonLd
+        data={fundCollectionSchema(
+          "Keşfet — TEFAS Fonları",
+          `${funds.length} TEFAS fonu, canlı getiri sıralaması ve risk analizi.`,
+          "/",
+          funds,
+        )}
+      />
+
       <SubHeader
         title="Keşfet"
         subtitle={`${funds.length} fon · getiriye göre sıralı`}

@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 
 import { SignupGate } from "@/components/fund-detail/SignupGate";
 import { ComingSoon } from "@/components/layout/ComingSoon";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
+import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "İzleme Listem";
@@ -23,6 +25,14 @@ export default async function WatchlistPage() {
 
   return (
     <Page>
+      <JsonLd data={webPageSchema(TITLE, DESCRIPTION, "/izleme")} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: "İzleme Listem", href: "/izleme" },
+        ])}
+      />
+
       <SubHeader title="İzleme Listem" />
       <PageBody>
         {/* A watchlist belongs to an account, so visitors meet the wall first. */}

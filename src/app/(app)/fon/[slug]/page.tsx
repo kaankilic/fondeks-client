@@ -10,9 +10,11 @@ import { MonthlyTrends } from "@/components/fund-detail/MonthlyTrends";
 import { PriceChart } from "@/components/fund-detail/PriceChart";
 import { SignupGate } from "@/components/fund-detail/SignupGate";
 import { SimilarFunds } from "@/components/fund-detail/SimilarFunds";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getFund, getFundDetail } from "@/lib/fondeks/queries";
+import { breadcrumbSchema, fundSchema } from "@/lib/fondeks/schema";
 import { fundDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 import { codeFromSlug } from "@/lib/fondeks/slug";
 
@@ -51,11 +53,22 @@ export default async function FundDetailPage({
   // fund has exactly one URL.
   if (slug !== fund.slug) permanentRedirect(`/fon/${fund.slug}`);
 
+  const schemas = [
+    fundSchema(fund),
+    breadcrumbSchema([
+      { name: "Keşfet", href: "/" },
+      { name: `${fund.code} — ${fund.name}`, href: `/fon/${fund.slug}` },
+    ]),
+  ];
+
   // Visitors get the price strip and nothing else — the rest of the fund is
   // never queried for them, so it never reaches the browser either.
   if (!user) {
     return (
       <Page>
+        {schemas.map((s, i) => (
+          <JsonLd key={i} data={s} />
+        ))}
         <FundHeader fund={fund} />
         <PageBody>
           <SignupGate preset="fund" fundCode={fund.code} />
@@ -69,6 +82,9 @@ export default async function FundDetailPage({
 
   return (
     <Page>
+      {schemas.map((s, i) => (
+        <JsonLd key={i} data={s} />
+      ))}
       <FundHeader fund={detail.fund} />
 
       <PageBody>

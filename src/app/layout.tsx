@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 
 import { Analytics } from "@/components/layout/Analytics";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { getFundCount } from "@/lib/fondeks/queries";
+import { websiteSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 import { siteUrl } from "@/lib/fondeks/site";
 
@@ -47,7 +49,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="tr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <JsonLd data={websiteSchema()} />
+        {children}
+      </body>
       <Analytics />
     </html>
   );

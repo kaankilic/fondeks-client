@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/layout/JsonLd";
 import { LegalPage } from "@/components/layout/LegalPage";
+import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
 import { legalDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 /** Shown on the page and, trimmed, to a search engine. */
@@ -19,5 +21,16 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <LegalPage title="Kullanım Şartları" lead={LEAD} />;
+  return (
+    <>
+      <JsonLd data={webPageSchema(TITLE, DESCRIPTION, "/kullanim-sartlari")} />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: TITLE, href: "/kullanim-sartlari" },
+        ])}
+      />
+      <LegalPage title="Kullanım Şartları" lead={LEAD} />
+    </>
+  );
 }

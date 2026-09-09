@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 
 import { FundTable, type CategoryTab } from "@/components/funds/FundTable";
+import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
 import { getPensionFunds } from "@/lib/fondeks/queries";
+import { breadcrumbSchema, fundCollectionSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Emeklilik Fonları";
@@ -43,6 +45,21 @@ export default async function PensionFundsPage() {
 
   return (
     <Page>
+      <JsonLd
+        data={fundCollectionSchema(
+          TITLE,
+          DESCRIPTION,
+          "/emeklilik-fonlari",
+          funds,
+        )}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: TITLE, href: "/emeklilik-fonlari" },
+        ])}
+      />
+
       <SubHeader
         title="Emeklilik Fonları"
         subtitle={`${formatCount(funds.length)} fon · getiriye göre sıralı`}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/layout/JsonLd";
 import {
   MarketStatus,
   Page,
@@ -15,6 +16,7 @@ import {
   getMarketIndices,
   getNews,
 } from "@/lib/fondeks/queries";
+import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
 import { marketDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 import styles from "./piyasa.module.scss";
@@ -47,8 +49,20 @@ export default async function MarketPage() {
     getNews("kap", 6),
   ]);
 
+  const description = marketDescription(indices.map((index) => index.name));
+
   return (
     <Page>
+      <JsonLd
+        data={webPageSchema("Piyasa Özeti", description, "/piyasa-ozeti")}
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Keşfet", href: "/" },
+          { name: "Piyasa Özeti", href: "/piyasa-ozeti" },
+        ])}
+      />
+
       <SubHeader
         title="Piyasa Özeti"
         subtitle={`${MARKET_SESSION.date} · ${MARKET_SESSION.close}`}
