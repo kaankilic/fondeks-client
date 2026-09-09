@@ -185,3 +185,58 @@ export class EvdsProvider implements IndexProvider {
     return results.flat();
   }
 }
+
+type YahooChartResult = {
+  chart: {
+    result: {
+      meta: { regularMarketPrice: number };
+      timestamp: number[];
+      indicators: {
+        quote: { close: (number | null)[] }[];
+      };
+    }[];
+    error: unknown;
+  };
+};
+
+export class YahooProvider implements IndexProvider {
+  readonly name = "yahoo";
+
+  async fetchSeries(
+    symbol: string,
+    range: { from: string; to: string },
+  ): Promise<IndexQuote[]> {
+    const period1 = Math.floor(
+      new Date(`${range.from}T00:00:00Z`).getTime() / 1000,
+    );
+    const period2 = Math.floor(
+      new Date(`${range.to}T23:59:59Z`).getTime() / 1000,
+    );
+
+    const url =
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}` +
+      `?period1=${period1}&period2=${period2}&interval=1d`;
+
+    const payload = await requestJson<YahooChartResult>(url, {
+      timeoutMs: 15_000,
+      headers: { "user-agent": "Mozilla/5.0" },
+    });
+
+    const result = payload.chart?.result?.[0];
+    if (!result?.timestamp) return [];
+
+    const closes = result.indicators.quote[0]?.close ?? [];
+
+    return result.timestamp.flatMap((ts, i) => {
+      const close = closes[i];
+      if (close == null || !Number.isFinite(close)) return [];
+      const d = new Date(ts * 1000);
+      const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+      return [{ name: symbol, date: iso, value: Number(close.toFixed(4)) }];
+    });
+  }
+
+  async fetchQuotes(range: { from: string; to: string }): Promise<IndexQuote[]> {
+    return [];
+  }
+}

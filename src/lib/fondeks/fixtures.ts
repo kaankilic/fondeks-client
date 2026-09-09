@@ -80,11 +80,11 @@ export const INDEX_FIXTURES: {
   unit: string;
   decimals: number;
   displayPattern?: string;
-  source: "tcmb" | "evds" | "fixture";
+  source: "tcmb" | "evds" | "yahoo" | "fixture";
   sourceSymbol?: string;
 }[] = [
-  { name: "BIST 100", symbol: "B", color: "#0B4DA2", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.MK.F.BILESIK" },
-  { name: "BIST 30", symbol: "B", color: "#12386B", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.MK.F.ENDEKS30" },
+  { name: "BIST 100", symbol: "B", color: "#0B4DA2", unit: "TRY", decimals: 2, source: "yahoo", sourceSymbol: "XU100.IS" },
+  { name: "BIST 30", symbol: "B", color: "#12386B", unit: "TRY", decimals: 2, source: "yahoo", sourceSymbol: "XU030.IS" },
   { name: "USD / TRY", symbol: "$", color: "#2E7D5B", unit: "", decimals: 4, source: "tcmb", sourceSymbol: "USD" },
   { name: "Gram Altın", symbol: "Au", color: "#B9821A", unit: "TRY", decimals: 2, source: "evds", sourceSymbol: "TP.ALTINPIYASA.KAP02/1000" },
   { name: "EUR / TRY", symbol: "€", color: "#3B5BA5", unit: "", decimals: 4, source: "tcmb", sourceSymbol: "EUR" },

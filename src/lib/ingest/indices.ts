@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { indexQuotes, marketIndices } from "@/db/schema/funds";
-import { EvdsProvider, TcmbProvider, type IndexQuote } from "@/lib/market/indices";
+import { EvdsProvider, TcmbProvider, YahooProvider, type IndexQuote } from "@/lib/market/indices";
 import { providerName } from "@/lib/market/provider";
 
 import { withRun } from "./runs";
@@ -61,6 +61,7 @@ export async function syncMarketIndices(range: { from: string; to: string }) {
     const offline = providerName() === "fixture";
     const tcmb = new TcmbProvider();
     const evds = new EvdsProvider();
+    const yahoo = new YahooProvider();
 
     const quotes: { indexName: string; date: string; value: number }[] = [];
     let read = 0;
@@ -104,6 +105,27 @@ export async function syncMarketIndices(range: { from: string; to: string }) {
 
         try {
           const series = await evds.fetchSeries(row.sourceSymbol, range);
+          read += series.length;
+          quotes.push(
+            ...series.map((quote) => ({
+              indexName: row.name,
+              date: quote.date,
+              value: quote.value,
+            })),
+          );
+        } catch (error) {
+          console.warn(
+            `[indices] ${row.name} failed:`,
+            error instanceof Error ? error.message : error,
+          );
+        }
+        continue;
+      }
+
+      if (source === "yahoo") {
+        if (!row.sourceSymbol) continue;
+        try {
+          const series = await yahoo.fetchSeries(row.sourceSymbol, range);
           read += series.length;
           quotes.push(
             ...series.map((quote) => ({
