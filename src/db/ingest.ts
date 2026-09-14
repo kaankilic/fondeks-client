@@ -14,6 +14,7 @@ loadEnv({ path: ".env", quiet: true });
  *   yarn ingest positions [--period yyyy-mm-01]
  *   yarn ingest collect
  *   yarn ingest documents [--period yyyy-mm-01] [--limit n]
+ *   yarn ingest disclosures [--days n] [--limit n]
  *   yarn ingest reextract [--period yyyy-mm-01] [--codes AFT,BHE] [--limit n]
  *   yarn ingest reports [--period yyyy-mm-01]
  *   yarn ingest backfill [--days 400]
@@ -59,6 +60,7 @@ async function main() {
   const jobs = await import("@/lib/ingest/jobs");
   const indices = await import("@/lib/ingest/indices");
   const holdings = await import("@/lib/ingest/holdings");
+  const disclosures = await import("@/lib/ingest/disclosures");
   const { getRecentRuns } = await import("@/lib/ingest/runs");
   const { pool } = await import("./index");
 
@@ -195,6 +197,26 @@ async function main() {
         break;
       }
 
+      case "disclosures": {
+        const days = flag("days");
+        const limit = flag("limit");
+
+        const result = await disclosures.syncDisclosures({
+          days: days === undefined ? undefined : Number(days),
+          limit: limit === undefined ? undefined : Number(limit),
+        });
+
+        console.log(
+          `disclosures: discovered ${result.discovery.run.rowsWritten} of ` +
+            `${result.discovery.run.rowsRead} filing(s), resolved ` +
+            `${result.links.run.rowsWritten} PDF link(s)` +
+            (result.links.missing
+              ? `, ${result.links.missing} without an attachment yet`
+              : ""),
+        );
+        break;
+      }
+
       case "reextract": {
         const period = flag("period") ?? holdings.periodOf();
         const codes = flag("codes")?.split(",").filter(Boolean);
@@ -256,7 +278,7 @@ async function main() {
         console.log(
           "usage: yarn ingest " +
             "<catalog|daily|range|allocations|indices|positions|collect|" +
-            "documents|reextract|reports|backfill|status> " +
+            "documents|disclosures|reextract|reports|backfill|status> " +
             "[--days n] [--from d] [--to d] [--period yyyy-mm-01] " +
             "[--codes AFT,BHE] [--limit n]",
         );
