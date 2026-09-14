@@ -68,6 +68,21 @@ export type PortfolioReport = {
 /** A report as the listing returns it, before anything has been fetched. */
 export type DiscoveredReport = PortfolioReport & { attachmentCount: number };
 
+/**
+ * Any KAP filing, of any subject — what the disclosure archive is built from.
+ * `subject` is KAP's own disclosure-type string, kept verbatim so a caller can
+ * pick one kind out (e.g. `PORTFOLIO_REPORT_SUBJECT`).
+ */
+export type DiscoveredDisclosure = {
+  disclosureIndex: number;
+  fundCode: string;
+  fundTitle: string;
+  subject: string;
+  publishedAt: Date;
+  isLate: boolean;
+  attachmentCount: number;
+};
+
 export type ReportAttachment = {
   objId: string;
   fileName: string;
@@ -268,6 +283,56 @@ export async function listPortfolioReports(
   return [...reports.values()].sort(
     (a, b) => a.publishedAt.getTime() - b.publishedAt.getTime(),
   );
+}
+
+/**
+ * Every fund disclosure KAP published between two dates, of every subject.
+ *
+ * Same day-by-day walk as `listPortfolioReports`, without the subject filter —
+ * this is the source for the full disclosure archive. A filing with no
+ * attachment is still returned; the caller decides whether an attachment-less
+ * disclosure is worth a row.
+ */
+export async function listDisclosures(
+  from: string,
+  to: string,
+): Promise<DiscoveredDisclosure[]> {
+  const days = daysBetween(from, to);
+  const perDay = await Promise.all(days.map((day) => fetchDay(day)));
+
+  const disclosures = new Map<number, DiscoveredDisclosure>();
+
+  for (const rows of perDay) {
+    for (const row of rows) {
+      const publishedAt = parsePublishDate(row.publishDate);
+      const code = row.fundCode?.trim().toUpperCase();
+      const subject = row.subject?.trim();
+
+      if (!row.disclosureIndex || !publishedAt || !code || !subject) continue;
+
+      const existing = disclosures.get(row.disclosureIndex);
+      if (existing && existing.publishedAt >= publishedAt) continue;
+
+      disclosures.set(row.disclosureIndex, {
+        disclosureIndex: row.disclosureIndex,
+        fundCode: code,
+        fundTitle: row.kapTitle?.trim() ?? code,
+        subject,
+        publishedAt,
+        isLate: row.isLate === true,
+        attachmentCount: row.attachmentCount ?? 0,
+      });
+    }
+  }
+
+  return [...disclosures.values()].sort(
+    (a, b) => a.publishedAt.getTime() - b.publishedAt.getTime(),
+  );
+}
+
+/** The human-readable KAP page for a disclosure. */
+export function disclosurePageUrl(disclosureIndex: number): string {
+  return `${BASE}/${LANG}/Bildirim/${disclosureIndex}`;
 }
 
 /** The files attached to one disclosure. A portfolio report carries one PDF. */

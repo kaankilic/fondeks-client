@@ -344,6 +344,53 @@ export const kapExtractionBatches = pgTable(
 
 export type KapExtractionBatchRow = typeof kapExtractionBatches.$inferSelect;
 
+/**
+ * Every KAP disclosure a fund we track has filed — the fund's whole paper
+ * trail, not just its monthly portfolio report.
+ *
+ * Unlike `kap_portfolio_reports`, `fund_code` carries a real foreign key: this
+ * table is scoped to funds in our catalogue on purpose, so a disclosure for a
+ * fund we don't track is never stored (discovery filters them out before the
+ * insert). `subject` is KAP's own disclosure-type string — e.g. "Portföy
+ * Dağılım Raporu" — kept so a caller can pick one kind of filing out of the
+ * fund's history.
+ *
+ * The link is stored, not the file: `pdf_url` is KAP's own download URL,
+ * resolved once via the attachment listing, and `disclosure_url` is the human
+ * page for the filing. A disclosure with no attachment keeps a null `pdf_url`.
+ */
+export const fundDisclosures = pgTable(
+  "fund_disclosures",
+  {
+    /** KAP's own disclosure id — globally unique and stable. */
+    disclosureIndex: integer().primaryKey(),
+    fundCode: varchar({ length: 8 })
+      .notNull()
+      .references(() => funds.code, { onDelete: "cascade" }),
+    /** The fund's name as KAP titles the filing. */
+    fundTitle: text().notNull(),
+    /** KAP disclosure type, e.g. "Portföy Dağılım Raporu". */
+    subject: text().notNull(),
+    publishedAt: timestamp({ withTimezone: true }).notNull(),
+    /** Filed after its deadline — still valid, just late. */
+    isLate: boolean().notNull().default(false),
+    /** The human-readable KAP page for this filing. */
+    disclosureUrl: text().notNull(),
+    /** Direct link to the filing's PDF, once resolved. Null until then. */
+    pdfUrl: text(),
+    pdfName: text(),
+    /** How many files KAP lists on the filing. */
+    attachmentCount: integer().notNull().default(0),
+    discoveredAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("fund_disclosures_fund_idx").on(table.fundCode, table.publishedAt),
+    index("fund_disclosures_subject_idx").on(table.fundCode, table.subject),
+  ],
+);
+
+export type FundDisclosureRow = typeof fundDisclosures.$inferSelect;
+
 export const categoryPerformance = pgTable("category_performance", {
   category: fundCategory().primaryKey(),
   y1: numeric({ precision: 6, scale: 2, mode: "number" }).notNull(),
