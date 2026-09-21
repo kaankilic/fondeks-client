@@ -46,14 +46,9 @@ export default async function FundDetailPage({
   const { slug } = await params;
   const code = codeFromSlug(slug);
 
-  const [fund, user] = await Promise.all([getFund(code), getCurrentUser()]);
-  if (!fund) notFound();
+  const user = await getCurrentUser();
 
-  // A bare code or a stale name redirects to the canonical slug, so every
-  // fund has exactly one URL.
-  if (slug !== fund.slug) permanentRedirect(`/fon/${fund.slug}`);
-
-  const schemas = [
+  const buildSchemas = (fund: Parameters<typeof fundSchema>[0]) => [
     fundSchema(fund),
     breadcrumbSchema([
       { name: "Keşfet", href: "/" },
@@ -61,12 +56,18 @@ export default async function FundDetailPage({
     ]),
   ];
 
-  // Visitors get the price strip and nothing else — the rest of the fund is
-  // never queried for them, so it never reaches the browser either.
+  // Visitors get the price strip and nothing else — the full detail is never
+  // queried for them, so a single light fetch is all this path costs.
   if (!user) {
+    const fund = await getFund(code);
+    if (!fund) notFound();
+    // A bare code or a stale name redirects to the canonical slug, so every
+    // fund has exactly one URL.
+    if (slug !== fund.slug) permanentRedirect(`/fon/${fund.slug}`);
+
     return (
       <Page>
-        {schemas.map((s, i) => (
+        {buildSchemas(fund).map((s, i) => (
           <JsonLd key={i} data={s} />
         ))}
         <FundHeader fund={fund} />
@@ -77,8 +78,13 @@ export default async function FundDetailPage({
     );
   }
 
+  // Logged-in: the detail bundle already carries the fund, so the page makes
+  // one request instead of fetching the fund a second time.
   const detail = await getFundDetail(code);
   if (!detail) notFound();
+  if (slug !== detail.fund.slug) permanentRedirect(`/fon/${detail.fund.slug}`);
+
+  const schemas = buildSchemas(detail.fund);
 
   return (
     <Page>

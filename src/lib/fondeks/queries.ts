@@ -63,13 +63,17 @@ type LeadersResponse<T> = { type: string; items: T[] };
 /** The API caps a page at 100 rows; walked in full where a screen needs it. */
 const MAX_PAGE = 100;
 
+/** The catalogue's size changes at most once a day, so it caches for an hour. */
+const COUNT_REVALIDATE = 3600;
+
 // ── Fund catalogue ──────────────────────────────────────────────────────────
 
 /** One page of funds, straight from the API with the given query. */
 async function listFunds(
   params: Record<string, string | number | undefined>,
+  revalidate?: number,
 ): Promise<FundListResponse> {
-  return apiFetch<FundListResponse>("/funds", params);
+  return apiFetch<FundListResponse>("/funds", params, revalidate);
 }
 
 /**
@@ -100,7 +104,7 @@ export const getFunds = cache(async (): Promise<Fund[]> => {
 
 /** How many funds the product covers — read off the list endpoint's total. */
 export const getFundCount = cache(async (): Promise<number> => {
-  const { total } = await listFunds({ limit: 1 });
+  const { total } = await listFunds({ limit: 1 }, COUNT_REVALIDATE);
   return total;
 });
 
@@ -218,10 +222,14 @@ export const getSmallestGainers = cache(async (limit = 5): Promise<Fund[]> => {
     .slice(0, limit);
 });
 
-/** Newest funds by kuruluş tarihi. */
+/**
+ * Newest funds by kuruluş tarihi. A fund whose launch date is still in the
+ * future has not "çıktı" yet, so it is left out rather than topping the list.
+ */
 export const getNewestFunds = cache(async (limit = 5): Promise<Fund[]> => {
+  const today = new Date().toISOString().slice(0, 10);
   return (await getFunds())
-    .filter((fund) => fund.inceptionDate)
+    .filter((fund) => fund.inceptionDate && fund.inceptionDate <= today)
     .sort((a, b) => (a.inceptionDate! < b.inceptionDate! ? 1 : -1))
     .slice(0, limit);
 });

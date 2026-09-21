@@ -17,6 +17,15 @@ const BASE_URL = (
 type QueryValue = string | number | boolean | undefined | null;
 type QueryParams = Record<string, QueryValue>;
 
+/**
+ * Default freshness window, in seconds. The API publishes
+ * `Cache-Control: s-maxage=60, stale-while-revalidate=300`, so 60s matches what
+ * it considers fresh: navigation is served from Next's data cache, and a price
+ * is never more than a minute behind. Readers over stable data (the catalogue
+ * size, the sitemap) pass a longer window.
+ */
+const DEFAULT_REVALIDATE = 60;
+
 /** A non-2xx response, carrying the status so callers can single out a 404. */
 export class ApiError extends Error {
   constructor(
@@ -44,14 +53,19 @@ function buildUrl(path: string, params?: QueryParams): string {
  * GET a JSON resource. Throws {@link ApiError} on a non-2xx response, using the
  * API's `{ "error": "…" }` body as the message when it has one.
  *
- * `no-store` because the app reads live prices — the same decision the data
- * layer made when the cross-request cache was removed. The API itself is
- * edge-cacheable, so freshness is its call to make, not ours to hold.
+ * Cached through Next's data cache for `revalidate` seconds (default
+ * {@link DEFAULT_REVALIDATE}). The API is the freshness authority — it declares
+ * a 60s window — so holding a response that long keeps navigation fast while
+ * prices stay within a minute of the source.
  */
-export async function apiFetch<T>(path: string, params?: QueryParams): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  params?: QueryParams,
+  revalidate: number = DEFAULT_REVALIDATE,
+): Promise<T> {
   const response = await fetch(buildUrl(path, params), {
     headers: { accept: "application/json" },
-    cache: "no-store",
+    next: { revalidate },
   });
 
   if (!response.ok) {
@@ -72,9 +86,10 @@ export async function apiFetch<T>(path: string, params?: QueryParams): Promise<T
 export async function apiFetchOrNull<T>(
   path: string,
   params?: QueryParams,
+  revalidate: number = DEFAULT_REVALIDATE,
 ): Promise<T | null> {
   try {
-    return await apiFetch<T>(path, params);
+    return await apiFetch<T>(path, params, revalidate);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
