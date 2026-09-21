@@ -1,312 +1,117 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 
-import { db } from "@/db";
-import {
-  categoryPerformance,
-  founders,
-  fundAllocations,
-  fundDailyStats,
-  fundPositions,
-  fundSimilarities,
-  funds,
-  guides,
-  indexQuotes,
-  marketIndices,
-  news,
-  symbols,
-} from "@/db/schema/funds";
-import {
-  ETF_FUND_TYPE,
-  PAGED_FUND_TYPES,
-  PENSION_FUND_TYPE,
-  PRODUCT_FUND_TYPE,
-  UNKNOWN,
-  type FundType,
-} from "./constants";
-import { formatPercent, formatPercentPrefixed } from "./format";
-import { allocationColor, FALLBACK_LOGO } from "./palette";
-import { fundSlug } from "./slug";
+import { apiFetch, apiFetchOrNull } from "./api-client";
 import type {
-  Allocation,
-  Guide,
-  GuideDetail,
-  NewsItem,
-  NewsSource,
   CategoryPerformance,
-  CompareRow,
   Fund,
   FundDetail,
-  HoldingChange,
+  Guide,
+  GuideDetail,
   MarketIndex,
   MonthlyStat,
+  NewsItem,
+  NewsSource,
   PricePoint,
-  RiskLevel,
-  SimilarFund,
+  SearchResult,
+  SitemapFund,
 } from "./types";
 
 /**
- * The data access layer. Prices, returns and fund size are derived from the
- * daily and monthly series rather than stored on the fund row, so everything a
- * screen shows can be traced back to a dated observation.
+ * The data access layer. The app no longer owns a database — every reader the
+ * external Fondeks API can serve reads from it over HTTP through
+ * {@link apiFetch}. Readers the API does not yet expose (market indices, news,
+ * category performance, guides, the pension and ETF universes) are stubbed to
+ * an empty result so their screens render an empty state rather than an error,
+ * until the API grows those endpoints.
  */
 
-const TRADING_DAYS_PER_YEAR = 252;
-
-/** Points drawn in an index card's sparkline. */
-const SPARK_POINTS = 16;
-
-/** Maps a value series onto the 120×42 sparkline viewBox. */
-function sparkPath(values: number[]): string | null {
-  if (values.length < 2) return null;
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-
-  return values
-    .map((value, index) => {
-      const x = (index / (values.length - 1)) * 118 + 1;
-      const y = 38 - ((value - min) / span) * 34;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-}
-
-type SnapshotRow = {
-  code: string;
-  name: string;
-  founder: string;
-  initials: string | null;
-  color: string | null;
-  category: Fund["category"];
-  isin: string | null;
-  management_fee: string;
-  withholding_tax: string | null;
-  risk: number | null;
-  buy_value_days: number | null;
-  sell_value_days: number | null;
-  on_tefas: boolean | null;
-  inception_date: string | null;
-  price: string;
-  price_date: string;
-  prev_price: string | null;
-  w1_price: string | null;
-  m1_price: string | null;
-  m3_price: string | null;
-  y1_price: string | null;
-  total_value: string | null;
-  investor_count: number | null;
-};
-
-/** Percentage change between two prices, or 0 when there is no history yet. */
-function changePct(current: number, past: string | null): number {
-  if (!past) return 0;
-  const previous = Number(past);
-  if (!previous) return 0;
-  return Number((((current / previous) - 1) * 100).toFixed(2));
-}
-
-function toFund(row: SnapshotRow): Fund {
-  const price = Number(row.price);
-
-  return {
-    code: row.code,
-    slug: fundSlug(row.code, row.name),
-    name: row.name,
-    founder: row.founder,
-    founderInitials: row.initials ?? FALLBACK_LOGO.initials,
-    founderColor: row.color ?? FALLBACK_LOGO.background,
-    category: row.category,
-    isin: row.isin,
-    managementFee: Number(row.management_fee),
-    withholdingTax: row.withholding_tax === null ? null : Number(row.withholding_tax),
-    buyValueDays: row.buy_value_days,
-    sellValueDays: row.sell_value_days,
-    onTefas: row.on_tefas,
-    price,
-    priceDate: row.price_date,
-    daily: changePct(price, row.prev_price),
-    w1: changePct(price, row.w1_price),
-    m1: changePct(price, row.m1_price),
-    m3: changePct(price, row.m3_price),
-    y1: changePct(price, row.y1_price),
-    inceptionDate: row.inception_date,
-    aum: Number(row.total_value ?? 0),
-    investors: row.investor_count,
-    risk: row.risk as RiskLevel | null,
-  };
-}
-
-/**
- * A one-day price move this large is a restatement, not a return.
- *
- * Funds are relaunched: the unit price is re-based and the share count steps
- * with it, so the series either side of that day measures a different thing.
- * Dividing across one produces figures like NMG's +11.492% year — which TEFAS
- * publishes too, because it divides the same two prices.
- *
- * 1.0 means "the price at least doubled or halved overnight". Of 489k daily
- * observations, 485,854 move less than 10% and only 52 clear this bar, every
- * one of them in a fund with between 1 and 72 investors.
- */
-const SERIES_BREAK_RATIO = 1;
-
-/**
- * One row per fund with its latest price, the reference prices the returns are
- * measured against, and the most recent monthly size and investor count.
- *
- * An anchor older than the fund's most recent restatement is dropped rather
- * than divided against, so that window reports no return instead of a
- * fabricated one. Each window is judged separately: a break last week spoils
- * the daily figure and the yearly one, a break ten months ago only the yearly.
- */
-const snapshotBase = sql`
-  select
-    f.code, f.name, f.founder, fo.initials, fo.color, f.category, f.isin,
-    f.management_fee, f.withholding_tax, f.risk,
-    f.buy_value_days, f.sell_value_days, f.on_tefas, f.inception_date,
-    lp.price,
-    to_char(lp.date, 'YYYY-MM-DD') as price_date,
-    case when brk.at is null or brk.at <= prev.date then prev.price end as prev_price,
-    case when brk.at is null or brk.at <= w1.date   then w1.price   end as w1_price,
-    case when brk.at is null or brk.at <= m1.date   then m1.price   end as m1_price,
-    case when brk.at is null or brk.at <= m3.date   then m3.price   end as m3_price,
-    case when brk.at is null or brk.at <= y1.date   then y1.price   end as y1_price,
-    lp.total_value,
-    lp.investor_count
-  from ${funds} f
-  join ${founders} fo on fo.name = f.founder
-  join lateral (
-    select p.price, p.date, p.total_value, p.investor_count
-    from ${fundDailyStats} p
-    where p.fund_code = f.code order by p.date desc limit 1
-  ) lp on true
-  left join lateral (
-    select p.price, p.date from ${fundDailyStats} p
-    where p.fund_code = f.code and p.date < lp.date
-    order by p.date desc limit 1
-  ) prev on true
-  left join lateral (
-    select p.price, p.date from ${fundDailyStats} p
-    where p.fund_code = f.code and p.date <= lp.date - interval '7 days'
-    order by p.date desc limit 1
-  ) w1 on true
-  left join lateral (
-    select p.price, p.date from ${fundDailyStats} p
-    where p.fund_code = f.code and p.date <= lp.date - interval '1 month'
-    order by p.date desc limit 1
-  ) m1 on true
-  left join lateral (
-    select p.price, p.date from ${fundDailyStats} p
-    where p.fund_code = f.code and p.date <= lp.date - interval '3 months'
-    order by p.date desc limit 1
-  ) m3 on true
-  left join lateral (
-    select p.price, p.date from ${fundDailyStats} p
-    where p.fund_code = f.code and p.date <= lp.date - interval '1 year'
-    order by p.date desc limit 1
-  ) y1 on true
-  left join lateral (
-    select max(step.date) as at from (
-      select p.date, p.price,
-             lag(p.price) over (order by p.date) as before
-      from ${fundDailyStats} p
-      where p.fund_code = f.code and p.date > lp.date - interval '1 year'
-    ) step
-    where step.before > 0
-      and abs(step.price / step.before - 1) > ${SERIES_BREAK_RATIO}
-  ) brk on true
-`;
-
-/** The snapshot narrowed to one TEFAS universe. */
-const snapshotOf = (fundType: FundType) =>
-  sql`${snapshotBase} where f.fund_type = ${fundType}`;
-
-/**
- * The snapshot is the same for every visitor and changes once a day, when the
- * ingest writes the session's prices — but it is not cheap: the anchors and
- * the restatement check are a lateral join each, per fund, over a year of
- * daily rows. Measured against a full 2,099-fund catalogue it runs ~650ms, and
- * every screen that lists funds was paying it on every navigation.
- *
- * `cache` alone does not help there: it dedupes within one request, so two
- * clicks are two runs. Caching it across requests is what makes navigating
- * between the fund screens feel instant.
- *
- * The window is short enough that a fund is never far behind its prices, and
- * the ingest routes drop the tag when they write, so a sync shows up at once
- * rather than at the end of it.
- */
 /**
  * Kept only so the `revalidateTag` calls in the cron routes still resolve to a
- * symbol. With the cross-request cache disabled those calls are harmless no-ops
- * — nothing is tagged for them to drop.
+ * symbol. Nothing is tagged for them to drop now that the readers fetch live
+ * from the API, so those calls are harmless no-ops.
  */
 export const CATALOGUE_TAG = "fund-catalogue";
 
-/**
- * Cross-request caching is disabled: every request reads live data straight
- * from the database, so a freshly ingested price shows up at once.
- *
- * `cache` still dedupes within a single request, so a screen that reads a
- * snapshot from several components runs the underlying query once per render
- * rather than paying the ~650ms lateral-join cost repeatedly. The `key`
- * argument is retained for call-site clarity even though nothing keys on it now.
- */
-function cached<A extends unknown[], T>(
-  _key: string,
-  load: (...args: A) => Promise<T>,
-): (...args: A) => Promise<T> {
-  return cache(load);
+// ── Response shapes the API returns ─────────────────────────────────────────
+
+type FundListResponse = {
+  items: Fund[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+type SearchResponse = { results: SearchResult[] };
+
+type FundDetailResponse = {
+  fund: Fund;
+  prices?: PricePoint[];
+  monthly?: MonthlyStat[];
+  volatility?: number | null;
+  allocation?: FundDetail["allocation"];
+  similar?: FundDetail["similar"];
+  increased?: FundDetail["increased"];
+  decreased?: FundDetail["decreased"];
+  compare?: FundDetail["compare"];
+};
+
+type InvestorLeader = { fund: Fund; growthPct: number; investors: number };
+type LeadersResponse<T> = { type: string; items: T[] };
+
+/** The API caps a page at 100 rows; walked in full where a screen needs it. */
+const MAX_PAGE = 100;
+
+// ── Fund catalogue ──────────────────────────────────────────────────────────
+
+/** One page of funds, straight from the API with the given query. */
+async function listFunds(
+  params: Record<string, string | number | undefined>,
+): Promise<FundListResponse> {
+  return apiFetch<FundListResponse>("/funds", params);
 }
 
-/** How many funds the product actually covers. */
-export const getFundCount = cached("fund-count", async (): Promise<number> => {
-  const [row] = await db
-    .select({ total: count() })
-    .from(funds)
-    .where(eq(funds.fundType, PRODUCT_FUND_TYPE));
-  return row?.total ?? 0;
+/**
+ * The whole catalogue, best one-year return first — the product's default
+ * order and the shape the discovery screens filter and slice client-side.
+ *
+ * The list endpoint pages at 100, so this walks every page. `cache` dedupes it
+ * within a request, so a screen that reads it from several components pays the
+ * walk once per render.
+ */
+export const getFunds = cache(async (): Promise<Fund[]> => {
+  const first = await listFunds({ sort: "y1", dir: "desc", limit: MAX_PAGE });
+  const funds = [...first.items];
+
+  for (let offset = MAX_PAGE; offset < first.total; offset += MAX_PAGE) {
+    const page = await listFunds({
+      sort: "y1",
+      dir: "desc",
+      limit: MAX_PAGE,
+      offset,
+    });
+    funds.push(...page.items);
+    if (page.items.length === 0) break;
+  }
+
+  return funds;
 });
 
-/** Ordered the way every list wants them: best one-year return first. */
-const byReturn = (rows: SnapshotRow[]): Fund[] =>
-  rows.map(toFund).sort((a, b) => b.y1 - a.y1);
-
-/** All funds, best one-year return first — the product's default order. */
-export const getFunds = cached("fund-snapshot", async (): Promise<Fund[]> => {
-  const result = await db.execute<SnapshotRow>(
-    snapshotOf(PRODUCT_FUND_TYPE),
-  );
-  return byReturn(result.rows);
+/** How many funds the product covers — read off the list endpoint's total. */
+export const getFundCount = cache(async (): Promise<number> => {
+  const { total } = await listFunds({ limit: 1 });
+  return total;
 });
 
 /**
- * Emeklilik yatırım fonları. A separate reader rather than a filter over
- * `getFunds`, so the pension section neither loads the securities catalogue
- * nor caches under its key.
+ * Emeklilik yatırım fonları. The list endpoint has no fund-type parameter, so
+ * this universe is unavailable until the API exposes one — stubbed empty.
  */
-export const getPensionFunds = cached(
-  "pension-snapshot",
-  async (): Promise<Fund[]> => {
-    const result = await db.execute<SnapshotRow>(
-      snapshotOf(PENSION_FUND_TYPE),
-    );
-    return byReturn(result.rows);
-  },
-);
+export const getPensionFunds = cache(async (): Promise<Fund[]> => []);
 
-/** Borsa yatırım fonları — the same arrangement, one universe over. */
-export const getEtfFunds = cached(
-  "etf-snapshot",
-  async (): Promise<Fund[]> => {
-    const result = await db.execute<SnapshotRow>(snapshotOf(ETF_FUND_TYPE));
-    return byReturn(result.rows);
-  },
-);
+/** Borsa yatırım fonları — likewise unavailable through the API for now. */
+export const getEtfFunds = cache(async (): Promise<Fund[]> => []);
 
 /** "Öne Çıkanlar" — the week's strongest movers, biggest gain first. */
 export const getFeaturedFunds = cache(async (limit = 3): Promise<Fund[]> => {
@@ -320,550 +125,82 @@ export const getWatchlist = cache(async (): Promise<Fund[]> => {
   return (await getFunds()).slice(0, 5);
 });
 
-export const getFund = cached(
-  "fund",
-  async (code: string): Promise<Fund | null> => {
-    const result = await db.execute<SnapshotRow>(
-      sql`${snapshotBase} where upper(f.code) = ${code.toUpperCase()}`,
-    );
-    const [row] = result.rows;
-    return row ? toFund(row) : null;
-  },
-);
+/** One fund, by TEFAS code or full slug. Null when the API answers 404. */
+export const getFund = cache(async (code: string): Promise<Fund | null> => {
+  return apiFetchOrNull<Fund>(`/funds/${encodeURIComponent(code)}`);
+});
 
 /** Daily price series, oldest first, limited to the last `days` sessions. */
-export const getFundPrices = cached(
-  "fund-prices",
+export const getFundPrices = cache(
   async (code: string, days: number = 260): Promise<PricePoint[]> => {
-    const rows = await db
-      .select({ date: fundDailyStats.date, price: fundDailyStats.price })
-      .from(fundDailyStats)
-      .where(eq(fundDailyStats.fundCode, code))
-      .orderBy(desc(fundDailyStats.date))
-      .limit(days);
-
-    return rows.reverse();
+    const detail = await apiFetchOrNull<FundDetailResponse>(
+      `/funds/${encodeURIComponent(code)}`,
+      { include: "prices" },
+    );
+    const prices = detail?.prices ?? [];
+    return days < prices.length ? prices.slice(prices.length - days) : prices;
   },
 );
 
-/**
- * Month-end size and investor count, rolled up from the daily rows, with net
- * flow derived as the part of the change in size the fund's own return does
- * not explain.
- */
-export const getFundMonthly = cached(
-  "fund-monthly",
+/** Month-end size, investor count and net flow for the fund. */
+export const getFundMonthly = cache(
   async (code: string, months = 24): Promise<MonthlyStat[]> => {
-    const result = await db.execute<{
-      month: string;
-      total_value: string | null;
-      investor_count: number | null;
-      price: string;
-    }>(sql`
-      select to_char(date_trunc('month', date), 'YYYY-MM-DD') as month,
-             (array_agg(total_value order by date desc))[1]    as total_value,
-             (array_agg(investor_count order by date desc))[1] as investor_count,
-             (array_agg(price order by date desc))[1]          as price
-      from ${fundDailyStats}
-      where fund_code = ${code}
-      group by date_trunc('month', date)
-      order by date_trunc('month', date) desc
-      limit ${months}
-    `);
-
-    const rows = result.rows.reverse();
-
-    return rows.map((row, index) => {
-      const value = Number(row.total_value ?? 0);
-      const previous = rows[index - 1];
-      const previousValue = Number(previous?.total_value ?? 0);
-      const priceReturn = previous
-        ? Number(row.price) / Number(previous.price) - 1
-        : 0;
-
-      return {
-        month: row.month,
-        totalValue: value,
-        investorCount: row.investor_count,
-        netFlow: previous
-          ? Number((value - previousValue * (1 + priceReturn)).toFixed(2))
-          : 0,
-      };
-    });
-  },
-);
-
-/** Annualised volatility of daily returns over the last year, in percent. */
-async function getVolatilities(
-  codes: string[],
-): Promise<Map<string, number | null>> {
-  const result = await db.execute<{ fund_code: string; vol: string | null }>(sql`
-    select fund_code,
-           stddev_samp(r) * sqrt(${TRADING_DAYS_PER_YEAR}) * 100 as vol
-    from (
-      select fund_code,
-             price / lag(price) over (partition by fund_code order by date) - 1 as r
-      from ${fundDailyStats}
-      where fund_code = any(${sql.param(codes)})
-        and date >= current_date - interval '1 year'
-    ) daily
-    where r is not null
-    group by fund_code
-  `);
-
-  return new Map(
-    result.rows.map((row) => [
-      row.fund_code,
-      row.vol === null ? null : Number(Number(row.vol).toFixed(1)),
-    ]),
-  );
-}
-
-/** KAP filings from the database, newest first. */
-export const getNews = cached(
-  "news",
-  async (source: NewsSource, limit: number = 6): Promise<NewsItem[]> => {
-    return db
-      .select({
-        id: news.id,
-        source: news.source,
-        title: news.title,
-        summary: news.summary,
-        symbol: news.symbol,
-        publisher: news.publisher,
-        url: news.url,
-        publishedAt: news.publishedAt,
-      })
-      .from(news)
-      .where(eq(news.source, source))
-      .orderBy(desc(news.publishedAt))
-      .limit(limit);
-  },
-);
-
-/** Live market headlines from the Foreks RSS feed, cached for 15 minutes. */
-export const getForeksNews = cached(
-  "foreks-news",
-  async (limit: number = 6): Promise<NewsItem[]> => {
-    const { fetchForeksNews } = await import("@/lib/market/foreks-rss");
-    const items = await fetchForeksNews();
-
-    return items.slice(0, limit).map((item, i) => ({
-      id: `rss-${i}`,
-      source: "haber" as const,
-      title: item.title,
-      summary: item.summary,
-      symbol: null,
-      publisher: "ForInvest",
-      url: item.link,
-      publishedAt: item.publishedAt,
-    }));
+    const detail = await apiFetchOrNull<FundDetailResponse>(
+      `/funds/${encodeURIComponent(code)}`,
+      { include: "monthly" },
+    );
+    const monthly = detail?.monthly ?? [];
+    return months < monthly.length
+      ? monthly.slice(monthly.length - months)
+      : monthly;
   },
 );
 
 /**
- * Index cards: the latest quote, its change against the previous one and a
- * sparkline — all read from `index_quotes`, so the three always agree.
+ * The full fund detail bundle: the fund, its series, volatility, allocation,
+ * similar funds, the mover panels and the compare table — one request with
+ * every section attached.
  */
-export const getMarketIndices = cached(
-  "market-indices",
-  async (): Promise<MarketIndex[]> => {
-    const rows = await db
-      .select({
-        name: marketIndices.name,
-        symbol: marketIndices.symbol,
-        color: marketIndices.color,
-        unit: marketIndices.unit,
-        decimals: marketIndices.decimals,
-        displayPattern: marketIndices.displayPattern,
-        position: marketIndices.position,
-      })
-      .from(marketIndices)
-      .where(eq(marketIndices.isActive, true))
-      .orderBy(asc(marketIndices.position));
-
-    if (rows.length === 0) return [];
-
-    // Last 16 sessions per index, newest first: enough for the card's sparkline.
-    const series = await db.execute<{
-      index_name: string;
-      value: string;
-      rn: number;
-    }>(sql`
-    select index_name, value, rn from (
-      select index_name, value,
-             row_number() over (partition by index_name order by date desc) as rn
-      from ${indexQuotes}
-    ) recent
-    where rn <= ${SPARK_POINTS}
-    order by index_name, rn desc
-  `);
-
-    const byIndex = new Map<string, number[]>();
-    for (const row of series.rows) {
-      const values = byIndex.get(row.index_name) ?? [];
-      values.push(Number(row.value));
-      byIndex.set(row.index_name, values);
-    }
-
-    return rows.map((row) => {
-      const values = byIndex.get(row.name) ?? [];
-      const value = values.at(-1) ?? 0;
-      const previous = values.at(-2);
-
-      return {
-        name: row.name,
-        symbol: row.symbol,
-        color: row.color,
-        unit: row.unit,
-        decimals: row.decimals,
-        displayPattern: row.displayPattern,
-        value,
-        change:
-          previous && previous !== 0
-            ? Number((((value - previous) / previous) * 100).toFixed(2))
-            : null,
-        spark: sparkPath(values),
-      };
-    });
-  },
-);
-
-export const getCategoryPerformance = cached(
-  "category-performance",
-  async (): Promise<CategoryPerformance[]> => {
-    return db
-      .select({
-        category: categoryPerformance.category,
-        y1: categoryPerformance.y1,
-      })
-      .from(categoryPerformance)
-      .orderBy(desc(categoryPerformance.y1));
-  },
-);
-
-/** How many peers the head-to-head table compares against. */
-const COMPARE_PEERS = 2;
-
-/** How many movers each of the two position panels lists. */
-const MOVERS_PER_PANEL = 5;
-
-/**
- * Smallest move worth a row. The panel prints one decimal, so anything under
- * this renders as "0,0 puan" — a row that says nothing happened.
- */
-const MIN_MOVE_POINTS = 0.05;
-
-type MoveRow = {
-  label: string;
-  color: string | null;
-  weight: string;
-  change: string;
-};
-
-/**
- * Security-level movements: what the manager added to and trimmed between two
- * monthly portfolio reports.
- *
- * This is the panel as designed — "artırdı: ASELS" rather than "artırdı: hisse
- * senedi". It is available because section III of a fund's KAP "Portföy Dağılım
- * Raporu" lists its positions individually; `fund_positions` is the diff of two
- * consecutive ones. A fund only has rows once two reports have been extracted,
- * so this falls back to asset classes rather than showing an empty panel.
- */
-async function getSecurityMoves(code: string) {
-  const result = await db.execute<MoveRow>(sql`
-    select
-      coalesce(s.name, p.ticker) as label,
-      s.color                    as color,
-      p.weight                   as weight,
-      p.change_points            as change
-    from ${fundPositions} p
-    left join ${symbols} s on s.ticker = p.ticker
-    where p.fund_code = ${code}
-      and p.period = (
-        select max(period) from ${fundPositions} where fund_code = ${code}
-      )
-      and abs(p.change_points) >= ${MIN_MOVE_POINTS}
-    order by p.change_points desc
-  `);
-
-  return result.rows;
-}
-
-/**
- * Asset-class movements: a fund's newest breakdown against the most recent one
- * at least a month older.
- *
- * The fallback for a fund whose portfolio reports have not both been read yet —
- * every fund publishes a breakdown daily, but only monthly filings name the
- * securities behind it.
- */
-async function getAllocationMoves(code: string) {
-  const result = await db.execute<MoveRow>(sql`
-    with latest as (
-      select max(date) as at from ${fundAllocations} where fund_code = ${code}
-    ),
-    baseline as (
-      select max(date) as at from ${fundAllocations}
-      where fund_code = ${code}
-        and date <= (select at from latest) - interval '1 month'
-    ),
-    current_slices as (
-      select label, pct from ${fundAllocations}
-      where fund_code = ${code} and date = (select at from latest)
-    ),
-    earlier_slices as (
-      select label, pct from ${fundAllocations}
-      where fund_code = ${code} and date = (select at from baseline)
-    )
-    select
-      coalesce(c.label, e.label)              as label,
-      null::text                              as color,
-      coalesce(c.pct, 0)                      as weight,
-      coalesce(c.pct, 0) - coalesce(e.pct, 0) as change
-    from current_slices c
-    full outer join earlier_slices e on e.label = c.label
-    -- With no baseline every slice would read as newly opened.
-    where (select at from baseline) is not null
-      and abs(coalesce(c.pct, 0) - coalesce(e.pct, 0)) >= ${MIN_MOVE_POINTS}
-    order by change desc
-  `);
-
-  return result.rows;
-}
-
 export const getFundDetail = cache(
   async (code: string): Promise<FundDetail | null> => {
-    const fund = await getFund(code);
-    if (!fund) return null;
-
-    const [
-      securityMoves,
-      allocationMoves,
-      allocation,
-      peerRows,
-      prices,
-      monthly,
-    ] = await Promise.all([
-      getSecurityMoves(fund.code),
-      getAllocationMoves(fund.code),
-
-      // The breakdown is a history now, so only the newest day is the picture.
-      db
-        .select({ label: fundAllocations.label, pct: fundAllocations.pct })
-        .from(fundAllocations)
-        .where(
-          sql`${fundAllocations.fundCode} = ${fund.code} and ${fundAllocations.date} = (
-            select max(date) from ${fundAllocations} where fund_code = ${fund.code}
-          )`,
-        )
-        .orderBy(asc(fundAllocations.position)),
-
-      db
-        .select({
-          code: fundSimilarities.peerCode,
-          label: fundSimilarities.peerLabel,
-          name: funds.name,
-          initials: founders.initials,
-          color: founders.color,
-          similarity: fundSimilarities.similarity,
-          risk: funds.risk,
-        })
-        .from(fundSimilarities)
-        .innerJoin(funds, eq(fundSimilarities.peerCode, funds.code))
-        .leftJoin(founders, eq(funds.founder, founders.name))
-        .where(eq(fundSimilarities.fundCode, fund.code))
-        .orderBy(desc(fundSimilarities.similarity)),
-
-      getFundPrices(fund.code),
-      getFundMonthly(fund.code),
-    ]);
-
-    const everyFund = await getFunds();
-    const returnsByCode = new Map(everyFund.map((row) => [row.code, row]));
-
-    const similar: SimilarFund[] = peerRows.map((peer) => ({
-      code: peer.code,
-      slug: fundSlug(peer.code, peer.name),
-      label: peer.label ?? peer.name,
-      initials: peer.initials ?? FALLBACK_LOGO.initials,
-      color: peer.color ?? FALLBACK_LOGO.background,
-      similarity: peer.similarity,
-      y1: returnsByCode.get(peer.code)?.y1 ?? 0,
-      risk: peer.risk as RiskLevel | null,
-    }));
-
-    const compareCodes = [
-      fund.code,
-      ...similar.slice(0, COMPARE_PEERS).map((peer) => peer.code),
-    ];
-    const volatilities = await getVolatilities(compareCodes);
-
-    // Every comparison row reads a real column or a series-derived figure.
-    const compared = compareCodes.map((peerCode) =>
-      peerCode === fund.code ? fund : returnsByCode.get(peerCode),
+    const detail = await apiFetchOrNull<FundDetailResponse>(
+      `/funds/${encodeURIComponent(code)}`,
+      { include: "prices,monthly,detail" },
     );
-
-    const rows: CompareRow[] = [
-      {
-        label: "1 Yıl Getiri",
-        values: compared.map((row) => (row ? formatPercent(row.y1, 1) : "—")),
-      },
-      {
-        label: "Risk Değeri",
-        values: compared.map((row) => {
-          if (!row) return "—";
-          return row.risk === null ? UNKNOWN : `${row.risk} / 7`;
-        }),
-      },
-      {
-        label: "Yıllık Yönetim Ücreti",
-        values: compared.map((row) =>
-          row ? formatPercentPrefixed(row.managementFee, 2) : "—",
-        ),
-      },
-      {
-        label: "Stopaj Oranı",
-        values: compared.map((row) => {
-          if (!row) return "—";
-          return row.withholdingTax === null
-            ? UNKNOWN
-            : formatPercentPrefixed(row.withholdingTax, 0);
-        }),
-      },
-      {
-        label: "Volatilite (1Y)",
-        values: compareCodes.map((peerCode) => {
-          const vol = volatilities.get(peerCode);
-          return vol === null || vol === undefined
-            ? "—"
-            : formatPercentPrefixed(vol, 1);
-        }),
-      },
-      {
-        label: "Yatırımcı Sayısı",
-        values: compared.map((row) => {
-          if (!row) return "—";
-          return row.investors === null
-            ? UNKNOWN
-            : row.investors.toLocaleString("tr-TR");
-        }),
-      },
-    ];
-
-    // Securities when both of the fund's monthly reports have been read, asset
-    // classes otherwise. Never both: the two measure different things over
-    // different windows, and a mixed panel would read as one list.
-    const moves = securityMoves.length > 0 ? securityMoves : allocationMoves;
-
-    const toHolding = (
-      row: (typeof moves)[number],
-      index: number,
-    ): HoldingChange => ({
-      label: row.label,
-      // A stock carries its own brand colour; asset classes are coloured by
-      // position, and so is a stock we have no colour for.
-      color: row.color ?? allocationColor(index),
-      weight: Number(row.weight),
-      change: Number(row.change),
-    });
-
-    // The query orders by change descending, so gains lead and the sharpest
-    // cuts are at the far end — reversed, they lead their own panel.
-    const gained = moves.filter((row) => Number(row.change) > 0);
-    const shed = moves.filter((row) => Number(row.change) < 0).reverse();
+    if (!detail) return null;
 
     return {
-      fund,
-      volatility: volatilities.get(fund.code) ?? null,
-      prices,
-      monthly,
-      increased: gained.slice(0, MOVERS_PER_PANEL).map(toHolding),
-      decreased: shed.slice(0, MOVERS_PER_PANEL).map(toHolding),
-      allocation: allocation as Allocation[],
-      similar,
-      compare: { codes: compareCodes, rows },
+      fund: detail.fund,
+      volatility: detail.volatility ?? null,
+      prices: detail.prices ?? [],
+      monthly: detail.monthly ?? [],
+      increased: detail.increased ?? [],
+      decreased: detail.decreased ?? [],
+      allocation: detail.allocation ?? [],
+      similar: detail.similar ?? [],
+      compare: detail.compare ?? { codes: [], rows: [] },
     };
   },
 );
 
-/**
- * Sparkline paths for the featured cards, drawn from the real price series and
- * downsampled to the shape the 120×42 viewBox expects.
- */
-export const getSparklines = cached(
-  "sparklines",
-  async (
-    codes: string[],
-    sessions: number = 60,
-    points: number = 16,
-  ): Promise<Record<string, string>> => {
-    if (codes.length === 0) return {};
+// ── Search ───────────────────────────────────────────────────────────────────
 
-    const result = await db.execute<{ fund_code: string; price: string }>(sql`
-      select fund_code, price from (
-        select fund_code, date, price,
-               row_number() over (partition by fund_code order by date desc) as rn
-        from ${fundDailyStats}
-        where fund_code = any(${sql.param(codes)})
-      ) recent
-      where rn <= ${sessions}
-      order by fund_code, date
-    `);
-
-    const byFund = new Map<string, number[]>();
-    for (const row of result.rows) {
-      const series = byFund.get(row.fund_code) ?? [];
-      series.push(Number(row.price));
-      byFund.set(row.fund_code, series);
-    }
-
-    const paths: Record<string, string> = {};
-
-    for (const [code, series] of byFund) {
-      if (series.length < 2) continue;
-
-      const sampled = Array.from({ length: points }, (_, i) => {
-        const index = Math.round((i / (points - 1)) * (series.length - 1));
-        return series[index];
-      });
-
-      const min = Math.min(...sampled);
-      const max = Math.max(...sampled);
-      const span = max - min || 1;
-
-      paths[code] = sampled
-        .map((value, i) => {
-          const x = (i / (points - 1)) * 118 + 1;
-          const y = 38 - ((value - min) / span) * 34;
-          return `${x.toFixed(1)},${y.toFixed(1)}`;
-        })
-        .join(" ");
-    }
-
-    return paths;
-  },
-);
-
-/** Fund search over code, name and issuer — powers the nav's quick search. */
-export async function searchFunds(query: string, limit = 6): Promise<Fund[]> {
+/** Quick-search over code, name and issuer — powers the nav's search box. */
+export async function searchFunds(query: string): Promise<SearchResult[]> {
   const needle = query.trim();
   if (needle.length < 2) return [];
 
-  const all = await getFunds();
-  const folded = needle.toLocaleLowerCase("tr");
-
-  return all
-    .filter((fund) =>
-      `${fund.code} ${fund.name} ${fund.founder}`
-        .toLocaleLowerCase("tr")
-        .includes(folded),
-    )
-    .slice(0, limit);
+  const { results } = await apiFetch<SearchResponse>("/funds/search", {
+    q: needle,
+  });
+  return results;
 }
 
 // ── Discovery widgets ───────────────────────────────────────────────────────
+//
+// Derived from the full catalogue rather than the `/leaders` endpoint: the
+// discovery screen already loads `getFunds()` once, so these are free client
+// transforms over it and stay exactly consistent with the table beside them.
 
 /** Best one-year performers. */
 export const getTopGainers = cache(async (limit = 5): Promise<Fund[]> => {
@@ -871,12 +208,8 @@ export const getTopGainers = cache(async (limit = 5): Promise<Fund[]> => {
 });
 
 /**
- * "En Az Kazandıran Fonlar" — the thinnest gains, closest to zero first.
- *
- * A fund that lost money did not earn least, it lost, so the panel is bounded
- * below by zero rather than being the return ranking read backwards. Funds
- * with no measurable year — a history shorter than the window, which `changePct`
- * reports as a flat 0 — are excluded too, as an absent figure is not a gain.
+ * "En Az Kazandıran Fonlar" — the thinnest gains, closest to zero first. A fund
+ * that lost money did not earn least, so the panel is bounded below by zero.
  */
 export const getSmallestGainers = cache(async (limit = 5): Promise<Fund[]> => {
   return (await getFunds())
@@ -896,139 +229,75 @@ export const getNewestFunds = cache(async (limit = 5): Promise<Fund[]> => {
 export type InvestorGrowth = { fund: Fund; growth: number; investors: number };
 
 /**
- * Funds whose yatırımcı sayısı grew most between the last two reported months.
+ * Funds whose yatırımcı sayısı grew most over the last month. Month-over-month
+ * growth is not in the fund snapshot, so this reads the API's leader board.
  */
-/**
- * Funds whose yatırımcı sayısı grew most over the last month, comparing the
- * latest reading with the closest one about 30 days earlier.
- */
-export const getInvestorGrowth = cached(
-  "investor-growth",
+export const getInvestorGrowth = cache(
   async (limit: number = 5): Promise<InvestorGrowth[]> => {
-    const result = await db.execute<{
-      fund_code: string;
-      investor_count: number;
-      growth: string | null;
-    }>(sql`
-      with latest as (
-        select distinct on (d.fund_code) d.fund_code, d.date, d.investor_count
-        from ${fundDailyStats} d
-        join ${funds} f on f.code = d.fund_code
-        where d.investor_count is not null
-          and f.fund_type = ${PRODUCT_FUND_TYPE}
-        order by d.fund_code, d.date desc
-      )
-      select l.fund_code, l.investor_count,
-             (l.investor_count::numeric / nullif(p.investor_count, 0) - 1) * 100
-               as growth
-      from latest l
-      join lateral (
-        select investor_count from ${fundDailyStats} d
-        where d.fund_code = l.fund_code
-          and d.investor_count is not null
-          and d.date <= l.date - interval '1 month'
-        order by d.date desc
-        limit 1
-      ) p on true
-      order by growth desc nulls last
-      limit ${limit}
-    `);
-
-    const byCode = new Map((await getFunds()).map((fund) => [fund.code, fund]));
-
-    return result.rows.flatMap((row) => {
-      const fund = byCode.get(row.fund_code);
-      if (!fund) return [];
-      return [
-        {
-          fund,
-          growth: Number(row.growth ?? 0),
-          investors: row.investor_count,
-        },
-      ];
-    });
-  },
-);
-
-// ── Rehber ──────────────────────────────────────────────────────────────────
-
-const guideColumns = {
-  slug: guides.slug,
-  title: guides.title,
-  summary: guides.summary,
-  category: guides.category,
-  readingMinutes: guides.readingMinutes,
-  publishedAt: guides.publishedAt,
-};
-
-/** Guide list, newest first. */
-export const getGuides = cached(
-  "guides",
-  async (limit?: number): Promise<Guide[]> => {
-    const query = db
-      .select(guideColumns)
-      .from(guides)
-      .orderBy(desc(guides.publishedAt));
-
-    return limit ? query.limit(limit) : query;
-  },
-);
-
-export const getGuide = cached(
-  "guide",
-  async (slug: string): Promise<GuideDetail | null> => {
-    const [row] = await db
-      .select({ ...guideColumns, body: guides.body })
-      .from(guides)
-      .where(eq(guides.slug, slug))
-      .limit(1);
-
-    if (!row) return null;
-
-    const { body, ...guide } = row;
-    return {
-      ...guide,
-      paragraphs: body.split(/\n\s*\n/).map((part) => part.trim()),
-    };
-  },
-);
-
-/** One indexable fund URL: the canonical slug and when its data last moved. */
-export type SitemapFund = { slug: string; lastModified: Date };
-
-/**
- * Funds for the sitemap. Deliberately not `getFunds()`: that builds a return
- * snapshot for every row and sorts it, none of which a URL list needs. Only
- * listed funds with a price are included, so every URL answers 200 rather than
- * redirecting or 404ing.
- */
-export const getSitemapFunds = cached(
-  "sitemap-funds",
-  async (): Promise<SitemapFund[]> => {
-    const rows = await db
-      .select({
-        code: funds.code,
-        name: funds.name,
-        lastModified: sql<string>`max(${fundDailyStats.date})`,
-      })
-      .from(funds)
-      .innerJoin(fundDailyStats, eq(fundDailyStats.fundCode, funds.code))
-      .where(
-        and(
-          eq(funds.isActive, true),
-          inArray(funds.fundType, PAGED_FUND_TYPES),
-        ),
-      )
-      .groupBy(funds.code, funds.name)
-      // A grouped query returns rows in whatever order the plan produces, and
-      // that order can change between runs. The submission job walks this list
-      // a slice per day, so its place in it has to mean the same thing
-      // tomorrow as it did today.
-      .orderBy(asc(funds.code));
-
-    return rows.map((row) => ({
-      slug: fundSlug(row.code, row.name),
-      lastModified: new Date(row.lastModified),
+    const { items } = await apiFetch<LeadersResponse<InvestorLeader>>(
+      "/leaders",
+      { type: "investors", limit },
+    );
+    return items.map((item) => ({
+      fund: item.fund,
+      growth: item.growthPct,
+      investors: item.investors,
     }));
   },
 );
+
+// ── Sitemap ───────────────────────────────────────────────────────────────────
+
+/**
+ * Every indexable fund URL, walked from the list endpoint. Uses each fund's
+ * canonical slug and its price date as the last-modified stamp.
+ */
+export const getSitemapFunds = cache(async (): Promise<SitemapFund[]> => {
+  const funds = await getFunds();
+  return funds.map((fund) => ({
+    slug: fund.slug,
+    lastModified: new Date(fund.priceDate),
+  }));
+});
+
+// ── Not yet served by the API — stubbed empty ────────────────────────────────
+//
+// These keep their call signatures so their screens compile unchanged; the
+// arguments are ignored until the API grows the matching endpoints.
+/* eslint-disable @typescript-eslint/no-unused-vars -- stubs keep their signatures */
+
+/** Market index cards (BIST, gold, FX). Not exposed by the API yet. */
+export const getMarketIndices = cache(async (): Promise<MarketIndex[]> => []);
+
+/** Category performance heatmap. Not exposed by the API yet. */
+export const getCategoryPerformance = cache(
+  async (): Promise<CategoryPerformance[]> => [],
+);
+
+/** KAP / haber news. Not exposed by the API yet. */
+export const getNews = cache(
+  async (_source: NewsSource, _limit: number = 6): Promise<NewsItem[]> => [],
+);
+
+/** Live market headlines. Not exposed by the API yet. */
+export const getForeksNews = cache(
+  async (_limit: number = 6): Promise<NewsItem[]> => [],
+);
+
+/** Rehber list. Not exposed by the API yet. */
+export const getGuides = cache(async (_limit?: number): Promise<Guide[]> => []);
+
+/** One rehber article. Not exposed by the API yet. */
+export const getGuide = cache(
+  async (_slug: string): Promise<GuideDetail | null> => null,
+);
+
+/** Featured-card sparklines. Per-fund price series are not batched by the API. */
+export const getSparklines = cache(
+  async (
+    _codes: string[],
+    _sessions: number = 60,
+    _points: number = 16,
+  ): Promise<Record<string, string>> => ({}),
+);
+/* eslint-enable @typescript-eslint/no-unused-vars */

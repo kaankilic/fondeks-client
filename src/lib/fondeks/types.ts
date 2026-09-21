@@ -46,6 +46,21 @@ export type Fund = {
   inceptionDate: string | null;
 };
 
+/** One indexable fund URL: the canonical slug and when its data last moved. */
+export type SitemapFund = { slug: string; lastModified: Date };
+
+/** The reduced fund shape the quick-search endpoint returns. */
+export type SearchResult = {
+  code: string;
+  slug: string;
+  name: string;
+  founder: string;
+  initials: string;
+  color: string;
+  category: string;
+  y1: number;
+};
+
 /** A fund plus one highlighted figure, for the discovery widgets. */
 export type FundHighlight = {
   fund: Fund;
