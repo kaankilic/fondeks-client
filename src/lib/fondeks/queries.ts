@@ -1,6 +1,5 @@
 import "server-only";
 
-import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 
@@ -241,38 +240,27 @@ const snapshotOf = (fundType: FundType) =>
  * the ingest routes drop the tag when they write, so a sync shows up at once
  * rather than at the end of it.
  */
+/**
+ * Kept only so the `revalidateTag` calls in the cron routes still resolve to a
+ * symbol. With the cross-request cache disabled those calls are harmless no-ops
+ * — nothing is tagged for them to drop.
+ */
 export const CATALOGUE_TAG = "fund-catalogue";
 
 /**
- * Long enough in production that a screen is served from memory rather than
- * from the query; short in development, where the database is seeded and
- * re-ingested by hand and a stale screen reads as a bug.
- */
-const CATALOGUE_TTL_SECONDS = process.env.NODE_ENV === "production" ? 900 : 5;
-
-/**
- * Read once per window and deduped within a request. Arguments are part of the
- * key, so a per-fund reader caches per fund.
+ * Cross-request caching is disabled: every request reads live data straight
+ * from the database, so a freshly ingested price shows up at once.
  *
- * The cross-request half needs Next's incremental cache, which only exists
- * inside the server runtime — a CLI script calling these would otherwise die
- * on "incrementalCache missing". Outside it the reader is still deduped per
- * call, which is all a one-shot script needs.
+ * `cache` still dedupes within a single request, so a screen that reads a
+ * snapshot from several components runs the underlying query once per render
+ * rather than paying the ~650ms lateral-join cost repeatedly. The `key`
+ * argument is retained for call-site clarity even though nothing keys on it now.
  */
-const IN_NEXT_RUNTIME = Boolean(process.env.NEXT_RUNTIME);
-
 function cached<A extends unknown[], T>(
-  key: string,
+  _key: string,
   load: (...args: A) => Promise<T>,
 ): (...args: A) => Promise<T> {
-  if (!IN_NEXT_RUNTIME) return cache(load);
-
-  return cache(
-    unstable_cache(load, [key], {
-      tags: [CATALOGUE_TAG],
-      revalidate: CATALOGUE_TTL_SECONDS,
-    }),
-  );
+  return cache(load);
 }
 
 /** How many funds the product actually covers. */
@@ -534,7 +522,7 @@ export const getMarketIndices = cached(
         change:
           previous && previous !== 0
             ? Number((((value - previous) / previous) * 100).toFixed(2))
-            : 0,
+            : null,
         spark: sparkPath(values),
       };
     });

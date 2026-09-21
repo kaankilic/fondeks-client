@@ -76,7 +76,8 @@ export type MarketIndex = {
   color: string;
   /** Latest quote and its change against the previous one, in percent. */
   value: number;
-  change: number;
+  /** Percent change, or null when there is no previous quote to compare. */
+  change: number | null;
   unit: string;
   decimals: number;
   /** Formatting override, e.g. "%v" renders 46.25 as "%46,25". */

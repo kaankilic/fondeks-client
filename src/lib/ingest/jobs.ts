@@ -183,8 +183,11 @@ export async function syncDailyStats(range: DateRange) {
       (await db.select({ code: funds.code }).from(funds)).map((row) => row.code),
     );
 
+    // A price of 0 means the fund did not publish that session (common for
+    // serbest funds). Skip it rather than writing a 0 that would read as a
+    // real quote and overwrite the last good price on conflict.
     const rows = stats
-      .filter((stat) => known.has(stat.code))
+      .filter((stat) => known.has(stat.code) && stat.price > 0)
       .map((stat) => ({
         fundCode: stat.code,
         date: stat.date,
