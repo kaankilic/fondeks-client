@@ -2,21 +2,15 @@ import { NextResponse } from "next/server";
 
 import { searchFunds } from "@/lib/fondeks/queries";
 
-/** Quick-search endpoint for the top navigation. */
+export const dynamic = "force-dynamic";
+
+/**
+ * Quick-search proxy for the nav's search box. The box is a client component
+ * and cannot reach the external Fondeks API directly (CORS, and the base URL
+ * stays server-side), so it calls this route, which forwards to the API's
+ * `/funds/search` and returns its `{ results }` unchanged.
+ */
 export async function GET(request: Request) {
   const query = new URL(request.url).searchParams.get("q") ?? "";
-  const funds = await searchFunds(query);
-
-  return NextResponse.json({
-    results: funds.map((fund) => ({
-      code: fund.code,
-      slug: fund.slug,
-      name: fund.name,
-      founder: fund.founder,
-      initials: fund.founderInitials,
-      color: fund.founderColor,
-      category: fund.category,
-      y1: fund.y1,
-    })),
-  });
+  return NextResponse.json({ results: await searchFunds(query) });
 }

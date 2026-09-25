@@ -64,6 +64,11 @@
   color: var(--neg);
 }
 
+.flat {
+  background: var(--surface-raised);
+  color: var(--text-dim);
+}
+
 .bottom {
   display: flex;
   align-items: flex-end;

@@ -18,6 +18,10 @@ export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
         <span className={styles.hint}>Portföy örtüşmesi</span>
       </div>
 
+      {funds.length === 0 && (
+        <p className={styles.empty}>Bu fon için benzer fon bulunamadı.</p>
+      )}
+
       {funds.map((fund) => {
         const color =
           fund.similarity >= STRONG_OVERLAP ? "var(--brand)" : "var(--action)";
