@@ -46,6 +46,21 @@ export type Fund = {
   inceptionDate: string | null;
 };
 
+/** One indexable fund URL: the canonical slug and when its data last moved. */
+export type SitemapFund = { slug: string; lastModified: Date };
+
+/** The reduced fund shape the quick-search endpoint returns. */
+export type SearchResult = {
+  code: string;
+  slug: string;
+  name: string;
+  founder: string;
+  initials: string;
+  color: string;
+  category: string;
+  y1: number;
+};
+
 /** A fund plus one highlighted figure, for the discovery widgets. */
 export type FundHighlight = {
   fund: Fund;
@@ -76,7 +91,8 @@ export type MarketIndex = {
   color: string;
   /** Latest quote and its change against the previous one, in percent. */
   value: number;
-  change: number;
+  /** Percent change, or null when there is no previous quote to compare. */
+  change: number | null;
   unit: string;
   decimals: number;
   /** Formatting override, e.g. "%v" renders 46.25 as "%46,25". */
@@ -100,6 +116,10 @@ export type CategoryPerformance = {
 export type HoldingChange = {
   /** A held security, e.g. "ASELSAN", or the asset class it falls back to. */
   label: string;
+  /** BIST ticker for an individual security, e.g. "TABGD"; null for an asset class. */
+  ticker: string | null;
+  /** URL of the security's symbol icon; null when the API has none. */
+  icon: string | null;
   color: string | null;
   /** Share of the portfolio now, in percent. */
   weight: number;

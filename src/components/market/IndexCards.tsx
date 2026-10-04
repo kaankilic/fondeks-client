@@ -8,13 +8,21 @@ import type { MarketIndex } from "@/lib/fondeks/types";
 import { BrandMark, Sparkline } from "@/components/funds/primitives";
 import styles from "./IndexCard.module.scss";
 
-const TONE_VAR = { pos: "var(--pos)", neg: "var(--neg)" } as const;
+const TONE_VAR = {
+  pos: "var(--pos)",
+  neg: "var(--neg)",
+  flat: "var(--text-dim)",
+} as const;
+
+/** Shown in place of a change a fresh series has no previous quote for. */
+const NOT_UPDATED = "Güncellenmedi";
 
 export function IndexCards({ indices }: { indices: MarketIndex[] }) {
   return (
     <div className={styles.grid}>
       {indices.map((index) => {
-        const tone = direction(index.change);
+        const change = index.change;
+        const tone = change === null ? "flat" : direction(change);
         return (
           <article key={index.name} className={styles.card}>
             <div className={styles.top}>
@@ -26,7 +34,7 @@ export function IndexCards({ indices }: { indices: MarketIndex[] }) {
                 <span className={styles.name}>{index.name}</span>
               </div>
               <span className={`${styles.change} ${styles[tone]}`}>
-                {formatIndexChange(index.change)}
+                {change === null ? NOT_UPDATED : formatIndexChange(change)}
               </span>
             </div>
 

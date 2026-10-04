@@ -12,7 +12,18 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
   overflow: hidden;
+}
+
+/* Directional brand thread: green over the positions the manager added to,
+ * red over the ones trimmed. */
+.panelUp {
+  @include accent-rule(var(--grad-pos));
+}
+
+.panelDown {
+  @include accent-rule(var(--grad-neg));
 }
 
 .head {
@@ -61,6 +72,15 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+}
+
+.icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-md;
+  object-fit: cover;
+  background: var(--track);
 }
 
 .ticker {

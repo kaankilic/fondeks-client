@@ -13,6 +13,18 @@ function initialsFor(label: string): string {
   return letters.toLocaleUpperCase("tr");
 }
 
+/**
+ * The API hands back icon URLs over http; upgrade them to https so the live
+ * (https) site does not drop them as mixed content. A local API host is left
+ * alone, since the dev page is served over http too.
+ */
+function secureIcon(url: string): string {
+  return url.startsWith("http://") &&
+    !/^http:\/\/(localhost|127\.0\.0\.1)/.test(url)
+    ? url.replace(/^http:\/\//, "https://")
+    : url;
+}
+
 function HoldingPanel({
   title,
   direction,
@@ -23,7 +35,11 @@ function HoldingPanel({
   holdings: HoldingChange[];
 }) {
   return (
-    <section className={styles.panel}>
+    <section
+      className={`${styles.panel} ${
+        direction === "up" ? styles.panelUp : styles.panelDown
+      }`}
+    >
       <div className={styles.head}>
         <span
           className={`${styles.dot} ${
@@ -36,15 +52,30 @@ function HoldingPanel({
       </div>
 
       {holdings.map((holding) => (
-        <div key={holding.label} className={styles.row}>
+        <div key={holding.ticker ?? holding.label} className={styles.row}>
           <div className={styles.stock}>
-            <BrandMark
-              logo={{
-                initials: initialsFor(holding.label),
-                background: holding.color ?? FALLBACK_LOGO.background,
-              }}
-              size="md"
-            />
+            {holding.icon ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small SVG symbol marks from the API; next/image would need dangerouslyAllowSVG
+              <img
+                className={styles.icon}
+                src={secureIcon(holding.icon)}
+                alt=""
+                width={22}
+                height={22}
+                loading="lazy"
+              />
+            ) : (
+              <BrandMark
+                logo={{
+                  initials: initialsFor(holding.label),
+                  background: holding.color ?? FALLBACK_LOGO.background,
+                }}
+                size="md"
+              />
+            )}
+            {holding.ticker ? (
+              <span className={styles.ticker}>{holding.ticker}</span>
+            ) : null}
             <span className={styles.name}>{holding.label}</span>
           </div>
           <span className={styles.weight}>
