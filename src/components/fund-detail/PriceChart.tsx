@@ -130,7 +130,7 @@ export function PriceChart({ prices }: { prices: PricePoint[] }) {
                   <stop
                     offset="0"
                     stopColor="var(--brand)"
-                    stopOpacity="0.28"
+                    stopOpacity="0.16"
                   />
                   <stop offset="1" stopColor="var(--brand)" stopOpacity="0" />
                 </linearGradient>

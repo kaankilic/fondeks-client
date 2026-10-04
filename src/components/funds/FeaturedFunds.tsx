@@ -21,7 +21,10 @@ export function FeaturedFunds({
       <div className={styles.header}>
         <span className={styles.eyebrow}>Öne Çıkanlar</span>
         <Link href="/arama" className={styles.more}>
-          Tümünü gör →
+          Tümünü gör
+          <span className={styles.arrow} aria-hidden>
+            →
+          </span>
         </Link>
       </div>
 

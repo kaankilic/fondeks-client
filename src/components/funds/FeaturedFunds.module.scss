@@ -2,35 +2,46 @@
 
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
+/* Shares the gold-bar section spine the panels use, so the one unframed band
+ * on the screen still reads as part of the same system. */
 .eyebrow {
-  @include eyebrow;
-  @include gradient-text(var(--grad-brand));
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  @include section-title(14px);
+  letter-spacing: -0.01em;
 }
 
 .more {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
 
   @include tap-target(34px);
 
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--brand);
   text-decoration: none;
+  transition: opacity $transition-fast;
 
   @include focus-ring;
 
   &:hover {
-    text-decoration: underline;
+    opacity: 0.85;
+
+    .arrow {
+      transform: translateX(3px);
+    }
   }
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform $transition-base;
 }
 
 .grid {
@@ -48,36 +59,47 @@
 }
 
 .card {
-  @include panel-raised;
-  @include accent-rule(var(--grad-brand));
+  @include panel;
   position: relative;
   overflow: hidden;
-  padding: 13px 14px;
+  padding: 16px 17px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 13px;
   text-decoration: none;
   color: inherit;
-  transition: border-color $transition-fast, box-shadow $transition-base,
-    transform $transition-base;
-
-  /* The brand accent rule is dormant until the card is hovered or focused. */
-  &::before {
-    opacity: 0;
-    transition: opacity $transition-base;
-  }
+  transition: border-color $transition-fast, background-color $transition-fast,
+    transform $transition-fast;
 
   @include focus-ring;
 
+  /* A gold hairline rides the top edge, revealed on hover — the one accent,
+   * marking the card the pointer is on without any glow. */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: var(--brand);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform $transition-base;
+  }
+
+  /* Flat hover: the border takes the accent and the surface lifts one step —
+   * no glow, no translate. */
   &:hover,
   &:focus-visible {
-    border-color: color-mix(in oklab, var(--brand) 42%, var(--border));
-    box-shadow: var(--shadow-brand);
-    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    background: var(--surface-raised);
 
     &::before {
-      opacity: 1;
+      transform: scaleX(1);
     }
+  }
+
+  &:active {
+    transform: translateY(1px);
   }
 }
 
@@ -104,16 +126,16 @@
 }
 
 .leadValue {
-  @include numeric(24px, 800);
-  letter-spacing: -0.02em;
+  @include numeric(26px, 800);
+  letter-spacing: -0.03em;
 
-  /* The headline return leads the card, painted in its directional gradient. */
+  /* The headline return leads the card, in its directional colour. */
   &.pos {
-    @include gradient-text(var(--grad-pos));
+    color: var(--pos);
   }
 
   &.neg {
-    @include gradient-text(var(--grad-neg));
+    color: var(--neg);
   }
 }
 

@@ -10,16 +10,15 @@ $tip-height: 42px;
 }
 
 .head {
-  @include panel-header;
+  @include section-head;
 }
 
 .title {
-  @include panel-title;
+  @include section-title;
 }
 
 .period {
-  font-size: 11px;
-  color: var(--text-dim);
+  @include section-meta;
 }
 
 .grid {

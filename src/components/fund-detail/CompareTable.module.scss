@@ -7,18 +7,15 @@
 }
 
 .head {
-  padding: 13px 18px;
-  border-bottom: 1px solid var(--border);
+  @include section-head;
 }
 
 .title {
-  @include panel-title;
+  @include section-title;
 }
 
 .hint {
-  margin-left: 8px;
-  font-size: 11px;
-  color: var(--text-dim);
+  @include section-meta;
 }
 
 @mixin compare-grid {

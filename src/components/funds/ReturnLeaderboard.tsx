@@ -10,7 +10,7 @@ import styles from "./ReturnLeaderboard.module.scss";
 const PODIUM = 3;
 
 export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
-  const best = Math.max(...funds.map((fund) => fund.y1));
+  const best = funds.reduce((max, fund) => Math.max(max, fund.y1), 0);
 
   return (
     <section className={styles.panel}>
@@ -18,6 +18,10 @@ export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
         <span className={styles.title}>Getiri Liderleri</span>
         <span className={styles.live}>Canlı</span>
       </div>
+
+      {funds.length === 0 ? (
+        <p className={styles.empty}>Sıralama için yeterli veri yok.</p>
+      ) : null}
 
       {funds.map((fund, index) => {
         const podium = index < PODIUM;
@@ -42,7 +46,7 @@ export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
               <div className={styles.meter}>
                 <Meter
                   pct={Math.round((fund.y1 / best) * 100)}
-                  color={podium ? "var(--grad-brand)" : "var(--action)"}
+                  color={podium ? "var(--brand)" : "var(--border-strong)"}
                 />
               </div>
             </div>

@@ -23,8 +23,11 @@ export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
       )}
 
       {funds.map((fund) => {
-        const color =
-          fund.similarity >= STRONG_OVERLAP ? "var(--brand)" : "var(--action)";
+        const strong = fund.similarity >= STRONG_OVERLAP;
+        // The bar reads as "quiet vs highlighted"; the figure beside it stays
+        // legible either way.
+        const meterColor = strong ? "var(--brand)" : "var(--border-strong)";
+        const valueColor = strong ? "var(--brand)" : "var(--text-muted)";
 
         return (
           <Link
@@ -43,9 +46,12 @@ export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
 
             <div className={styles.similarity}>
               <div className={styles.meter}>
-                <Meter pct={fund.similarity} color={color} />
+                <Meter pct={fund.similarity} color={meterColor} />
               </div>
-              <span className={styles.similarityValue} style={{ color }}>
+              <span
+                className={styles.similarityValue}
+                style={{ color: valueColor }}
+              >
                 %{fund.similarity}
               </span>
             </div>

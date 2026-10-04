@@ -29,7 +29,7 @@
 
   &:hover {
     border-color: var(--border-strong);
-    transform: translateY(-2px);
+    background: var(--surface-raised);
   }
 }
 
@@ -73,44 +73,69 @@
 /* Compact widget used on the Keşfet screen. */
 .panel {
   @include panel;
-  @include accent-rule(var(--grad-brand));
   overflow: hidden;
 }
 
 .head {
-  @include panel-header;
-  padding: 11px 14px;
+  @include section-head(11px 14px);
 }
 
 .panelTitle {
-  @include panel-title;
+  @include section-title;
 }
 
 .all {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
 
   @include tap-target(34px);
 
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--brand);
   text-decoration: none;
+  transition: opacity $transition-fast;
 
   @include focus-ring;
 
   &:hover {
-    text-decoration: underline;
+    opacity: 0.85;
+
+    .arrow {
+      transform: translateX(3px);
+    }
   }
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform $transition-base;
 }
 
 .item {
   display: block;
-  padding: 10px 14px;
+  padding: 12px 14px;
+  position: relative;
   text-decoration: none;
   color: inherit;
   @include data-row;
   @include focus-ring;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--brand);
+    transform: scaleY(0);
+    transition: transform $transition-fast;
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    transform: scaleY(1);
+  }
 }
 
 .itemMeta {

@@ -35,8 +35,6 @@ export function MarketHero({
 
   return (
     <section className={styles.hero} aria-label="Piyasa özeti">
-      <div className={styles.glow} aria-hidden />
-
       <div className={styles.top}>
         <div className={styles.lead}>
           <span className={styles.kicker}>TEFAS · Canlı Piyasa</span>
@@ -45,6 +43,10 @@ export function MarketHero({
             {formatCount(total)} fon · getiriye göre sıralı
           </p>
           <div className={styles.breadth}>
+            <div className={styles.breadthHead}>
+              <span className={styles.breadthLabel}>Bugünkü yükseliş genişliği</span>
+              <span className={styles.breadthPct}>%{breadth}</span>
+            </div>
             <div className={styles.breadthBar} aria-hidden>
               <span
                 className={styles.breadthFill}
@@ -52,9 +54,9 @@ export function MarketHero({
               />
             </div>
             <span className={styles.breadthText}>
-              Bugün <strong className={styles.pos}>{formatCount(up)}</strong>{" "}
-              yükselen · <strong className={styles.neg}>{formatCount(down)}</strong>{" "}
-              düşen
+              <strong className={styles.pos}>{formatCount(up)}</strong> yükselen
+              {" · "}
+              <strong className={styles.neg}>{formatCount(down)}</strong> düşen
             </span>
           </div>
         </div>

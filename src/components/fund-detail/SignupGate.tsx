@@ -182,8 +182,6 @@ export function SignupGate(props: GateProps) {
       <LockedPreview />
 
       <section className={styles.gate}>
-        <div className={styles.glow} aria-hidden />
-
         <svg
           className={styles.ghost}
           viewBox="0 0 520 180"

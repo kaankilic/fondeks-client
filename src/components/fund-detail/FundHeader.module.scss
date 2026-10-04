@@ -1,12 +1,12 @@
 @use "abstracts" as *;
 
 /*
- * The fund masthead. Full-bleed gradient band under the top nav, carrying the
- * brand thread, a soft corner bloom and the six-up metric strip — the detail
- * page's counterpart to the discovery hero.
+ * The fund masthead. Full-bleed flat band under the top nav, one step up from
+ * the page ground, carrying the identity and the six-up metric strip — the
+ * detail page's counterpart to the discovery hero. No bloom, no thread: the
+ * bottom hairline and the metric grid's dividers do the separating.
  */
 .header {
-  @include accent-rule(var(--grad-brand));
   position: relative;
   overflow: hidden;
   /* Break out of the centered page column so the band spans the viewport; the
@@ -14,8 +14,8 @@
    * `.shell` clips the horizontal overflow so this never adds a scrollbar. */
   width: 100vw;
   margin-inline: calc(50% - 50vw);
-  padding-block: 20px 22px;
-  background: var(--grad-hero);
+  padding-block: 24px 26px;
+  background: var(--chrome);
   border-bottom: 1px solid var(--border);
 }
 
@@ -26,23 +26,6 @@
   max-width: $page-width;
   margin-inline: auto;
   padding-inline: $page-gutter;
-}
-
-/* Warm bloom anchored to the top-right, behind the content. */
-.header::after {
-  content: "";
-  position: absolute;
-  top: -170px;
-  right: -70px;
-  width: 440px;
-  height: 340px;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    circle at 60% 40%,
-    rgba(224, 165, 38, 0.16),
-    transparent 68%
-  );
 }
 
 .breadcrumb {
@@ -188,6 +171,18 @@
   margin-top: 4px;
   @include numeric(16px, 700);
   color: var(--text);
+}
+
+/* The one-year return is the figure the page is read for — given more size and
+ * weight than the surrounding cells so it leads the strip. */
+.statFocus .statValue {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+
+  @include respond-to("sm") {
+    font-size: 22px;
+  }
 }
 
 /* Dates the figure above it: same place on every screen size. */

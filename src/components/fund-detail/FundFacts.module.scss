@@ -7,11 +7,11 @@
 }
 
 .head {
-  @include panel-header;
+  @include section-head;
 }
 
 .title {
-  @include panel-title;
+  @include section-title;
 }
 
 .tefas {

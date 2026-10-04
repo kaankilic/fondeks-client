@@ -2,73 +2,72 @@
 
 /*
  * Fondeks design tokens — ported from the Claude Design canvas
- * (Fondeks.dc.html). The product is dark-only by design, so these are
- * defined once rather than per color-scheme.
+ * (Fondeks.dc.html), then flattened toward a high-contrast minimalist
+ * language (Cloudflare / Strapi): near-black surfaces separated by crisp
+ * hairline borders and real whitespace rather than glows and gradients, with
+ * a single gold accent doing the work. The product is dark-only by design, so
+ * these are defined once rather than per color-scheme.
  */
 :root {
   color-scheme: dark;
 
-  /* surfaces */
+  /* ── Surfaces ──────────────────────────────────────────────────────────
+     A short, deliberate ladder: the page is the ground, bands (hero /
+     masthead) sit one step up on `chrome`, and every panel and cell sits on
+     `surface`. Depth is read off the 1px borders between these steps, never
+     off a gradient or a shadow. */
   --page: #080808;
-  --chrome: #0f0f12;
-  --surface: #121215;
-  --surface-raised: #1c1c21;
+  --chrome: #101013;
+  --surface: #141418;
+  --surface-raised: #1d1d22;
   --rail: #0d0d10;
   --track: #0f0f12;
 
-  /* lines */
-  --border: #27272a;
-  --border-strong: #3f3f46;
-  --border-subtle: #1a1a1e;
+  /* ── Lines ─────────────────────────────────────────────────────────────
+     The borders carry the whole structure now, so they read a touch brighter
+     than before — crisp hairlines, not whispers. */
+  --border: #2c2c32;
+  --border-strong: #45454e;
+  --border-subtle: #1f1f24;
 
-  /* text */
-  --text: #fafafa;
-  --text-secondary: #e4e4e7;
-  --text-muted: #a1a1aa;
-  --text-dim: #71717a;
-  --text-faint: #52525b;
+  /* ── Text ──────────────────────────────────────────────────────────────
+     Pushed up for stronger hierarchy and contrast against the flat ground. */
+  --text: #fcfcfd;
+  --text-secondary: #ebebee;
+  --text-muted: #b2b2bc;
+  --text-dim: #85858f;
+  --text-faint: #5c5c66;
 
-  /* brand + accents */
+  /* brand + accents — gold is the one accent; blue `action` is kept for
+     non-decorative affordances only (links/buttons), not for data washes. */
   --brand: #e0a526;
   --brand-ink: #0b0b0d;
-  --action: #0051c3;
+  --action: #3b82f6;
   --pos: #10b981;
   --neg: #f87171;
   --warn: #eab308;
   --caution: #f97316;
 
-  --pos-bg: rgba(5, 150, 105, 0.12);
-  --neg-bg: rgba(220, 38, 38, 0.12);
+  --pos-bg: rgba(16, 185, 129, 0.14);
+  --neg-bg: rgba(248, 113, 113, 0.14);
 
-  /* ── Gradient layer ──────────────────────────────────────────────────────
-     The product is a dark terminal; gradients are used sparingly to give the
-     surfaces depth and to let the brand read as light rather than a flat fill.
-     Directional tones keep their semantic hue so a gain never looks like a
-     loss — the gradient only adds a highlight, it never crosses the divide. */
-  --grad-brand: linear-gradient(135deg, #f7d072 0%, #e0a526 52%, #b9790d 100%);
-  --grad-brand-soft: linear-gradient(
-    135deg,
-    rgba(247, 208, 114, 0.16),
-    rgba(185, 121, 13, 0.04)
-  );
-  --grad-pos: linear-gradient(135deg, #4ade80 0%, #10b981 100%);
-  --grad-neg: linear-gradient(135deg, #fb7185 0%, #ef4444 100%);
-  --grad-surface: linear-gradient(180deg, #17171c 0%, #101013 100%);
-  --grad-hero: linear-gradient(
-    155deg,
-    #1a1a20 0%,
-    #131317 46%,
-    #0e0e12 100%
-  );
+  /* ── "Gradient" layer, flattened ────────────────────────────────────────
+     The tokens survive by name so every call site keeps working, but they now
+     resolve to flat fills: the brand reads as one crisp gold, directional
+     tones as their own semantic colour, and the former gradient surfaces as
+     plain panels. Nothing here paints a gradient any more. */
+  --grad-brand: var(--brand);
+  --grad-brand-soft: rgba(224, 165, 38, 0.07);
+  --grad-pos: var(--pos);
+  --grad-neg: var(--neg);
+  --grad-surface: var(--surface);
+  --grad-hero: var(--chrome);
 
-  /* Ambient blobs that sit behind the whole page (see body::before). */
-  --glow-warm: rgba(224, 165, 38, 0.14);
-  --glow-cool: rgba(59, 92, 214, 0.12);
-
-  /* Soft brand halo used on the hero and hovered cards. */
-  --shadow-brand: 0 0 0 1px rgba(224, 165, 38, 0.14),
-    0 18px 40px -24px rgba(224, 165, 38, 0.35);
-  --shadow-panel: 0 20px 50px -32px rgba(0, 0, 0, 0.9);
+  /* No shadows on panels — depth is the border's job. The tokens stay defined
+     so panel mixins resolve, but they paint nothing; genuinely floating UI
+     (tooltips, chart readouts) sets its own small shadow locally. */
+  --shadow-brand: none;
+  --shadow-panel: none;
 
   /* Fixed so full-height screens can subtract it, and so the bar never
      changes height when the search field replaces the nav links. */
@@ -114,36 +113,10 @@ body {
 }
 
 /*
- * Ambient light. Two low-alpha radial blobs — a warm brand glow drifting off
- * the top-left, a cool one off the top-right — sit fixed behind every screen so
- * the near-black surfaces read with depth instead of as one flat sheet. Pinned
- * to the top of the viewport and fading out well before the fold, so it frames
- * the masthead without washing the dense data below.
+ * No ambient light. The high-contrast minimalist language reads depth off the
+ * flat surface ladder and its hairline borders, so the near-black ground stays
+ * one clean sheet — the former warm/cool radial blobs are gone.
  */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      680px 420px at 8% -6%,
-      var(--glow-warm),
-      transparent 70%
-    ),
-    radial-gradient(
-      760px 460px at 100% -12%,
-      var(--glow-cool),
-      transparent 72%
-    );
-}
-
-/* Keeps real content above the ambient layer. */
-body > * {
-  position: relative;
-  z-index: 1;
-}
 
 /* Numeric values are always mono + tabular, per the design system. */
 .num {

@@ -77,28 +77,18 @@
   max-width: 100%;
   margin: 0 auto;
   overflow: hidden;
-  background: color-mix(in oklab, var(--surface) 84%, transparent);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
   backdrop-filter: blur(14px) saturate(1.1);
   border: 1px solid var(--border-strong);
   border-radius: $radius-frame;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  /* The card genuinely floats over the blurred locked preview, so it keeps a
+   * tight shadow — but a crisp one, not a soft bloom. */
+  box-shadow: 0 16px 40px -14px rgba(0, 0, 0, 0.7);
   padding: 32px 30px;
 
   @include respond-to("md") {
     padding: 40px 44px;
   }
-}
-
-/* Brand glow + a ghosted chart line, hinting at what sits behind the gate. */
-.glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    90% 120% at 12% 0%,
-    rgba(224, 165, 38, 0.12),
-    transparent 60%
-  );
 }
 
 .ghost {

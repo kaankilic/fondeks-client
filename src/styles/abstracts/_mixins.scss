@@ -113,21 +113,14 @@
   color: transparent;
 }
 
-/// A hairline gradient rule that sits at the top edge of a panel header — the
-/// brand thread that runs across every card on the discovery screen. Masked to
-/// fade out toward the right so it reads as a refined highlight, not a bar.
+/// Formerly a gradient brand thread across the top of every card. In the
+/// minimalist language that decorative thread is gone — depth comes from the
+/// crisp border and the single gold bar on the section title instead. The
+/// mixin is kept (and still establishes the containing block call sites may
+/// rely on) so every `@include accent-rule(...)` keeps compiling untouched;
+/// the `$gradient` argument is accepted and ignored.
 @mixin accent-rule($gradient: var(--grad-brand)) {
   position: relative;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 2px;
-    background: $gradient;
-    -webkit-mask: linear-gradient(90deg, #000 0%, transparent 68%);
-    mask: linear-gradient(90deg, #000 0%, transparent 68%);
-  }
 }
 
 /// Premium panel: the standard surface language, lifted onto a soft vertical
@@ -137,6 +130,64 @@
   border: 1px solid var(--border);
   border-radius: $radius-panel;
   box-shadow: var(--shadow-panel);
+}
+
+// ── Section header spine ──────────────────────────────────────────────────────
+// A single header language shared by the discovery and fund-detail screens, so
+// every panel reads as part of one deliberate system rather than a stack of
+// look-alike cards. The title is led by a short brand bar; the right slot holds
+// a quiet meta chip (a hint, a period, a live flag).
+
+/// Header strip at the top of a lifted panel. Slightly roomier than the flat
+/// `panel-header` and with no bottom rule — the panel's own gradient and the
+/// title bar carry the separation instead.
+@mixin section-head($pad: 13px 16px) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: $pad;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/// Panel title led by a short gold bar — the recurring spine of every section.
+@mixin section-title($size: 13.5px) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: $size;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+
+  &::before {
+    content: "";
+    flex: none;
+    width: 3px;
+    height: 1em;
+    border-radius: 2px;
+    background: var(--grad-brand);
+  }
+}
+
+/// Quiet right-hand meta chip on a section header (a hint, a period label).
+@mixin section-meta {
+  flex: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0.01em;
+}
+
+/// Lifted data panel: the flat surface raised onto the soft vertical gradient
+/// with a drop shadow, so a focal panel sits above the near-black ground. The
+/// brand accent-rule is applied separately where the panel wants the thread.
+@mixin panel-lift {
+  background: var(--grad-surface);
+  border: 1px solid var(--border);
+  border-radius: $radius-panel;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
 }
 
 // ── Mobile ──────────────────────────────────────────────────────────────────

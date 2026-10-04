@@ -1,30 +1,46 @@
 @use "abstracts" as *;
 
 /*
- * Discovery screen body. Tighter than the shared PageBody rhythm: this screen
- * is a dense dashboard, so sections sit closer and lead straight into data.
+ * Discovery screen body. A dense dashboard, but given room to breathe: major
+ * sections sit on a generous, deliberate vertical rhythm that opens up on
+ * wider screens, so each panel reads as its own block rather than one stacked
+ * wall of data. The rhythm inside a group (the rail's stacked widgets) stays
+ * tighter than the rhythm between the page's major bands.
  */
 .body {
-  padding: 14px $page-gutter 30px;
+  padding: 24px $page-gutter 56px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 28px;
+
+  @include respond-to("md") {
+    padding: 28px $page-gutter 72px;
+    gap: 36px;
+  }
 }
 
 /* Dense table on the left, leaderboard and guide rail on the right. */
 .split {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 
   @include respond-to("lg") {
     grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 28px;
   }
 }
 
 .rail {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+
+  @include respond-to("lg") {
+    /* Rides the scroll so the leaderboard and guide stay in view against the
+     * long catalogue table beside them — a desktop-only premium touch. */
+    position: sticky;
+    top: calc(var(--nav-height) + 20px);
+  }
 }

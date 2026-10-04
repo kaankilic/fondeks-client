@@ -41,7 +41,10 @@ export function GuidePanel({ guides }: { guides: Guide[] }) {
       <div className={styles.head}>
         <span className={styles.panelTitle}>Rehber</span>
         <Link href="/rehber" className={styles.all}>
-          Tümü →
+          Tümü
+          <span className={styles.arrow} aria-hidden>
+            →
+          </span>
         </Link>
       </div>
 

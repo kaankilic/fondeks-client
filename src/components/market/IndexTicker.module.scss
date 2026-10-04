@@ -10,7 +10,7 @@
   align-items: stretch;
   border: 1px solid var(--border);
   border-radius: $radius-panel;
-  background: var(--chrome);
+  background: var(--surface);
   overflow-x: auto;
   scrollbar-width: none;
 
@@ -22,13 +22,14 @@
 .item {
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 9px 16px;
+  gap: 9px;
+  padding: 10px 18px;
   border-left: 1px solid var(--border-subtle);
   white-space: nowrap;
 
   &:first-child {
     border-left: none;
+    padding-left: 16px;
   }
 }
 
@@ -39,10 +40,12 @@
 .value {
   @include numeric(13px, 600);
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .change {
   @include numeric(11px, 600);
+  letter-spacing: -0.01em;
 }
 
 .pos {

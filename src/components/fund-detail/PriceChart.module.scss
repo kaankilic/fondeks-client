@@ -1,13 +1,14 @@
 @use "abstracts" as *;
 
+/* The detail screen's focal surface: lifted onto the brand-lit gradient with a
+ * soft shadow so the chart anchors the page above the flat data panels below. */
 .panel {
-  @include panel;
+  @include panel-lift;
   @include accent-rule(var(--grad-brand));
-  overflow: hidden;
   padding: 18px 16px;
 
   @include respond-to("sm") {
-    padding: 18px 20px;
+    padding: 20px 22px;
   }
 }
 
@@ -27,24 +28,33 @@
 
 .heading {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 }
 
 .title {
-  @include panel-title;
+  @include section-title;
 }
 
+/* The range's headline return — the number the chart is read for — carried in a
+ * directional pill so it reads as the panel's focal figure. */
 .change {
-  @include numeric(12px, 600);
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: $radius-md;
+  @include numeric(13px, 700);
+  letter-spacing: -0.01em;
 }
 
 .pos {
   color: var(--pos);
+  background: var(--pos-bg);
 }
 
 .neg {
   color: var(--neg);
+  background: var(--neg-bg);
 }
 
 .ranges {
@@ -143,7 +153,9 @@
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
   border-radius: $radius-md;
-  box-shadow: var(--shadow-panel);
+  /* A floating readout genuinely sits above the plot, so it keeps a small,
+   * tight shadow of its own — the flat `--shadow-panel` would show nothing. */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
   pointer-events: none;
 }

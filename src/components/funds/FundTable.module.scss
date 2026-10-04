@@ -107,7 +107,7 @@
 }
 
 .title {
-  @include panel-title;
+  @include section-title(14px);
 }
 
 .tabs {
@@ -126,17 +126,24 @@
   padding: 8px 12px;
   border-radius: $radius-md;
   border: 1px solid var(--border);
-  background: var(--surface-raised);
+  background: transparent;
   font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color $transition-fast, background-color $transition-fast;
+  transition: color $transition-fast, background-color $transition-fast,
+    border-color $transition-fast, transform $transition-fast;
 
   @include focus-ring;
 
   &:hover {
     color: var(--text-secondary);
+    border-color: var(--border-strong);
+    background: var(--surface-raised);
+  }
+
+  &:active {
+    transform: translateY(1px);
   }
 
   @include respond-to("md") {
@@ -152,6 +159,8 @@
 
   &:hover {
     color: var(--brand-ink);
+    background: var(--brand);
+    border-color: var(--brand);
   }
 }
 
@@ -201,10 +210,28 @@
 .dataRow {
   @include screener-grid;
   @include data-row;
+  position: relative;
   text-decoration: none;
   color: inherit;
 
   @include focus-ring;
+
+  /* A gold edge marker slides in on hover to mark the tracked row — the one
+   * accent at work, no wash beyond the shared row hover. */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--brand);
+    transform: scaleY(0);
+    transition: transform $transition-fast;
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    transform: scaleY(1);
+  }
 }
 
 .price {
@@ -238,29 +265,33 @@
   font-weight: 600;
   color: var(--brand);
   cursor: pointer;
-  transition: background-color $transition-fast;
+  letter-spacing: 0.01em;
+  transition: background-color $transition-fast, color $transition-fast;
 
   @include focus-ring;
 
   &:hover {
     background: var(--surface-raised);
+    color: var(--text);
   }
 }
 
 .empty {
-  padding: 44px 18px 48px;
+  padding: 52px 18px 56px;
   text-align: center;
 }
 
 .emptyTitle {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text-secondary);
 }
 
 .emptyHint {
-  margin-top: 4px;
+  margin-top: 5px;
   font-size: 12px;
+  line-height: 1.55;
   color: var(--text-dim);
 }
 

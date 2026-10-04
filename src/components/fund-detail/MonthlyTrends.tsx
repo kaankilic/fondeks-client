@@ -249,7 +249,7 @@ export function MonthlyTrends({ monthly }: { monthly: MonthlyStat[] }) {
             <BarChart
               bars={investorMonths}
               format={formatCount}
-              color="var(--action)"
+              color="var(--border-strong)"
             />
           ) : null}
         </div>
