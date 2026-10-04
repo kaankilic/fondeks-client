@@ -45,32 +45,29 @@ const STATIC_PAGES: {
 export async function listIndexableUrls(): Promise<MetadataRoute.Sitemap> {
   const [funds, guides] = await Promise.all([getSitemapFunds(), getGuides()]);
 
-  // The freshest fund price is the best available proxy for "the site changed".
-  const latestFundUpdate = funds.reduce<Date | null>(
-    (latest, fund) =>
-      latest === null || fund.lastModified > latest ? fund.lastModified : latest,
-    null,
-  );
-  const siteModified = latestFundUpdate ?? new Date();
+  // Every entry is stamped with the current day. The sitemap route revalidates
+  // daily (see app/sitemap.ts), so each day's sitemap reports today's date and
+  // invites crawlers to re-check the prices, which change every session.
+  const today = new Date();
 
   return [
     ...STATIC_PAGES.map(({ path, changeFrequency, priority }) => ({
       url: absoluteUrl(path),
-      lastModified: siteModified,
+      lastModified: today,
       changeFrequency,
       priority,
     })),
 
     ...funds.map((fund) => ({
       url: absoluteUrl(`/fon/${fund.slug}`),
-      lastModified: fund.lastModified,
+      lastModified: today,
       changeFrequency: "daily" as const,
       priority: 0.7,
     })),
 
     ...guides.map((guide) => ({
       url: absoluteUrl(`/rehber/${guide.slug}`),
-      lastModified: guide.publishedAt,
+      lastModified: today,
       changeFrequency: "monthly" as const,
       priority: 0.5,
     })),
