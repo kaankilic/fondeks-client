@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { FundTable, type CategoryTab } from "@/components/funds/FundTable";
+import { EmptyState } from "@/components/layout/EmptyState";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
@@ -58,13 +59,20 @@ export default async function EtfFundsPage() {
       />
 
       <PageBody>
-        <FundTable
-          funds={funds}
-          title="Borsa Yatırım Fonları"
-          tabs={TABS}
-          showFounder
-          wide
-        />
+        {funds.length === 0 ? (
+          <EmptyState
+            title="Borsa yatırım fonları yakında"
+            message="Borsa yatırım fonu (BYF) verileri henüz veri kaynağına bağlı değil. Hazır olduğunda fonlar burada getiriye göre listelenecek."
+          />
+        ) : (
+          <FundTable
+            funds={funds}
+            title="Borsa Yatırım Fonları"
+            tabs={TABS}
+            showFounder
+            wide
+          />
+        )}
       </PageBody>
     </Page>
   );
