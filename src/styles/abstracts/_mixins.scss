@@ -101,6 +101,44 @@
   overflow: hidden;
 }
 
+// ── Gradient accents ─────────────────────────────────────────────────────────
+
+/// Paints text with a gradient. Falls back to the flat colour where
+/// background-clip is unsupported, so a value is never invisible.
+@mixin gradient-text($gradient) {
+  background: $gradient;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/// A hairline gradient rule that sits at the top edge of a panel header — the
+/// brand thread that runs across every card on the discovery screen. Masked to
+/// fade out toward the right so it reads as a refined highlight, not a bar.
+@mixin accent-rule($gradient: var(--grad-brand)) {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: $gradient;
+    -webkit-mask: linear-gradient(90deg, #000 0%, transparent 68%);
+    mask: linear-gradient(90deg, #000 0%, transparent 68%);
+  }
+}
+
+/// Premium panel: the standard surface language, lifted onto a soft vertical
+/// gradient with a drop shadow so featured cards read above the flat data grid.
+@mixin panel-raised {
+  background: var(--grad-surface);
+  border: 1px solid var(--border);
+  border-radius: $radius-panel;
+  box-shadow: var(--shadow-panel);
+}
+
 // ── Mobile ──────────────────────────────────────────────────────────────────
 
 /// Field text: iOS Safari zooms the page whenever a focused input carries text
