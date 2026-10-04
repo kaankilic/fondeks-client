@@ -2,6 +2,8 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
+  overflow: hidden;
   padding: 18px 16px;
 
   @include respond-to("sm") {
@@ -80,9 +82,80 @@
   }
 }
 
+/* Wraps the plot so the crosshair overlay can be positioned against it. */
+.plot {
+  position: relative;
+  cursor: crosshair;
+  /* Keep touch drags from scrolling the page while reading the line. */
+  touch-action: none;
+}
+
 .chart {
   display: block;
   overflow: visible;
+}
+
+/* Crosshair drawn as HTML over the plot, so the stretched (non-uniform) SVG
+ * viewBox never distorts the lines or the marker into ellipses. */
+.vline,
+.hline {
+  position: absolute;
+  pointer-events: none;
+  background: var(--border-strong);
+}
+
+.vline {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.hline {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.marker {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--brand);
+  /* Ring in the panel colour so the dot reads as lifted off the line. */
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border-strong);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.readout {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 9px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-md;
+  box-shadow: var(--shadow-panel);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.readoutPrice {
+  @include numeric(12px, 700);
+  color: var(--text);
+}
+
+.readoutDate {
+  font-size: 10px;
+  color: var(--text-dim);
 }
 
 .axis {

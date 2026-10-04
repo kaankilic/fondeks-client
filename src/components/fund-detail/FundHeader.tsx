@@ -22,6 +22,9 @@ export function FundHeader({ fund }: { fund: Fund }) {
     tone?: "pos" | "neg" | "muted";
     /** Small line under the figure — where it needs a date to be read. */
     note?: string;
+    /** The one-year return is the figure the page is read for — given the
+     *  brand wash and gradient treatment, like the hero's focal cell. */
+    focus?: boolean;
   }[] = [
     {
       label: "Son Fiyat",
@@ -36,7 +39,12 @@ export function FundHeader({ fund }: { fund: Fund }) {
       tone: direction(fund.daily),
     },
     { label: "1 Ay", value: formatPercent(fund.m1), tone: direction(fund.m1) },
-    { label: "1 Yıl", value: formatPercent(fund.y1), tone: direction(fund.y1) },
+    {
+      label: "1 Yıl",
+      value: formatPercent(fund.y1),
+      tone: direction(fund.y1),
+      focus: true,
+    },
     { label: "Büyüklük", value: formatAum(fund.aum), tone: "muted" },
     {
       label: "Yatırımcı",
@@ -47,59 +55,64 @@ export function FundHeader({ fund }: { fund: Fund }) {
 
   return (
     <div className={styles.header}>
-      <nav className={styles.breadcrumb} aria-label="Konum">
-        <Link href="/">Keşfet</Link>
-        <span className={styles.separator} aria-hidden>
-          ›
-        </span>
-        <Link href={`/arama?q=${encodeURIComponent(fund.category)}`}>
-          {fund.category}
-        </Link>
-        <span className={styles.separator} aria-hidden>
-          ›
-        </span>
-        <span className={styles.current}>{fund.code}</span>
-      </nav>
+      <div className={styles.inner}>
+        <nav className={styles.breadcrumb} aria-label="Konum">
+          <Link href="/">Keşfet</Link>
+          <span className={styles.separator} aria-hidden>
+            ›
+          </span>
+          <Link href={`/arama?q=${encodeURIComponent(fund.category)}`}>
+            {fund.category}
+          </Link>
+          <span className={styles.separator} aria-hidden>
+            ›
+          </span>
+          <span className={styles.current}>{fund.code}</span>
+        </nav>
 
-      <div className={styles.identityRow}>
-        <div className={styles.identity}>
-          <BrandMark logo={fundLogo(fund)} size="hero" />
-          <FundCode code={fund.code} size="hero" />
-          <div className={styles.identityText}>
-            <h1 className={styles.name}>{fund.name}</h1>
-            <div className={styles.meta}>
-              {fund.founder} · {fund.category}
-              {fund.isin ? ` · ${fund.isin}` : ""} · Risk{" "}
-              <span className={styles.risk}>
-                {fund.risk === null ? UNKNOWN : `${fund.risk}/7`}
-              </span>
+        <div className={styles.identityRow}>
+          <div className={styles.identity}>
+            <BrandMark logo={fundLogo(fund)} size="hero" />
+            <FundCode code={fund.code} size="hero" />
+            <div className={styles.identityText}>
+              <h1 className={styles.name}>{fund.name}</h1>
+              <div className={styles.meta}>
+                {fund.founder} · {fund.category}
+                {fund.isin ? ` · ${fund.isin}` : ""} · Risk{" "}
+                <span className={styles.risk}>
+                  {fund.risk === null ? UNKNOWN : `${fund.risk}/7`}
+                </span>
+              </div>
             </div>
+          </div>
+
+          <div className={styles.actions}>
+            <Button variant="secondary">☆ İzle</Button>
+            <Button variant="secondary">Karşılaştır</Button>
+            <Button>Portföye Ekle</Button>
           </div>
         </div>
 
-        <div className={styles.actions}>
-          <Button variant="secondary">☆ İzle</Button>
-          <Button variant="secondary">Karşılaştır</Button>
-          <Button>Portföye Ekle</Button>
-        </div>
-      </div>
-
-      <div className={styles.stats}>
-        {stats.map((stat) => (
-          <div key={stat.label} className={styles.stat}>
-            <div className={styles.statLabel}>{stat.label}</div>
+        <div className={styles.stats}>
+          {stats.map((stat) => (
             <div
-              className={`${styles.statValue} ${
-                stat.tone ? styles[stat.tone] : ""
-              }`}
+              key={stat.label}
+              className={`${styles.stat} ${stat.focus ? styles.statFocus : ""}`}
             >
-              {stat.value}
+              <div className={styles.statLabel}>{stat.label}</div>
+              <div
+                className={`${styles.statValue} ${
+                  stat.tone ? styles[stat.tone] : ""
+                } ${stat.focus ? styles.focusValue : ""}`}
+              >
+                {stat.value}
+              </div>
+              {stat.note ? (
+                <div className={styles.statNote}>{stat.note}</div>
+              ) : null}
             </div>
-            {stat.note ? (
-              <div className={styles.statNote}>{stat.note}</div>
-            ) : null}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

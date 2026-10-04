@@ -1,11 +1,53 @@
 @use "abstracts" as *;
 
+/*
+ * The fund masthead. Full-bleed gradient band under the top nav, carrying the
+ * brand thread, a soft corner bloom and the six-up metric strip — the detail
+ * page's counterpart to the discovery hero.
+ */
 .header {
-  padding: 18px $page-gutter;
+  @include accent-rule(var(--grad-brand));
+  position: relative;
+  overflow: hidden;
+  /* Break out of the centered page column so the band spans the viewport; the
+   * `.inner` wrapper keeps the content on the same column as the body below.
+   * `.shell` clips the horizontal overflow so this never adds a scrollbar. */
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding-block: 20px 22px;
+  background: var(--grad-hero);
   border-bottom: 1px solid var(--border);
 }
 
+/* Holds the band's content on the shared 1320px column, gutters and all. */
+.inner {
+  position: relative;
+  z-index: 1;
+  max-width: $page-width;
+  margin-inline: auto;
+  padding-inline: $page-gutter;
+}
+
+/* Warm bloom anchored to the top-right, behind the content. */
+.header::after {
+  content: "";
+  position: absolute;
+  top: -170px;
+  right: -70px;
+  width: 440px;
+  height: 340px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 60% 40%,
+    rgba(224, 165, 38, 0.16),
+    transparent 68%
+  );
+}
+
 .breadcrumb {
+  position: relative;
+  z-index: 1;
   font-size: 12px;
   color: var(--text-dim);
   margin-bottom: 12px;
@@ -30,6 +72,8 @@
 }
 
 .identityRow {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -85,6 +129,8 @@
 
 /* Six-up metric strip: hairline gaps produced by the background bleeding through. */
 .stats {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
@@ -93,6 +139,7 @@
   border: 1px solid var(--border);
   border-radius: $radius-panel;
   overflow: hidden;
+  box-shadow: var(--shadow-panel);
 
   @include respond-to("sm") {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -106,6 +153,21 @@
 .stat {
   padding: 12px 14px;
   background: var(--surface);
+}
+
+/* The one-year return: warmed by the brand wash so it leads the strip. */
+.statFocus {
+  background: var(--grad-brand-soft);
+}
+
+.focusValue {
+  &.pos {
+    @include gradient-text(var(--grad-pos));
+  }
+
+  &.neg {
+    @include gradient-text(var(--grad-neg));
+  }
 }
 
 .statLabel {

@@ -51,6 +51,14 @@ function HoldingPanel({
         <span className={styles.period}>Son ay</span>
       </div>
 
+      {holdings.length === 0 && (
+        <p className={styles.empty}>
+          {direction === "up"
+            ? "Bu dönemde artırılan pozisyon yok."
+            : "Bu dönemde azaltılan pozisyon yok."}
+        </p>
+      )}
+
       {holdings.map((holding) => (
         <div key={holding.ticker ?? holding.label} className={styles.row}>
           <div className={styles.stock}>

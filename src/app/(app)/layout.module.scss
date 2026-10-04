@@ -5,6 +5,10 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* Full-bleed bands (e.g. the fund masthead) break out to 100vw; clip the
+   * x-axis so that never shows a horizontal scrollbar. `clip` leaves the normal
+   * vertical document scroll untouched. */
+  overflow-x: clip;
 }
 
 .main {

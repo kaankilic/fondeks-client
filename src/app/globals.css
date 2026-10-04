@@ -40,6 +40,36 @@
   --pos-bg: rgba(5, 150, 105, 0.12);
   --neg-bg: rgba(220, 38, 38, 0.12);
 
+  /* ── Gradient layer ──────────────────────────────────────────────────────
+     The product is a dark terminal; gradients are used sparingly to give the
+     surfaces depth and to let the brand read as light rather than a flat fill.
+     Directional tones keep their semantic hue so a gain never looks like a
+     loss — the gradient only adds a highlight, it never crosses the divide. */
+  --grad-brand: linear-gradient(135deg, #f7d072 0%, #e0a526 52%, #b9790d 100%);
+  --grad-brand-soft: linear-gradient(
+    135deg,
+    rgba(247, 208, 114, 0.16),
+    rgba(185, 121, 13, 0.04)
+  );
+  --grad-pos: linear-gradient(135deg, #4ade80 0%, #10b981 100%);
+  --grad-neg: linear-gradient(135deg, #fb7185 0%, #ef4444 100%);
+  --grad-surface: linear-gradient(180deg, #17171c 0%, #101013 100%);
+  --grad-hero: linear-gradient(
+    155deg,
+    #1a1a20 0%,
+    #131317 46%,
+    #0e0e12 100%
+  );
+
+  /* Ambient blobs that sit behind the whole page (see body::before). */
+  --glow-warm: rgba(224, 165, 38, 0.14);
+  --glow-cool: rgba(59, 92, 214, 0.12);
+
+  /* Soft brand halo used on the hero and hovered cards. */
+  --shadow-brand: 0 0 0 1px rgba(224, 165, 38, 0.14),
+    0 18px 40px -24px rgba(224, 165, 38, 0.35);
+  --shadow-panel: 0 20px 50px -32px rgba(0, 0, 0, 0.9);
+
   /* Fixed so full-height screens can subtract it, and so the bar never
      changes height when the search field replaces the nav links. */
   --nav-height: 60px;
@@ -81,6 +111,38 @@ body {
   color: var(--text);
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Ambient light. Two low-alpha radial blobs — a warm brand glow drifting off
+ * the top-left, a cool one off the top-right — sit fixed behind every screen so
+ * the near-black surfaces read with depth instead of as one flat sheet. Pinned
+ * to the top of the viewport and fading out well before the fold, so it frames
+ * the masthead without washing the dense data below.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      680px 420px at 8% -6%,
+      var(--glow-warm),
+      transparent 70%
+    ),
+    radial-gradient(
+      760px 460px at 100% -12%,
+      var(--glow-cool),
+      transparent 72%
+    );
+}
+
+/* Keeps real content above the ambient layer. */
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Numeric values are always mono + tabular, per the design system. */
