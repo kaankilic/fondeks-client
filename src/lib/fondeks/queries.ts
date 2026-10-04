@@ -7,6 +7,7 @@ import { sparklineFromValues } from "./series";
 import type {
   CategoryPerformance,
   Fund,
+  FundCategory,
   FundDetail,
   Guide,
   GuideDetail,
@@ -300,9 +301,27 @@ export const getSitemapFunds = cache(async (): Promise<SitemapFund[]> => {
 /** Market index cards (BIST, gold, FX). Not exposed by the API yet. */
 export const getMarketIndices = cache(async (): Promise<MarketIndex[]> => []);
 
-/** Category performance heatmap. Not exposed by the API yet. */
+/**
+ * Average one-year return per fund category, best first. The API has no
+ * category-performance endpoint, so this is derived from the fund catalogue the
+ * API does serve: group the funds by category and average their y1.
+ */
 export const getCategoryPerformance = cache(
-  async (): Promise<CategoryPerformance[]> => [],
+  async (): Promise<CategoryPerformance[]> => {
+    const funds = await getFunds();
+    const totals = new Map<FundCategory, { sum: number; count: number }>();
+
+    for (const fund of funds) {
+      const entry = totals.get(fund.category) ?? { sum: 0, count: 0 };
+      entry.sum += fund.y1;
+      entry.count += 1;
+      totals.set(fund.category, entry);
+    }
+
+    return [...totals.entries()]
+      .map(([category, { sum, count }]) => ({ category, y1: sum / count }))
+      .sort((a, b) => b.y1 - a.y1);
+  },
 );
 
 /** KAP / haber news. Not exposed by the API yet. */

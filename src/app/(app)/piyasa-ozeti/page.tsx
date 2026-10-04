@@ -7,6 +7,7 @@ import {
   PageBody,
   SubHeader,
 } from "@/components/layout/Shell";
+import { EmptyState } from "@/components/layout/EmptyState";
 import { CategoryPerformance } from "@/components/market/CategoryPerformance";
 import { IndexCards } from "@/components/market/IndexCards";
 import { NewsPanel } from "@/components/news/NewsPanel";
@@ -73,7 +74,14 @@ export default async function MarketPage() {
       </SubHeader>
 
       <PageBody>
-        <IndexCards indices={indices} />
+        {indices.length === 0 ? (
+          <EmptyState
+            title="Piyasa endeksleri yakında"
+            message="BIST, altın ve döviz verileri henüz veri kaynağına bağlı değil. Hazır olduğunda canlı endeksler burada görünecek."
+          />
+        ) : (
+          <IndexCards indices={indices} />
+        )}
 
         <div className={styles.split}>
           <NewsPanel
