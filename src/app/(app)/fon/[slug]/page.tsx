@@ -14,6 +14,7 @@ import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getFund, getFundDetail } from "@/lib/fondeks/queries";
+import { isWatched } from "@/lib/watchlist/queries";
 import { breadcrumbSchema, fundSchema } from "@/lib/fondeks/schema";
 import { fundDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 import { codeFromSlug } from "@/lib/fondeks/slug";
@@ -70,7 +71,7 @@ export default async function FundDetailPage({
         {buildSchemas(fund).map((s, i) => (
           <JsonLd key={i} data={s} />
         ))}
-        <FundHeader fund={fund} />
+        <FundHeader fund={fund} isAuthed={false} isWatched={false} />
         <PageBody>
           <SignupGate preset="fund" fundCode={fund.code} />
         </PageBody>
@@ -85,13 +86,14 @@ export default async function FundDetailPage({
   if (slug !== detail.fund.slug) permanentRedirect(`/fon/${detail.fund.slug}`);
 
   const schemas = buildSchemas(detail.fund);
+  const watched = await isWatched(user.id, code);
 
   return (
     <Page>
       {schemas.map((s, i) => (
         <JsonLd key={i} data={s} />
       ))}
-      <FundHeader fund={detail.fund} />
+      <FundHeader fund={detail.fund} isAuthed isWatched={watched} />
 
       <PageBody>
         <PriceChart prices={detail.prices} />

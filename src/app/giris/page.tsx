@@ -18,12 +18,20 @@ export const metadata: Metadata = {
   twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: PageProps<"/giris">) {
+  const { next } = await searchParams;
+  const safeNext =
+    typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : undefined;
+
   return (
     <>
       <JsonLd data={webPageSchema(TITLE, DESCRIPTION, "/giris")} />
       <AuthShell>
-        <LoginForm />
+        <LoginForm next={safeNext} />
       </AuthShell>
     </>
   );

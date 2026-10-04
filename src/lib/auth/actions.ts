@@ -24,6 +24,19 @@ const DB_ERROR =
 /** Generic on purpose: never reveal whether an address is registered. */
 const BAD_CREDENTIALS = "E-posta veya şifre hatalı.";
 
+/**
+ * Where to land after auth. Only in-app absolute paths are honoured, so a
+ * crafted `next` can't bounce the user to another origin once signed in.
+ */
+function safeNext(formData: FormData): string {
+  const next = formData.get("next");
+  return typeof next === "string" &&
+    next.startsWith("/") &&
+    !next.startsWith("//")
+    ? next
+    : "/";
+}
+
 export async function signInAction(
   _prev: AuthFormState,
   formData: FormData,
@@ -59,7 +72,7 @@ export async function signInAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(safeNext(formData));
 }
 
 export async function signUpAction(
@@ -109,7 +122,7 @@ export async function signUpAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect(safeNext(formData));
 }
 
 export async function signOutAction(): Promise<void> {

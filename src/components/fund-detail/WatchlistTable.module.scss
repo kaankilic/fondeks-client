@@ -1,0 +1,102 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  overflow: hidden;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+
+  strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+}
+
+.headRow,
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px 84px 46px 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+}
+
+.headRow {
+  border-bottom: 1px solid var(--border);
+}
+
+.headRow span {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.colNum,
+.colRisk {
+  text-align: right;
+}
+
+.row {
+  @include data-row;
+}
+
+.fund {
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.value {
+  @include numeric(13px, 600);
+  text-align: right;
+}
+
+.daily {
+  justify-self: end;
+}
+
+.riskChip {
+  justify-self: end;
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}
+
+.removeForm {
+  display: contents;
+}
+
+.remove {
+  justify-self: end;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: $radius-md;
+  background: none;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color $transition-fast, background-color $transition-fast;
+  @include focus-ring;
+
+  &:hover {
+    color: var(--neg);
+    background: var(--neg-bg);
+  }
+}
