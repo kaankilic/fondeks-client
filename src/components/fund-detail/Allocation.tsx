@@ -9,35 +9,41 @@ export function Allocation({ slices }: { slices: AllocationSlice[] }) {
     <section className={styles.panel}>
       <span className={styles.title}>Varlık Dağılımı</span>
 
-      <div className={styles.bar}>
-        {slices.map((slice, index) => (
-          <div
-            key={slice.label}
-            className={styles.segment}
-            style={{
-              width: `${slice.pct}%`,
-              background: allocationColor(index),
-            }}
-            title={`${slice.label} ${formatPercentPrefixed(slice.pct)}`}
-          />
-        ))}
-      </div>
-
-      <div className={styles.legend}>
-        {slices.map((slice, index) => (
-          <div key={slice.label} className={styles.item}>
-            <span
-              className={styles.swatch}
-              style={{ background: allocationColor(index) }}
-              aria-hidden
-            />
-            <span className={styles.label}>{slice.label}</span>
-            <span className={styles.value}>
-              {formatPercentPrefixed(slice.pct)}
-            </span>
+      {slices.length === 0 ? (
+        <p className={styles.empty}>Varlık dağılımı verisi bulunamadı.</p>
+      ) : (
+        <>
+          <div className={styles.bar}>
+            {slices.map((slice, index) => (
+              <div
+                key={slice.label}
+                className={styles.segment}
+                style={{
+                  width: `${slice.pct}%`,
+                  background: allocationColor(index),
+                }}
+                title={`${slice.label} ${formatPercentPrefixed(slice.pct)}`}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+
+          <div className={styles.legend}>
+            {slices.map((slice, index) => (
+              <div key={slice.label} className={styles.item}>
+                <span
+                  className={styles.swatch}
+                  style={{ background: allocationColor(index) }}
+                  aria-hidden
+                />
+                <span className={styles.label}>{slice.label}</span>
+                <span className={styles.value}>
+                  {formatPercentPrefixed(slice.pct)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

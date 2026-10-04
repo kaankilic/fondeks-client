@@ -2,6 +2,7 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
   overflow: hidden;
 }
 

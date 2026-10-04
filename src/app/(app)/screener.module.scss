@@ -1,10 +1,21 @@
 @use "abstracts" as *;
 
+/*
+ * Discovery screen body. Tighter than the shared PageBody rhythm: this screen
+ * is a dense dashboard, so sections sit closer and lead straight into data.
+ */
+.body {
+  padding: 14px $page-gutter 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 /* Dense table on the left, leaderboard and guide rail on the right. */
 .split {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 22px;
+  gap: 16px;
   align-items: start;
 
   @include respond-to("lg") {
@@ -15,5 +26,5 @@
 .rail {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 16px;
 }

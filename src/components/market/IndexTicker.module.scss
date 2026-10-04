@@ -1,0 +1,54 @@
+@use "abstracts" as *;
+
+/*
+ * Horizontal index strip. Scrolls sideways on phones rather than wrapping, so
+ * it always reads as one continuous ticker line. Hairline dividers between
+ * quotes, no scrollbar chrome.
+ */
+.ticker {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: $radius-panel;
+  background: var(--chrome);
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 16px;
+  border-left: 1px solid var(--border-subtle);
+  white-space: nowrap;
+
+  &:first-child {
+    border-left: none;
+  }
+}
+
+.name {
+  @include eyebrow;
+}
+
+.value {
+  @include numeric(13px, 600);
+  color: var(--text);
+}
+
+.change {
+  @include numeric(11px, 600);
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}

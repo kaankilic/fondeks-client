@@ -42,7 +42,7 @@ export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
               <div className={styles.meter}>
                 <Meter
                   pct={Math.round((fund.y1 / best) * 100)}
-                  color={podium ? "var(--brand)" : "var(--action)"}
+                  color={podium ? "var(--grad-brand)" : "var(--action)"}
                 />
               </div>
             </div>

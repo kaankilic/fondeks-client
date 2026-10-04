@@ -4,13 +4,14 @@ import {
   HighlightGrid,
 } from "@/components/funds/FundHighlights";
 import { FundTable } from "@/components/funds/FundTable";
+import { MarketHero } from "@/components/funds/MarketHero";
 import { ReturnLeaderboard } from "@/components/funds/ReturnLeaderboard";
 import { GuidePanel } from "@/components/guides/GuideList";
 import { JsonLd } from "@/components/layout/JsonLd";
-import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
+import { Page } from "@/components/layout/Shell";
 import {
   direction,
-  formatCount,
+  formatCompactCount,
   formatCountOrUnknown,
   formatDate,
   formatPercent,
@@ -20,6 +21,7 @@ import {
   getFunds,
   getGuides,
   getInvestorGrowth,
+  getMarketIndices,
   getNewestFunds,
   getSparklines,
   getTopGainers,
@@ -44,16 +46,25 @@ function byReturn(funds: Fund[]): FundHighlight[] {
 }
 
 export default async function DiscoverPage() {
-  const [funds, featured, gainers, smallestGainers, growth, newest, guides] =
-    await Promise.all([
-      getFunds(),
-      getFeaturedFunds(),
-      getTopGainers(),
-      getSmallestGainers(),
-      getInvestorGrowth(),
-      getNewestFunds(4),
-      getGuides(3),
-    ]);
+  const [
+    funds,
+    featured,
+    gainers,
+    smallestGainers,
+    growth,
+    newest,
+    guides,
+    indices,
+  ] = await Promise.all([
+    getFunds(),
+    getFeaturedFunds(),
+    getTopGainers(),
+    getSmallestGainers(),
+    getInvestorGrowth(),
+    getNewestFunds(4),
+    getGuides(3),
+    getMarketIndices(),
+  ]);
 
   const sparklines = await getSparklines(featured.map((fund) => fund.code));
 
@@ -68,12 +79,9 @@ export default async function DiscoverPage() {
         )}
       />
 
-      <SubHeader
-        title="Keşfet"
-        subtitle={`${funds.length} fon · getiriye göre sıralı`}
-      />
+      <div className={styles.body}>
+        <MarketHero funds={funds} indices={indices} />
 
-      <PageBody>
         <FeaturedFunds funds={featured} sparklines={sparklines} />
 
         <div className={styles.split}>
@@ -103,9 +111,8 @@ export default async function DiscoverPage() {
             hint="Son bir ay"
             items={growth.map((row) => ({
               fund: row.fund,
-              value: formatPercent(row.growth),
-              tone: direction(row.growth),
-              detail: `${formatCount(row.investors)} yatırımcı`,
+              value: formatCompactCount(row.investors),
+              detail: `${formatPercent(row.growth)} artış · yatırımcı`,
             }))}
           />
 
@@ -122,7 +129,7 @@ export default async function DiscoverPage() {
             }))}
           />
         </HighlightGrid>
-      </PageBody>
+      </div>
     </Page>
   );
 }

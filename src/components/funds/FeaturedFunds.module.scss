@@ -5,11 +5,14 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .eyebrow {
   @include eyebrow;
+  @include gradient-text(var(--grad-brand));
+  font-weight: 700;
+  letter-spacing: 0.12em;
 }
 
 .more {
@@ -33,7 +36,7 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 10px;
 
   @include respond-to("sm") {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -45,64 +48,106 @@
 }
 
 .card {
-  @include panel;
-  padding: 15px;
+  @include panel-raised;
+  @include accent-rule(var(--grad-brand));
+  position: relative;
+  overflow: hidden;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   text-decoration: none;
   color: inherit;
-  transition: border-color $transition-fast;
+  transition: border-color $transition-fast, box-shadow $transition-base,
+    transform $transition-base;
+
+  /* The brand accent rule is dormant until the card is hovered or focused. */
+  &::before {
+    opacity: 0;
+    transition: opacity $transition-base;
+  }
 
   @include focus-ring;
 
-  &:hover {
-    border-color: var(--border-strong);
+  &:hover,
+  &:focus-visible {
+    border-color: color-mix(in oklab, var(--brand) 42%, var(--border));
+    box-shadow: var(--shadow-brand);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
   }
 }
 
-.cardTop {
+.top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.cardBrand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.star {
-  font-size: 15px;
-  color: var(--text-faint);
+  gap: 7px;
+  min-width: 0;
 }
 
 .name {
-  font-size: 12px;
+  min-width: 0;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--text-secondary);
-  line-height: 1.35;
-  height: 32px;
-  @include line-clamp(2);
+  @include truncate;
 }
 
-.cardBottom {
+/* The one-year return leads the card — the figure the eye lands on first. */
+.lead {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: baseline;
   gap: 8px;
-  margin-top: 12px;
+}
+
+.leadValue {
+  @include numeric(24px, 800);
+  letter-spacing: -0.02em;
+
+  /* The headline return leads the card, painted in its directional gradient. */
+  &.pos {
+    @include gradient-text(var(--grad-pos));
+  }
+
+  &.neg {
+    @include gradient-text(var(--grad-neg));
+  }
+}
+
+.leadLabel {
+  @include eyebrow;
+}
+
+/* The supporting returns: shorter horizons in a compact secondary row. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.metric {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .metricLabel {
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--text-dim);
+  @include truncate;
 }
 
 .metricValue {
-  @include numeric(20px, 700);
-  letter-spacing: -0.02em;
+  @include numeric(12.5px, 700);
+  letter-spacing: -0.01em;
 }
 
 .pos {
@@ -111,4 +156,15 @@
 
 .neg {
   color: var(--neg);
+}
+
+/* Thin full-bleed trend line under the metrics, weekly-direction coloured. */
+.spark {
+  margin-top: 1px;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 30px;
+  }
 }

@@ -2,6 +2,8 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
+  overflow: hidden;
   padding: 18px 20px;
 }
 
@@ -50,4 +52,11 @@
   margin-left: auto;
   @include numeric(12px, 600);
   color: var(--text-muted);
+}
+
+.empty {
+  padding: 24px 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
 }

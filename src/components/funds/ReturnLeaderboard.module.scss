@@ -2,12 +2,13 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
   overflow: hidden;
 }
 
 .header {
   @include panel-header;
-  padding-inline: 16px;
+  padding: 11px 14px;
 }
 
 .title {
@@ -15,10 +16,36 @@
 }
 
 .live {
-  @include numeric(10px, 600);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  @include numeric(10px, 700);
   color: var(--brand);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+
+  /* Pulsing dot to read as a live feed. */
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pos);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    animation: livePulse 2s ease-out infinite;
+  }
+}
+
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
 .row {
@@ -26,7 +53,7 @@
   grid-template-columns: 22px minmax(0, 1fr) 62px;
   align-items: center;
   gap: 10px;
-  padding: 11px 16px;
+  padding: 9px 14px;
   text-decoration: none;
   color: inherit;
   @include data-row;

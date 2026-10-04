@@ -65,6 +65,24 @@ export function formatCountOrUnknown(value: number | null): string {
 }
 
 /**
+ * Compact magnitude: "842", "12,5k", "3,4m", "1,2b". Used where the size of a
+ * count matters more than its exact digits — investor counts on the discovery
+ * widgets — keeping a big figure to one glance-able token.
+ */
+export function formatCompactCount(value: number | null): string {
+  if (value === null) return UNKNOWN;
+
+  const abs = Math.abs(value);
+  const scaled = (n: number, suffix: string) =>
+    `${decimal(1).format(n).replace(/,0$/, "")}${suffix}`;
+
+  if (abs >= 1_000_000_000) return scaled(value / 1_000_000_000, "b");
+  if (abs >= 1_000_000) return scaled(value / 1_000_000, "m");
+  if (abs >= 1_000) return scaled(value / 1_000, "k");
+  return tr().format(value);
+}
+
+/**
  * Index values carry their own precision, and some are written with a leading
  * percent sign ("%46,25") — `pattern` places the formatted number at "%v".
  */

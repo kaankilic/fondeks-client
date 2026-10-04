@@ -73,11 +73,13 @@
 /* Compact widget used on the Keşfet screen. */
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
   overflow: hidden;
 }
 
 .head {
   @include panel-header;
+  padding: 11px 14px;
 }
 
 .panelTitle {
@@ -104,7 +106,7 @@
 
 .item {
   display: block;
-  padding: 12px 18px;
+  padding: 10px 14px;
   text-decoration: none;
   color: inherit;
   @include data-row;
