@@ -116,6 +116,10 @@ export type CategoryPerformance = {
 export type HoldingChange = {
   /** A held security, e.g. "ASELSAN", or the asset class it falls back to. */
   label: string;
+  /** BIST ticker for an individual security, e.g. "TABGD"; null for an asset class. */
+  ticker: string | null;
+  /** URL of the security's symbol icon; null when the API has none. */
+  icon: string | null;
   color: string | null;
   /** Share of the portfolio now, in percent. */
   weight: number;
