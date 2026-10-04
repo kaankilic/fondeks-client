@@ -32,3 +32,29 @@ export function sparklinePoints(seed: number, declining = false): string {
 
   return points.join(" ");
 }
+
+/**
+ * Polyline points for a real price series, min-max normalised into the
+ * {@link SPARK_VIEWBOX}. A flat series (no spread) draws down the middle rather
+ * than dividing by zero. Fewer than two points has no shape, so it yields "".
+ */
+export function sparklineFromValues(values: number[]): string {
+  if (values.length < 2) return "";
+
+  const { width, height } = SPARK_VIEWBOX;
+  const pad = 2;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  return values
+    .map((value, i) => {
+      const x = (i / (values.length - 1)) * (width - pad * 2) + pad;
+      const y =
+        max === min
+          ? height / 2
+          : height - pad - ((value - min) / range) * (height - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}

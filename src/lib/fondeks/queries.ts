@@ -2,7 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 
-import { apiFetch, apiFetchOrNull } from "./api-client";
+import { ApiError, apiFetch, apiFetchOrNull } from "./api-client";
+import { sparklineFromValues } from "./series";
 import type {
   CategoryPerformance,
   Fund,
@@ -131,7 +132,14 @@ export const getWatchlist = cache(async (): Promise<Fund[]> => {
 
 /** One fund, by TEFAS code or full slug. Null when the API answers 404. */
 export const getFund = cache(async (code: string): Promise<Fund | null> => {
-  return apiFetchOrNull<Fund>(`/funds/${encodeURIComponent(code)}`);
+  // The detail endpoint wraps the fund in `{ fund }` (same envelope the price
+  // and monthly readers unwrap), so the fund itself is `detail.fund` — reading
+  // the envelope as a bare Fund left `slug`/`code` undefined and bounced the
+  // visitor view to `/fon/undefined`.
+  const detail = await apiFetchOrNull<FundDetailResponse>(
+    `/funds/${encodeURIComponent(code)}`,
+  );
+  return detail?.fund ?? null;
 });
 
 /** Daily price series, oldest first, limited to the last `days` sessions. */
@@ -167,10 +175,25 @@ export const getFundMonthly = cache(
  */
 export const getFundDetail = cache(
   async (code: string): Promise<FundDetail | null> => {
-    const detail = await apiFetchOrNull<FundDetailResponse>(
-      `/funds/${encodeURIComponent(code)}`,
-      { include: "prices,monthly,detail" },
-    );
+    const path = `/funds/${encodeURIComponent(code)}`;
+
+    // The `detail` bundle (allocation, similar funds, movers, compare) is
+    // computed upstream and returns a 500 for a number of funds. When it does,
+    // drop the `detail` token and fetch series only, so the page still renders
+    // — header, chart, facts, monthly — with the detail sections falling back to
+    // empty, rather than the whole route erroring. A 404 still means the fund
+    // is gone, so it propagates to `notFound()`.
+    let detail: FundDetailResponse | null;
+    try {
+      detail = await apiFetchOrNull<FundDetailResponse>(path, {
+        include: "prices,monthly,detail",
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status === 404) throw error;
+      detail = await apiFetchOrNull<FundDetailResponse>(path, {
+        include: "prices,monthly",
+      });
+    }
     if (!detail) return null;
 
     return {
@@ -300,12 +323,27 @@ export const getGuide = cache(
   async (_slug: string): Promise<GuideDetail | null> => null,
 );
 
-/** Featured-card sparklines. Per-fund price series are not batched by the API. */
+/**
+ * Featured-card sparklines. The API has no batch series endpoint, so each
+ * fund's recent price series is fetched on its own and mapped to polyline
+ * points — a handful of parallel requests for the few featured funds, each
+ * cached by {@link getFundPrices}. A fund with no series drops out of the map,
+ * and the card renders without a trend line.
+ */
 export const getSparklines = cache(
   async (
-    _codes: string[],
-    _sessions: number = 60,
-    _points: number = 16,
-  ): Promise<Record<string, string>> => ({}),
+    codes: string[],
+    sessions: number = 30,
+  ): Promise<Record<string, string>> => {
+    const entries = await Promise.all(
+      codes.map(async (code) => {
+        const series = await getFundPrices(code, sessions);
+        const points = sparklineFromValues(series.map((point) => point.price));
+        return [code, points] as const;
+      }),
+    );
+
+    return Object.fromEntries(entries.filter(([, points]) => points !== ""));
+  },
 );
 /* eslint-enable @typescript-eslint/no-unused-vars */
