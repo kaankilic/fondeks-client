@@ -159,21 +159,52 @@ export function Sparkline({
   color,
   width = 96,
   height = 34,
+  fill = false,
+  gradientId,
 }: {
   points: string;
   color: string;
   width?: number;
   height?: number;
+  /** Draws a soft gradient wash under the line, fading to the baseline. */
+  fill?: boolean;
+  /** Deterministic id for the fill gradient — required when `fill` is set so
+   *  server and client markup match. */
+  gradientId?: string;
 }) {
+  const { width: vbW, height: vbH } = SPARK_VIEWBOX;
+
+  // Close the trend line down to the baseline to make a fillable area. The
+  // first/last x are read straight off the point string so any series shape
+  // (seeded or real) produces a matching silhouette.
+  const coords = points.split(" ");
+  const firstX = coords[0]?.split(",")[0];
+  const lastX = coords[coords.length - 1]?.split(",")[0];
+  const canFill = fill && gradientId && firstX && lastX;
+  const areaPoints = canFill
+    ? `${firstX},${vbH} ${points} ${lastX},${vbH}`
+    : "";
+
   return (
     <svg
       className={styles.spark}
       width={width}
       height={height}
-      viewBox={`0 0 ${SPARK_VIEWBOX.width} ${SPARK_VIEWBOX.height}`}
+      viewBox={`0 0 ${vbW} ${vbH}`}
       preserveAspectRatio="none"
       aria-hidden
     >
+      {canFill ? (
+        <>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.32" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <polygon points={areaPoints} fill={`url(#${gradientId})`} />
+        </>
+      ) : null}
       <polyline
         points={points}
         fill="none"

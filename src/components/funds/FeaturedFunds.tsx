@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { direction, formatPercent } from "@/lib/fondeks/format";
+import { direction, formatPercent, type Direction } from "@/lib/fondeks/format";
 import type { Fund } from "@/lib/fondeks/types";
 
 import { BrandMark, FundCode, fundLogo, Sparkline } from "./primitives";
@@ -27,8 +27,9 @@ export function FeaturedFunds({
 
       <div className={styles.grid}>
         {funds.map((fund) => {
-          // Ranked on the week, so the card reports the week.
+          // Ranked on the week; the sparkline takes the week's direction.
           const tone = direction(fund.w1);
+          const lead: Direction = direction(fund.y1);
           const spark = sparklines[fund.code];
           return (
             <Link
@@ -36,33 +37,51 @@ export function FeaturedFunds({
               href={`/fon/${fund.slug}`}
               className={styles.card}
             >
-              <div className={styles.cardTop}>
-                <div className={styles.cardBrand}>
-                  <BrandMark logo={fundLogo(fund)} />
-                  <FundCode code={fund.code} size="lg" />
-                </div>
-                <span className={styles.star} aria-hidden>
-                  ☆
+              <div className={styles.top}>
+                <BrandMark logo={fundLogo(fund)} size="md" />
+                <FundCode code={fund.code} size="md" />
+                <span className={styles.name}>{fund.name}</span>
+              </div>
+
+              <div className={styles.lead}>
+                <span className={`${styles.leadValue} ${styles[lead]}`}>
+                  {formatPercent(fund.y1)}
                 </span>
+                <span className={styles.leadLabel}>1 Yıl</span>
               </div>
 
-              <div className={styles.name}>{fund.name}</div>
+              <div className={styles.metrics}>
+                <Metric label="Günlük" value={fund.daily} />
+                <Metric label="1 Hafta" value={fund.w1} />
+                <Metric label="1 Ay" value={fund.m1} />
+              </div>
 
-              <div className={styles.cardBottom}>
-                <div>
-                  <div className={styles.metricLabel}>1 Hafta</div>
-                  <div className={`${styles.metricValue} ${styles[tone]}`}>
-                    {formatPercent(fund.w1)}
-                  </div>
+              {spark ? (
+                <div className={styles.spark}>
+                  <Sparkline
+                    points={spark}
+                    color={TONE_VAR[tone]}
+                    fill
+                    gradientId={`spark-${fund.code}`}
+                  />
                 </div>
-                {spark ? (
-                  <Sparkline points={spark} color={TONE_VAR[tone]} />
-                ) : null}
-              </div>
+              ) : null}
             </Link>
           );
         })}
       </div>
     </section>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  const tone: Direction = direction(value);
+  return (
+    <div className={styles.metric}>
+      <span className={styles.metricLabel}>{label}</span>
+      <span className={`${styles.metricValue} ${styles[tone]}`}>
+        {formatPercent(value)}
+      </span>
+    </div>
   );
 }

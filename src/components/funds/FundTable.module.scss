@@ -2,6 +2,7 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
   overflow: hidden;
 }
 
@@ -279,6 +280,11 @@
   background: none;
   border: none;
   border-radius: 0;
+
+  /* No card, so drop the brand rule that frames the boxed variant. */
+  &::before {
+    display: none;
+  }
 }
 
 .searchClose {

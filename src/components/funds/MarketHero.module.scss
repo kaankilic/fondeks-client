@@ -1,0 +1,205 @@
+@use "abstracts" as *;
+
+/*
+ * Discovery masthead. A single gradient band that folds the screen title, the
+ * catalogue KPIs and the market ticker into one premium unit. Dense by design:
+ * the padding stays tight and the KPI board sits on hairline dividers so the
+ * band reads as a terminal header, not a marketing hero.
+ */
+.hero {
+  @include panel-raised;
+  @include accent-rule(var(--grad-brand));
+  position: relative;
+  overflow: hidden;
+  background: var(--grad-hero);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @include respond-to("md") {
+    padding: 22px 26px;
+  }
+}
+
+/* A soft brand bloom anchored to the top-right corner, behind the content. */
+.glow {
+  position: absolute;
+  top: -140px;
+  right: -80px;
+  width: 380px;
+  height: 300px;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 60% 40%,
+    rgba(224, 165, 38, 0.22),
+    transparent 68%
+  );
+  filter: blur(6px);
+}
+
+.top {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  @include respond-to("lg") {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+  }
+}
+
+/* ── Left: title block ─────────────────────────────────────────────────────── */
+
+.lead {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kicker {
+  @include gradient-text(var(--grad-brand));
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+
+  @include respond-to("md") {
+    font-size: 36px;
+  }
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* Market breadth: a thin gradient gauge of today's up/down split. */
+.breadth {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.breadthBar {
+  @include meter(5px);
+  background: var(--neg-bg);
+}
+
+.breadthFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--grad-pos);
+}
+
+.breadthText {
+  font-size: 11px;
+  color: var(--text-dim);
+
+  strong {
+    @include numeric(11.5px, 700);
+  }
+}
+
+/* ── Right: KPI board ──────────────────────────────────────────────────────── */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border);
+  border-radius: $radius-lg;
+  overflow: hidden;
+
+  @include respond-to("lg") {
+    flex: none;
+    width: 460px;
+  }
+}
+
+.stat {
+  background: color-mix(in oklab, var(--surface) 82%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 12px;
+  min-width: 0;
+
+  @include respond-to("md") {
+    padding: 12px 16px;
+  }
+}
+
+/* The catalogue's best return: the focal cell, warmed by a brand wash. */
+.statHero {
+  background: var(--grad-brand-soft);
+}
+
+.statLabel {
+  @include eyebrow;
+  @include truncate;
+}
+
+.figure {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  min-width: 0;
+}
+
+.value {
+  @include numeric(15px, 700);
+  color: var(--text);
+  letter-spacing: -0.02em;
+
+  @include respond-to("md") {
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+}
+
+.valueHero {
+  @include gradient-text(var(--grad-brand));
+  font-size: 17px;
+  font-weight: 800;
+
+  @include respond-to("md") {
+    font-size: 22px;
+  }
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}
+
+.brand {
+  color: var(--brand);
+}
+
+/* Ticker sits full width along the foot of the band. */
+.ticker {
+  position: relative;
+}

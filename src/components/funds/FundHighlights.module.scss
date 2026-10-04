@@ -6,7 +6,7 @@
  */
 .grid {
   column-count: 1;
-  column-gap: 22px;
+  column-gap: 16px;
 
   @include respond-to("lg") {
     column-count: 2;
@@ -15,7 +15,7 @@
   > * {
     display: block;
     width: 100%;
-    margin-bottom: 22px;
+    margin-bottom: 16px;
     /* Keeps a panel whole rather than splitting it across columns. */
     break-inside: avoid;
     -webkit-column-break-inside: avoid;
@@ -28,11 +28,13 @@
 
 .panel {
   @include panel;
+  @include accent-rule(var(--grad-brand));
   overflow: hidden;
 }
 
 .head {
   @include panel-header;
+  padding: 11px 14px;
 }
 
 .title {
@@ -49,7 +51,7 @@
   grid-template-columns: 22px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  padding: 10px 18px;
+  padding: 9px 14px;
   text-decoration: none;
   color: inherit;
   @include data-row;
