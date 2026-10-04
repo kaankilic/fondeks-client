@@ -10,15 +10,19 @@ import styles from "./LoginForm.module.scss";
 
 const EMPTY: AuthFormState = {};
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signInAction, EMPTY);
 
   return (
     <form className={styles.form} action={formAction}>
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <h1 className={styles.title}>Hesabına giriş yap</h1>
       <p className={styles.subtitle}>
         Hesabın yok mu?{" "}
-        <Link href="/kayit" className={styles.link}>
+        <Link
+          href={next ? `/kayit?next=${encodeURIComponent(next)}` : "/kayit"}
+          className={styles.link}
+        >
           Ücretsiz kaydol
         </Link>
       </p>

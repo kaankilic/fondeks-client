@@ -11,15 +11,19 @@ import styles from "./LoginForm.module.scss";
 
 const EMPTY: AuthFormState = {};
 
-export function RegisterForm() {
+export function RegisterForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signUpAction, EMPTY);
 
   return (
     <form className={styles.form} action={formAction}>
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <h1 className={styles.title}>Ücretsiz hesap oluştur</h1>
       <p className={styles.subtitle}>
         Zaten hesabın var mı?{" "}
-        <Link href="/giris" className={styles.link}>
+        <Link
+          href={next ? `/giris?next=${encodeURIComponent(next)}` : "/giris"}
+          className={styles.link}
+        >
           Giriş yap
         </Link>
       </p>

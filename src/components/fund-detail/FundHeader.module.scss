@@ -127,6 +127,12 @@
   gap: 10px;
 }
 
+/* Lets the watch button sit in the .actions flex row with the compare link,
+ * sharing its gap, instead of the form wrapper adding a box of its own. */
+.watchForm {
+  display: contents;
+}
+
 /* Six-up metric strip: hairline gaps produced by the background bleeding through. */
 .stats {
   position: relative;

@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { BrandMark, FundCode, fundLogo } from "@/components/funds/primitives";
-import { Button } from "@/components/ui/Button";
 import { UNKNOWN } from "@/lib/fondeks/constants";
 import {
   direction,
@@ -13,9 +12,18 @@ import {
 } from "@/lib/fondeks/format";
 import type { Fund } from "@/lib/fondeks/types";
 
+import { FundActions } from "./FundActions";
 import styles from "./FundHeader.module.scss";
 
-export function FundHeader({ fund }: { fund: Fund }) {
+export function FundHeader({
+  fund,
+  isAuthed,
+  isWatched,
+}: {
+  fund: Fund;
+  isAuthed: boolean;
+  isWatched: boolean;
+}) {
   const stats: {
     label: string;
     value: string;
@@ -87,9 +95,12 @@ export function FundHeader({ fund }: { fund: Fund }) {
           </div>
 
           <div className={styles.actions}>
-            <Button variant="secondary">☆ İzle</Button>
-            <Button variant="secondary">Karşılaştır</Button>
-            <Button>Portföye Ekle</Button>
+            <FundActions
+              code={fund.code}
+              slug={fund.slug}
+              isAuthed={isAuthed}
+              isWatched={isWatched}
+            />
           </div>
         </div>
 

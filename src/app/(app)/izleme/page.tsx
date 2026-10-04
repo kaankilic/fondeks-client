@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 
 import { SignupGate } from "@/components/fund-detail/SignupGate";
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { WatchlistTable } from "@/components/fund-detail/WatchlistTable";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getWatchlistFunds } from "@/lib/watchlist/queries";
 import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 
 export default async function WatchlistPage() {
   const user = await getCurrentUser();
+  const funds = user ? await getWatchlistFunds(user.id) : [];
 
   return (
     <Page>
@@ -37,7 +39,7 @@ export default async function WatchlistPage() {
       <PageBody>
         {/* A watchlist belongs to an account, so visitors meet the wall first. */}
         {user ? (
-          <ComingSoon screen="İzleme Listem" />
+          <WatchlistTable funds={funds} />
         ) : (
           <SignupGate preset="watchlist" />
         )}
