@@ -291,11 +291,24 @@ export const getInvestorGrowth = cache(
  * canonical slug and its price date as the last-modified stamp.
  */
 export const getSitemapFunds = cache(async (): Promise<SitemapFund[]> => {
-  const funds = await getFunds();
-  return funds.map((fund) => ({
-    slug: fund.slug,
-    lastModified: new Date(fund.priceDate),
-  }));
+  const universes = await Promise.all([
+    getFunds(),
+    getPensionFunds(),
+    getEtfFunds(),
+  ]);
+
+  // Every universe shares the one detail route (`/fon/{slug}`), so dedupe by
+  // slug — a fund listed under more than one type yields a single sitemap URL,
+  // stamped with its latest price date.
+  const bySlug = new Map<string, SitemapFund>();
+  for (const fund of universes.flat()) {
+    bySlug.set(fund.slug, {
+      slug: fund.slug,
+      lastModified: new Date(fund.priceDate),
+    });
+  }
+
+  return [...bySlug.values()];
 });
 
 // ── Not yet served by the API — stubbed empty ────────────────────────────────
