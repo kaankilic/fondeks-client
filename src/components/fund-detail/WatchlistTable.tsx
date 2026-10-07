@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { ChangePill, FundIdentity, RiskChip } from "@/components/funds/primitives";
+import { useEvents } from "@/lib/analytics/useEvents";
 import { direction, formatPercent } from "@/lib/fondeks/format";
 import type { Fund } from "@/lib/fondeks/types";
 import { toggleWatch } from "@/lib/watchlist/actions";
@@ -11,6 +12,8 @@ import styles from "./WatchlistTable.module.scss";
 
 /** The signed-in user's tracked funds, each removable in place. */
 export function WatchlistTable({ funds }: { funds: Fund[] }) {
+  const { track } = useEvents();
+
   if (funds.length === 0) {
     return (
       <section className={styles.panel}>
@@ -34,7 +37,16 @@ export function WatchlistTable({ funds }: { funds: Fund[] }) {
 
       {funds.map((fund) => (
         <div key={fund.code} className={styles.row}>
-          <Link href={`/fon/${fund.slug}`} className={styles.fund}>
+          <Link
+            href={`/fon/${fund.slug}`}
+            className={styles.fund}
+            onClick={() =>
+              track("fund_list_item_click", {
+                code: fund.code,
+                context: "watchlist",
+              })
+            }
+          >
             <FundIdentity fund={fund} markSize="md" codeSize="sm" />
           </Link>
           <span className={`${styles.value} ${styles[direction(fund.y1)]}`}>
@@ -45,6 +57,13 @@ export function WatchlistTable({ funds }: { funds: Fund[] }) {
           <form
             action={toggleWatch.bind(null, fund.code)}
             className={styles.removeForm}
+            onSubmit={() =>
+              track("fund_watch_toggled", {
+                code: fund.code,
+                action: "remove",
+                authed: true,
+              })
+            }
           >
             <button
               type="submit"

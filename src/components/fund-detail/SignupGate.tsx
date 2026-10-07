@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { buttonClass } from "@/components/ui/Button";
+import { TrackClick, TrackView } from "@/lib/analytics/Track";
 
 import styles from "./SignupGate.module.scss";
 
@@ -177,8 +178,18 @@ export function SignupGate(props: GateProps) {
 
   const features = fund ? FUND_FEATURES : WATCHLIST_FEATURES;
 
+  const gateLocation = fund ? "fund_gate" : "watchlist_gate";
+
   return (
     <div className={styles.stage}>
+      <TrackView
+        event="signup_gate_viewed"
+        params={
+          props.preset === "fund"
+            ? { preset: "fund", code: props.fundCode }
+            : { preset: "watchlist" }
+        }
+      />
       <LockedPreview />
 
       <section className={styles.gate}>
@@ -252,18 +263,28 @@ export function SignupGate(props: GateProps) {
           </ul>
 
           <div className={styles.actions}>
-            <Link
-              href="/kayit"
-              className={buttonClass({ variant: "brand", size: "lg" })}
+            <TrackClick
+              event="auth_cta_click"
+              params={{ target: "signup", location: gateLocation }}
             >
-              Ücretsiz Üye Ol →
-            </Link>
-            <Link
-              href="/giris"
-              className={buttonClass({ variant: "ghost", size: "lg" })}
+              <Link
+                href="/kayit"
+                className={buttonClass({ variant: "brand", size: "lg" })}
+              >
+                Ücretsiz Üye Ol →
+              </Link>
+            </TrackClick>
+            <TrackClick
+              event="auth_cta_click"
+              params={{ target: "login", location: gateLocation }}
             >
-              Zaten üyeyim
-            </Link>
+              <Link
+                href="/giris"
+                className={buttonClass({ variant: "ghost", size: "lg" })}
+              >
+                Zaten üyeyim
+              </Link>
+            </TrackClick>
           </div>
 
           <p className={styles.note}>

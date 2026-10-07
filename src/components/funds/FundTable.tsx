@@ -10,13 +10,15 @@ import {
   type ReactNode,
 } from "react";
 
+import type { SurfaceContext } from "@/lib/analytics";
+import { useEvents } from "@/lib/analytics/useEvents";
 import { direction, formatPercent, formatPrice } from "@/lib/fondeks/format";
 import type { Fund, FundCategory } from "@/lib/fondeks/types";
 
 import { ChangePill, FundIdentity, RiskChip } from "./primitives";
 import styles from "./FundTable.module.scss";
 
-export type SortKey = "price" | "daily" | "y1";
+export type SortKey = "price" | "daily" | "w1" | "m1" | "y1";
 export type SortDir = "asc" | "desc";
 export type Sort = { key: SortKey; dir: SortDir };
 
@@ -36,6 +38,8 @@ const ARROW: Record<SortDir, string> = { asc: "↑", desc: "↓" };
 const CELL: Record<SortKey, string> = {
   price: styles.cellPrice,
   daily: styles.cellDaily,
+  w1: styles.cellW1,
+  m1: styles.cellM1,
   y1: styles.cellY1,
 };
 
@@ -83,6 +87,7 @@ export function FundTable({
   limit,
   sort: controlledSort,
   onSortChange,
+  trackContext = "table",
 }: {
   funds: Fund[];
   title?: string;
@@ -105,7 +110,10 @@ export function FundTable({
   /** Pass both to drive sorting from outside; omit to keep it internal. */
   sort?: Sort;
   onSortChange?: (sort: Sort) => void;
+  /** Labels this table's events, so each mount is distinct in the funnel. */
+  trackContext?: SurfaceContext;
 }) {
+  const { track } = useEvents();
   const [category, setCategory] = useState<FundCategory | null>(null);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
@@ -158,11 +166,15 @@ export function FundTable({
 
   // Clicking the active column flips direction; a new column starts descending.
   function toggleSort(key: SortKey) {
-    setSort(
+    const next: Sort =
       sort.key === key
         ? { key, dir: sort.dir === "desc" ? "asc" : "desc" }
-        : { key, dir: "desc" },
-    );
+        : { key, dir: "desc" };
+    track("list_sorted", {
+      sort: `${next.key}-${next.dir}`,
+      context: trackContext,
+    });
+    setSort(next);
   }
 
   function headerCell(key: SortKey, label: string) {
@@ -205,7 +217,14 @@ export function FundTable({
                     className={`${styles.tab} ${
                       tab.category === category ? styles.tabActive : ""
                     }`}
-                    onClick={() => setCategory(tab.category)}
+                    onClick={() => {
+                      track("list_filtered", {
+                        filter: "category",
+                        value: tab.label,
+                        context: trackContext,
+                      });
+                      setCategory(tab.category);
+                    }}
                     aria-pressed={tab.category === category}
                   >
                     {tab.label}
@@ -263,6 +282,8 @@ export function FundTable({
         </span>
         {headerCell("price", "Fiyat")}
         {headerCell("daily", "Günlük")}
+        {headerCell("w1", "1 Hafta")}
+        {headerCell("m1", "1 Ay")}
         {headerCell("y1", "1 Yıl")}
         <span
           className={`${styles.colLabel} ${styles.alignCenter} ${styles.cellRisk}`}
@@ -284,6 +305,12 @@ export function FundTable({
             key={fund.code}
             href={`/fon/${fund.slug}`}
             className={styles.dataRow}
+            onClick={() =>
+              track("fund_list_item_click", {
+                code: fund.code,
+                context: trackContext,
+              })
+            }
           >
             <FundIdentity
               className={styles.cellIdentity}
@@ -298,6 +325,20 @@ export function FundTable({
               {formatPrice(fund.price)}
             </span>
             <ChangePill value={fund.daily} className={styles.cellDaily} />
+            <span
+              className={`${styles.return} ${styles.cellW1} ${
+                styles[direction(fund.w1)]
+              }`}
+            >
+              {formatPercent(fund.w1)}
+            </span>
+            <span
+              className={`${styles.return} ${styles.cellM1} ${
+                styles[direction(fund.m1)]
+              }`}
+            >
+              {formatPercent(fund.m1)}
+            </span>
             <span
               className={`${styles.return} ${styles.cellY1} ${
                 styles[direction(fund.y1)]

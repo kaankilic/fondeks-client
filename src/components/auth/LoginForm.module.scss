@@ -74,6 +74,94 @@
   letter-spacing: 0.08em;
 }
 
+/* Wraps a password input so the reveal button can sit inside it, on the right. */
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.withToggle {
+  padding-right: 42px;
+}
+
+.reveal {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: $radius-sm;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color $transition-fast, background-color $transition-fast;
+
+  &:hover {
+    color: var(--text-muted);
+    background: var(--surface-raised);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+    color: var(--text-muted);
+  }
+}
+
+/* Segmented strength meter shown beneath the password field as the user types. */
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 16px;
+  margin: 8px 0;
+}
+
+.meter {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+
+.segment {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background-color $transition-fast;
+}
+
+.meter[data-score="1"] .segmentOn {
+  background: var(--neg);
+}
+
+.meter[data-score="2"] .segmentOn {
+  background: var(--caution);
+}
+
+.meter[data-score="3"] .segmentOn {
+  background: var(--warn);
+}
+
+.meter[data-score="4"] .segmentOn {
+  background: var(--pos);
+}
+
+.strengthLabel {
+  flex-shrink: 0;
+  min-width: 56px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: right;
+  color: var(--text-muted);
+}
+
 /* Reserves the space a field error would occupy, so rows don't jump. */
 .spacer {
   height: 16px;

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type KeyboardEvent } from "react";
 
+import { useEvents } from "@/lib/analytics/useEvents";
 import type { SearchResult } from "@/lib/fondeks/types";
 
 import styles from "./ComparePicker.module.scss";
@@ -24,6 +25,7 @@ export function ComparePicker({
   selected: { code: string; name: string }[];
 }) {
   const router = useRouter();
+  const { track } = useEvents();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,12 +69,14 @@ export function ComparePicker({
 
   function add(code: string) {
     if (full || codes.includes(code)) return;
+    track("compare_fund_added", { code, total: codes.length + 1 });
     setQuery("");
     setHits([]);
     pushCodes([...codes, code]);
   }
 
   function remove(code: string) {
+    track("compare_fund_removed", { code, total: codes.length - 1 });
     pushCodes(codes.filter((item) => item !== code));
   }
 

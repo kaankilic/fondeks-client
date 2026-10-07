@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import { signInAction, type AuthFormState } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/Button";
+import { useEvents } from "@/lib/analytics/useEvents";
 
 import styles from "./LoginForm.module.scss";
 
@@ -12,9 +13,22 @@ const EMPTY: AuthFormState = {};
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signInAction, EMPTY);
+  const { track } = useEvents();
+
+  // A successful sign-in redirects, so the component unmounts without ever
+  // reaching a "success" state here — only failures come back as new state.
+  useEffect(() => {
+    if (state.error || state.fieldErrors) {
+      track("login_failed", { reason: state.error ?? "validation" });
+    }
+  }, [state, track]);
 
   return (
-    <form className={styles.form} action={formAction}>
+    <form
+      className={styles.form}
+      action={formAction}
+      onSubmit={() => track("login_submitted", { method: "password" })}
+    >
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <h1 className={styles.title}>Hesabına giriş yap</h1>
       <p className={styles.subtitle}>
@@ -22,6 +36,9 @@ export function LoginForm({ next }: { next?: string }) {
         <Link
           href={next ? `/kayit?next=${encodeURIComponent(next)}` : "/kayit"}
           className={styles.link}
+          onClick={() =>
+            track("auth_cta_click", { target: "signup", location: "login_form" })
+          }
         >
           Ücretsiz kaydol
         </Link>

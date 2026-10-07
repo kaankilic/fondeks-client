@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BrandMark, FundCode, fundLogo } from "@/components/funds/primitives";
 import { UNKNOWN } from "@/lib/fondeks/constants";
+import { fundLogoSrc } from "@/lib/fondeks/founders";
 import {
   direction,
   formatAum,
@@ -80,7 +81,11 @@ export function FundHeader({
 
         <div className={styles.identityRow}>
           <div className={styles.identity}>
-            <BrandMark logo={fundLogo(fund)} size="hero" />
+            <BrandMark
+              logo={fundLogo(fund)}
+              src={fundLogoSrc(fund)}
+              size="hero"
+            />
             <FundCode code={fund.code} size="hero" />
             <div className={styles.identityText}>
               <h1 className={styles.name}>{fund.name}</h1>

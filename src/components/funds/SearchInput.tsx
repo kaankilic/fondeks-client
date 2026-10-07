@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { useEvents } from "@/lib/analytics/useEvents";
+
 import styles from "./SearchInput.module.scss";
 
 type SearchInputProps = {
@@ -29,6 +31,7 @@ export function SearchInput(props: SearchInputProps) {
     compact = false,
   } = props;
   const router = useRouter();
+  const { track } = useEvents();
   const [internal, setInternal] = useState(
     props.value === undefined ? (props.defaultValue ?? "") : "",
   );
@@ -46,6 +49,7 @@ export function SearchInput(props: SearchInputProps) {
     if (controlled) return;
 
     const trimmed = query.trim();
+    if (trimmed) track("search_submitted", { query: trimmed, source: "table" });
     router.push(trimmed ? `/arama?q=${encodeURIComponent(trimmed)}` : "/arama");
   }
 

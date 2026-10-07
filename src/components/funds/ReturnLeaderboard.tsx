@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { fundLogoSrc } from "@/lib/fondeks/founders";
 import { direction, formatPercent } from "@/lib/fondeks/format";
 import type { Fund } from "@/lib/fondeks/types";
 
@@ -10,7 +11,10 @@ import styles from "./ReturnLeaderboard.module.scss";
 const PODIUM = 3;
 
 export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
-  const best = funds.reduce((max, fund) => Math.max(max, fund.y1), 0);
+  // Ranked by the daily change, best first, independent of how the caller
+  // ordered the list.
+  const ranked = [...funds].sort((a, b) => b.daily - a.daily);
+  const best = ranked.reduce((max, fund) => Math.max(max, fund.daily), 0);
 
   return (
     <section className={styles.panel}>
@@ -19,11 +23,11 @@ export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
         <span className={styles.live}>Canlı</span>
       </div>
 
-      {funds.length === 0 ? (
+      {ranked.length === 0 ? (
         <p className={styles.empty}>Sıralama için yeterli veri yok.</p>
       ) : null}
 
-      {funds.map((fund, index) => {
+      {ranked.map((fund, index) => {
         const podium = index < PODIUM;
         return (
           <Link
@@ -39,22 +43,30 @@ export function ReturnLeaderboard({ funds }: { funds: Fund[] }) {
 
             <div className={styles.fund}>
               <div className={styles.fundTop}>
-                <BrandMark logo={fundLogo(fund)} size="sm" />
+                <BrandMark
+                  logo={fundLogo(fund)}
+                  src={fundLogoSrc(fund)}
+                  size="sm"
+                />
                 <FundCode code={fund.code} size="sm" />
                 <span className={styles.founder}>{fund.founder}</span>
               </div>
               <div className={styles.meter}>
                 <Meter
-                  pct={Math.round((fund.y1 / best) * 100)}
+                  pct={
+                    best > 0
+                      ? Math.max(0, Math.round((fund.daily / best) * 100))
+                      : 0
+                  }
                   color={podium ? "var(--brand)" : "var(--border-strong)"}
                 />
               </div>
             </div>
 
             <span
-              className={`${styles.value} ${styles[direction(fund.y1)]}`}
+              className={`${styles.value} ${styles[direction(fund.daily)]}`}
             >
-              {formatPercent(fund.y1)}
+              {formatPercent(fund.daily)}
             </span>
           </Link>
         );

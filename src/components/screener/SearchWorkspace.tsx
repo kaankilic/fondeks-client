@@ -9,6 +9,7 @@ import {
 } from "@/components/funds/FundTable";
 import { SearchInput } from "@/components/funds/SearchInput";
 import { Button } from "@/components/ui/Button";
+import { useEvents } from "@/lib/analytics/useEvents";
 import {
   FUND_CATEGORIES,
   RISK_MAX as RISK_SCALE_MAX,
@@ -70,6 +71,7 @@ export function SearchWorkspace({
   funds: Fund[];
   initialQuery?: string;
 }) {
+  const { track } = useEvents();
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT);
@@ -117,11 +119,17 @@ export function SearchWorkspace({
   }, [funds, query, filters]);
 
   function toggleCategory(category: FundCategory) {
+    const active = !filters.categories.includes(category);
+    track("list_filtered", {
+      filter: "category",
+      value: `${category}:${active ? "on" : "off"}`,
+      context: "screener",
+    });
     setFilters((current) => ({
       ...current,
-      categories: current.categories.includes(category)
-        ? current.categories.filter((item) => item !== category)
-        : [...current.categories, category],
+      categories: active
+        ? [...current.categories, category]
+        : current.categories.filter((item) => item !== category),
     }));
   }
 
@@ -135,6 +143,7 @@ export function SearchWorkspace({
     returnFiltered;
 
   function reset() {
+    track("filters_reset", { context: "screener" });
     setQuery("");
     setFilters(NO_FILTERS);
   }
@@ -230,6 +239,10 @@ export function SearchWorkspace({
           <Button
             block
             onClick={() => {
+              track("filter_results_shown", {
+                count: results.length,
+                context: "screener",
+              });
               setFiltersOpen(false);
               resultsRef.current?.scrollIntoView({ behavior: "smooth" });
             }}
@@ -261,7 +274,13 @@ export function SearchWorkspace({
                   const option = SORT_OPTIONS.find(
                     (item) => item.value === event.target.value,
                   );
-                  if (option) setSort(option.sort);
+                  if (option) {
+                    track("list_sorted", {
+                      sort: option.value,
+                      context: "screener",
+                    });
+                    setSort(option.sort);
+                  }
                 }}
               >
                 {SORT_OPTIONS.map((option) => (
@@ -355,6 +374,7 @@ export function SearchWorkspace({
           flush
           sort={sort}
           onSortChange={setSort}
+          trackContext="screener"
         />
       </div>
     </div>

@@ -18,15 +18,21 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Şifreni gir."),
 });
 
-export const registerSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Adın en az 2 karakter olmalı.")
-    .max(80, "Ad çok uzun."),
-  email: emailField,
-  password: passwordField,
-});
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Adın en az 2 karakter olmalı.")
+      .max(80, "Ad çok uzun."),
+    email: emailField,
+    password: passwordField,
+    confirmPassword: z.string().min(1, "Şifreni tekrar gir."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Şifreler eşleşmiyor.",
+    path: ["confirmPassword"],
+  });
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;

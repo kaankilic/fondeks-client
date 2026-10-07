@@ -10,6 +10,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
+import { useEvents } from "@/lib/analytics/useEvents";
 import { direction, formatPercent } from "@/lib/fondeks/format";
 
 import styles from "./TopNav.module.scss";
@@ -55,6 +56,7 @@ export function NavCenter({
   pathname: string;
 }) {
   const router = useRouter();
+  const { track } = useEvents();
 
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
@@ -103,7 +105,10 @@ export function NavCenter({
 
   function goToResults() {
     const needle = query.trim();
-    if (needle) router.push(`/arama?q=${encodeURIComponent(needle)}`);
+    if (needle) {
+      track("search_submitted", { query: needle, source: "nav" });
+      router.push(`/arama?q=${encodeURIComponent(needle)}`);
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -167,6 +172,13 @@ export function NavCenter({
                   key={hit.code}
                   href={`/fon/${hit.slug}`}
                   className={styles.result}
+                  onClick={() =>
+                    track("search_result_selected", {
+                      code: hit.code,
+                      query: needle,
+                      source: "nav",
+                    })
+                  }
                 >
                   <span
                     className={styles.resultMark}
@@ -241,6 +253,12 @@ export function NavCenter({
                 href={item.href}
                 className={`${styles.link} ${active ? styles.active : ""}`}
                 aria-current={active ? "page" : undefined}
+                onClick={() =>
+                  track("navigation_click", {
+                    label: item.label,
+                    href: String(item.href),
+                  })
+                }
               >
                 {item.label}
               </Link>

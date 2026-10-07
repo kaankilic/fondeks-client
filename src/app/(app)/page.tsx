@@ -88,7 +88,11 @@ export default async function DiscoverPage() {
           <FundTable funds={funds} limit={PREVIEW_ROWS} />
 
           <div className={styles.rail}>
-            <ReturnLeaderboard funds={funds.slice(0, PREVIEW_ROWS)} />
+            <ReturnLeaderboard
+              funds={[...funds]
+                .sort((a, b) => b.daily - a.daily)
+                .slice(0, PREVIEW_ROWS)}
+            />
             <GuidePanel guides={guides} />
           </div>
         </div>

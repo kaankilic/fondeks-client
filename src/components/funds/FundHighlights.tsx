@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { fundLogoSrc } from "@/lib/fondeks/founders";
 import type { FundHighlight } from "@/lib/fondeks/types";
 
 import { BrandMark, FundCode, fundLogo } from "./primitives";
@@ -44,7 +45,11 @@ export function FundHighlightPanel({
 
             <div className={styles.fund}>
               <div className={styles.fundTop}>
-                <BrandMark logo={fundLogo(item.fund)} size="sm" />
+                <BrandMark
+                  logo={fundLogo(item.fund)}
+                  src={fundLogoSrc(item.fund)}
+                  size="sm"
+                />
                 <FundCode code={item.fund.code} size="sm" />
                 <span className={styles.name}>{item.fund.name}</span>
               </div>

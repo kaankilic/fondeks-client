@@ -164,9 +164,12 @@
   }
 }
 
-/* Fon / Kod · Fiyat · Günlük · 1 Yıl · Risk */
+/* Fon / Kod · Fiyat · Günlük · 1 Hafta · 1 Ay · 1 Yıl · Risk */
 @mixin screener-grid {
-  @include fund-row(minmax(0, 1.7fr) 84px 96px 80px 64px);
+  @include fund-row(
+    minmax(0, 1.5fr) 64px 76px 68px 68px 72px 52px,
+    '"identity price daily w1 m1 y1 risk"'
+  );
 }
 
 .headRow {
@@ -300,7 +303,7 @@
   .headRow,
   .dataRow {
     @include respond-to("sm") {
-      grid-template-columns: minmax(0, 1.9fr) 96px 88px 80px 64px;
+      grid-template-columns: minmax(0, 1.9fr) 88px 84px 80px 80px 80px 60px;
       padding-inline: $page-gutter;
     }
   }
@@ -356,6 +359,30 @@
 
   .cellDaily {
     grid-area: daily;
+  }
+
+  /* 1 Hafta and 1 Ay only appear once there's room — they're absent from the
+   * two-line phone fold, so they stay hidden below `sm`. */
+  .cellW1,
+  .cellM1 {
+    display: none;
+    text-align: right;
+
+    @include respond-to("sm") {
+      display: block;
+    }
+  }
+
+  .cellW1 {
+    @include respond-to("sm") {
+      grid-area: w1;
+    }
+  }
+
+  .cellM1 {
+    @include respond-to("sm") {
+      grid-area: m1;
+    }
   }
 
   .cellY1 {

@@ -14,6 +14,8 @@ export type Fund = {
   founder: string;
   founderInitials: string;
   founderColor: string;
+  /** Issuer logo URL. When set, rows show it in place of the initials mark. */
+  founderIcon?: string | null;
   category: FundCategory;
   isin: string | null;
   /** Yıllık yönetim ücreti, %. */

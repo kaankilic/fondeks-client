@@ -1,44 +1,20 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { UNKNOWN } from "@/lib/fondeks/constants";
+import { fundLogoSrc } from "@/lib/fondeks/founders";
 import { riskTone, type Logo } from "@/lib/fondeks/palette";
 import { direction, formatDaily } from "@/lib/fondeks/format";
 import { SPARK_VIEWBOX } from "@/lib/fondeks/series";
 import type { Fund, RiskLevel } from "@/lib/fondeks/types";
 
+import { BrandMark, type MarkSize } from "./BrandMark";
+import styles from "./primitives.module.scss";
+
+export { BrandMark, type MarkSize };
+
 /** The issuer mark a fund row carries, assembled from its joined columns. */
 export function fundLogo(fund: Fund): Logo {
   return { initials: fund.founderInitials, background: fund.founderColor };
-}
-
-import styles from "./primitives.module.scss";
-
-type MarkSize = "sm" | "md" | "lg" | "xl" | "hero";
-
-const MARK_CLASS: Record<MarkSize, string> = {
-  sm: styles.markSm,
-  md: styles.markMd,
-  lg: styles.markLg,
-  xl: styles.markXl,
-  hero: styles.markHero,
-};
-
-export function BrandMark({
-  logo,
-  size = "lg",
-}: {
-  logo: Logo;
-  size?: MarkSize;
-}) {
-  return (
-    <span
-      className={`${styles.mark} ${MARK_CLASS[size]}`}
-      style={{ background: logo.background }}
-      aria-hidden
-    >
-      {logo.initials}
-    </span>
-  );
 }
 
 export function FundCode({
@@ -144,7 +120,11 @@ export function FundIdentity({
 }) {
   return (
     <div className={`${styles.identity} ${className}`}>
-      <BrandMark logo={fundLogo(fund)} size={markSize} />
+      <BrandMark
+        logo={fundLogo(fund)}
+        src={fundLogoSrc(fund)}
+        size={markSize}
+      />
       <FundCode code={fund.code} size={codeSize} />
       <div className={styles.identityText}>
         <div className={styles.identityName}>{fund.name}</div>

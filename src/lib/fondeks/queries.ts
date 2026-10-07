@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { ApiError, apiFetch, apiFetchOrNull } from "./api-client";
+import { ETF_FUND_TYPE, PENSION_FUND_TYPE } from "./constants";
 import { sparklineFromValues } from "./series";
 import type {
   CategoryPerformance,
@@ -24,9 +25,8 @@ import type {
  * The data access layer. The app no longer owns a database — every reader the
  * external Fondeks API can serve reads from it over HTTP through
  * {@link apiFetch}. Readers the API does not yet expose (market indices, news,
- * category performance, guides, the pension and ETF universes) are stubbed to
- * an empty result so their screens render an empty state rather than an error,
- * until the API grows those endpoints.
+ * guides) are stubbed to an empty result so their screens render an empty state
+ * rather than an error, until the API grows those endpoints.
  */
 
 /**
@@ -79,30 +79,35 @@ async function listFunds(
 }
 
 /**
- * The whole catalogue, best one-year return first — the product's default
- * order and the shape the discovery screens filter and slice client-side.
- *
- * The list endpoint pages at 100, so this walks every page. `cache` dedupes it
- * within a request, so a screen that reads it from several components pays the
- * walk once per render.
+ * Every fund matching `params`, best one-year return first. The list endpoint
+ * pages at 100, so this walks every page and concatenates them. Shared by the
+ * whole-catalogue reader and the per-universe readers, which narrow it with a
+ * `type` filter.
  */
-export const getFunds = cache(async (): Promise<Fund[]> => {
-  const first = await listFunds({ sort: "y1", dir: "desc", limit: MAX_PAGE });
+async function listAllFunds(
+  params: Record<string, string | number | undefined> = {},
+): Promise<Fund[]> {
+  const query = { sort: "y1", dir: "desc", limit: MAX_PAGE, ...params };
+  const first = await listFunds(query);
   const funds = [...first.items];
 
   for (let offset = MAX_PAGE; offset < first.total; offset += MAX_PAGE) {
-    const page = await listFunds({
-      sort: "y1",
-      dir: "desc",
-      limit: MAX_PAGE,
-      offset,
-    });
+    const page = await listFunds({ ...query, offset });
     funds.push(...page.items);
     if (page.items.length === 0) break;
   }
 
   return funds;
-});
+}
+
+/**
+ * The whole catalogue, best one-year return first — the product's default
+ * order and the shape the discovery screens filter and slice client-side.
+ *
+ * `cache` dedupes it within a request, so a screen that reads it from several
+ * components pays the page walk once per render.
+ */
+export const getFunds = cache((): Promise<Fund[]> => listAllFunds());
 
 /** How many funds the product covers — read off the list endpoint's total. */
 export const getFundCount = cache(async (): Promise<number> => {
@@ -110,14 +115,15 @@ export const getFundCount = cache(async (): Promise<number> => {
   return total;
 });
 
-/**
- * Emeklilik yatırım fonları. The list endpoint has no fund-type parameter, so
- * this universe is unavailable until the API exposes one — stubbed empty.
- */
-export const getPensionFunds = cache(async (): Promise<Fund[]> => []);
+/** Emeklilik yatırım fonları (EMK) — the pension universe, best y1 first. */
+export const getPensionFunds = cache(
+  (): Promise<Fund[]> => listAllFunds({ type: PENSION_FUND_TYPE }),
+);
 
-/** Borsa yatırım fonları — likewise unavailable through the API for now. */
-export const getEtfFunds = cache(async (): Promise<Fund[]> => []);
+/** Borsa yatırım fonları (BYF) — the ETF universe, best y1 first. */
+export const getEtfFunds = cache(
+  (): Promise<Fund[]> => listAllFunds({ type: ETF_FUND_TYPE }),
+);
 
 /** "Öne Çıkanlar" — the week's strongest movers, biggest gain first. */
 export const getFeaturedFunds = cache(async (limit = 3): Promise<Fund[]> => {

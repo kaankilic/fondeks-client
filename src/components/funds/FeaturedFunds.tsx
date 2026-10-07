@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { fundLogoSrc } from "@/lib/fondeks/founders";
 import { direction, formatPercent, type Direction } from "@/lib/fondeks/format";
 import type { Fund } from "@/lib/fondeks/types";
 
@@ -41,7 +42,11 @@ export function FeaturedFunds({
               className={styles.card}
             >
               <div className={styles.top}>
-                <BrandMark logo={fundLogo(fund)} size="md" />
+                <BrandMark
+                  logo={fundLogo(fund)}
+                  src={fundLogoSrc(fund)}
+                  size="md"
+                />
                 <FundCode code={fund.code} size="md" />
                 <span className={styles.name}>{fund.name}</span>
               </div>

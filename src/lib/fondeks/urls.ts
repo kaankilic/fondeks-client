@@ -58,11 +58,14 @@ export async function listIndexableUrls(): Promise<MetadataRoute.Sitemap> {
       priority,
     })),
 
+    // Fund detail pages are the site's core indexable content and the whole
+    // reason to crawl, so they rank above the section pages (0.8) — second
+    // only to the home page.
     ...funds.map((fund) => ({
       url: absoluteUrl(`/fon/${fund.slug}`),
       lastModified: today,
       changeFrequency: "daily" as const,
-      priority: 0.7,
+      priority: 0.9,
     })),
 
     ...guides.map((guide) => ({

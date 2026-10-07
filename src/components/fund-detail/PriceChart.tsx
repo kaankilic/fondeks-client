@@ -2,6 +2,7 @@
 
 import { type PointerEvent, useMemo, useState } from "react";
 
+import { useEvents } from "@/lib/analytics/useEvents";
 import { formatDate, formatPercent, formatPrice } from "@/lib/fondeks/format";
 import type { PricePoint } from "@/lib/fondeks/types";
 
@@ -23,6 +24,7 @@ const RANGES = [
 type RangeLabel = (typeof RANGES)[number]["label"];
 
 export function PriceChart({ prices }: { prices: PricePoint[] }) {
+  const { track } = useEvents();
   const [range, setRange] = useState<RangeLabel>("1Y");
   const [hover, setHover] = useState<number | null>(null);
 
@@ -98,6 +100,7 @@ export function PriceChart({ prices }: { prices: PricePoint[] }) {
                 item.label === range ? styles.rangeActive : ""
               }`}
               onClick={() => {
+                track("chart_range_changed", { range: item.label });
                 setRange(item.label);
                 setHover(null);
               }}

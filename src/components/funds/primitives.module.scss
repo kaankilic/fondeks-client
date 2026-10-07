@@ -10,6 +10,16 @@
   font-weight: 800;
   letter-spacing: 0.01em;
   border-radius: $radius-md;
+  overflow: hidden;
+}
+
+/* A real founder logo fills the tile, kept whole (never cropped). */
+.markImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+  border-radius: inherit;
 }
 
 .markSm {

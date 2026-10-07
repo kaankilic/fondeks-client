@@ -125,7 +125,7 @@
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   background: var(--border);
   border: 1px solid var(--border);
@@ -134,7 +134,7 @@
 
   @include respond-to("lg") {
     flex: none;
-    width: 468px;
+    width: 340px;
   }
 }
 
