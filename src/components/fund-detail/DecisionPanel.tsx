@@ -1,3 +1,4 @@
+import { TrackView } from "@/lib/analytics/Track";
 import { UNKNOWN } from "@/lib/fondeks/constants";
 import {
   consistencyLabel,
@@ -110,8 +111,18 @@ export function DecisionPanel({
     },
   ];
 
+  const bilinmiyorCount = metrics.filter((m) => m.unknown).length;
+
   return (
     <section className={styles.panel}>
+      <TrackView
+        event="decision_panel_viewed"
+        params={{
+          code: fund.code,
+          has_full_year: fullYear,
+          bilinmiyor_count: bilinmiyorCount,
+        }}
+      />
       <div className={styles.head}>
         <span className={styles.title}>Karar Paneli</span>
         <span className={styles.hint}>Doğru fonda mıyım?</span>

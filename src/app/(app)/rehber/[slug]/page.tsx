@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
+import { ScrollDepthTracker } from "@/lib/analytics/ScrollDepthTracker";
+import { TrackView } from "@/lib/analytics/Track";
 import { getGuide, getGuides } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, guideArticleSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
@@ -47,6 +49,9 @@ export default async function GuidePage({
           { name: guide.title, href: `/rehber/${guide.slug}` },
         ])}
       />
+
+      <TrackView event="guide_viewed" params={{ slug: guide.slug }} />
+      <ScrollDepthTracker kind="guide" slug={guide.slug} />
 
       <SubHeader
         title={guide.title}

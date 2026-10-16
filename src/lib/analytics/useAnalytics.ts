@@ -19,6 +19,7 @@ export function useAnalytics() {
     () => ({
       track: analytics.track,
       identify: analytics.identify,
+      setUserProperties: analytics.setUserProperties,
       page: analytics.page,
       reset: analytics.reset,
     }),

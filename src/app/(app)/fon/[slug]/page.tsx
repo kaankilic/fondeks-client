@@ -13,6 +13,7 @@ import { SignupGate } from "@/components/fund-detail/SignupGate";
 import { SimilarFunds } from "@/components/fund-detail/SimilarFunds";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody } from "@/components/layout/Shell";
+import { ScrollDepthTracker } from "@/lib/analytics/ScrollDepthTracker";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getFund, getFundDetail } from "@/lib/fondeks/queries";
 import { isWatched } from "@/lib/watchlist/queries";
@@ -96,6 +97,8 @@ export default async function FundDetailPage({
       ))}
       <FundHeader fund={detail.fund} isAuthed isWatched={watched} />
 
+      <ScrollDepthTracker kind="fund" code={detail.fund.code} />
+
       <PageBody>
         <DecisionPanel fund={detail.fund} prices={detail.prices} />
 
@@ -112,7 +115,7 @@ export default async function FundDetailPage({
 
         <div className={styles.split}>
           <Allocation slices={detail.allocation} asOf={detail.allocationDate} />
-          <SimilarFunds funds={detail.similar} />
+          <SimilarFunds funds={detail.similar} fromCode={detail.fund.code} />
         </div>
 
         <CompareTable

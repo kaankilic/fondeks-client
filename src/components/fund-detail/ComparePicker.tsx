@@ -26,7 +26,7 @@ export function ComparePicker({
   selected: { code: string; name: string }[];
 }) {
   const router = useRouter();
-  const { track } = useAnalytics();
+  const { track, setUserProperties } = useAnalytics();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,6 +81,7 @@ export function ComparePicker({
   function add(code: string) {
     if (full || codes.includes(code)) return;
     track("compare_fund_added", { code, total: codes.length + 1 });
+    setUserProperties({ has_compared: true });
     setQuery("");
     setHits([]);
     pushCodes([...codes, code]);

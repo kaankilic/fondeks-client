@@ -26,7 +26,7 @@ export function FundActions({
   isAuthed: boolean;
   isWatched: boolean;
 }) {
-  const { track } = useAnalytics();
+  const { track, setUserProperties } = useAnalytics();
 
   const comparePath = `/karsilastir?fonlar=${code}`;
   const compareHref = isAuthed
@@ -53,6 +53,7 @@ export function FundActions({
             // Adding a fund you had compared is the Choose→Hold coupling the
             // north-star metric counts; a removal is not.
             if (action === "add") {
+              setUserProperties({ has_watchlist: true });
               track("compare_to_track", {
                 code,
                 from: "fund",

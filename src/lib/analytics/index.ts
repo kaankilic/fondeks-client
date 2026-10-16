@@ -81,6 +81,18 @@ export const analytics = {
     }
   },
 
+  /**
+   * Set properties on the current user (anon or signed-in) without rebinding
+   * their id. Idempotent-safe — call it when the flag flips (first compare,
+   * first watch) and every provider will mirror it on subsequent events.
+   */
+  setUserProperties(traits: UserTraits) {
+    ensureInitialized();
+    for (const provider of providers) {
+      safely(() => provider.setUserProperties?.(traits));
+    }
+  },
+
   // Route views flow through the same `track` wire every provider implements,
   // so GA4, Amplitude and future sinks all see the identical `page_view`
   // event shape. Call sites keep the convenience `page(url, …)` form.

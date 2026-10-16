@@ -49,7 +49,7 @@ export function CompareTrackBar({
 }
 
 function TrackButton({ code, isWatched }: { code: string; isWatched: boolean }) {
-  const { track } = useAnalytics();
+  const { track, setUserProperties } = useAnalytics();
 
   return (
     <form
@@ -58,6 +58,7 @@ function TrackButton({ code, isWatched }: { code: string; isWatched: boolean }) 
         const action = isWatched ? "remove" : "add";
         track("fund_watch_toggled", { code, action, authed: true });
         if (action === "add") {
+          setUserProperties({ has_watchlist: true });
           // The add happens on the compare board, so the comparison is a
           // certainty — `compared` is true by construction.
           track("compare_to_track", { code, from: "compare", compared: true });

@@ -4,6 +4,7 @@ import { SignupGate } from "@/components/fund-detail/SignupGate";
 import { WatchlistTable } from "@/components/fund-detail/WatchlistTable";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
+import { TrackView } from "@/lib/analytics/Track";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getWatchlistFunds } from "@/lib/watchlist/queries";
 import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
@@ -34,6 +35,13 @@ export default async function WatchlistPage() {
           { name: "İzleme Listem", href: "/izleme" },
         ])}
       />
+
+      {user ? (
+        <TrackView
+          event="watchlist_viewed"
+          params={{ count: funds.length, empty: funds.length === 0 }}
+        />
+      ) : null}
 
       <SubHeader title="İzleme Listem" />
       <PageBody>

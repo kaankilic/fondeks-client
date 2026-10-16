@@ -2,7 +2,7 @@
 
 import * as amplitude from "@amplitude/analytics-browser";
 
-import type { AnalyticsProvider } from "../types";
+import type { AnalyticsProvider, UserTraits } from "../types";
 
 /**
  * Amplitude, EU data residency. The SDK bootstraps lazily in `init()` — only
@@ -31,16 +31,23 @@ export const amplitudeProvider: AnalyticsProvider = {
 
   identify(userId, traits) {
     amplitude.setUserId(userId);
-    if (traits) {
-      const identify = new amplitude.Identify();
-      for (const [key, value] of Object.entries(traits)) {
-        if (value !== undefined && value !== null) identify.set(key, value);
-      }
-      amplitude.identify(identify);
-    }
+    if (traits) applyTraits(traits);
+  },
+
+  setUserProperties(traits) {
+    applyTraits(traits);
   },
 
   reset() {
     amplitude.reset();
   },
 };
+
+function applyTraits(traits: UserTraits) {
+  const identify = new amplitude.Identify();
+  for (const [key, value] of Object.entries(traits)) {
+    if (value === undefined || value === null) continue;
+    identify.set(key, value);
+  }
+  amplitude.identify(identify);
+}

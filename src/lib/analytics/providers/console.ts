@@ -19,6 +19,10 @@ export const consoleProvider: AnalyticsProvider = {
     console.debug(`%c[analytics] identify ${userId}`, style, traits ?? {});
   },
 
+  setUserProperties(traits) {
+    console.debug(`%c[analytics] setUserProperties`, style, traits);
+  },
+
   reset() {
     console.debug(`%c[analytics] reset`, style);
   },

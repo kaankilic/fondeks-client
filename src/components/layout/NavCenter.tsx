@@ -125,6 +125,16 @@ export function NavCenter({
   const visible = ready ? hits : [];
   const showEmpty = ready && !loading && visible.length === 0;
 
+  // Fire `search_no_results` once per distinct empty-result needle, so the
+  // "we don't carry this fund yet" signal is cohortable without flooding on
+  // every keystroke that still resolves to the same query.
+  const reportedEmpty = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!showEmpty || reportedEmpty.current.has(needle)) return;
+    reportedEmpty.current.add(needle);
+    track("search_no_results", { query: needle, source: "nav" });
+  }, [showEmpty, needle, track]);
+
   return (
     <div className={styles.middle}>
       <button

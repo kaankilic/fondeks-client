@@ -76,8 +76,29 @@ export type AnalyticsEvents = {
     compared: boolean;
   };
 
+  // Fund-detail depth & impressions (growth v1)
+  decision_panel_viewed: {
+    code: string;
+    has_full_year: boolean;
+    bilinmiyor_count: number;
+  };
+  fund_detail_scroll_depth: { code: string; depth: 25 | 50 | 75 | 100 };
+  compare_board_viewed: { funds: number };
+  watchlist_viewed: { count: number; empty: boolean };
+  fund_similar_click: { from: string; to: string };
+
+  // Content engagement
+  guide_viewed: { slug: string };
+  guide_scroll_depth: { slug: string; depth: 25 | 50 | 75 | 100 };
+  search_no_results: { query: string; source: SurfaceContext };
+
+  // Hygiene
+  outbound_link_click: { destination: string; host: string; location: string };
+  not_found_viewed: { path: string };
+
   // Conversion & auth
   signup_gate_viewed: { preset: "fund" | "watchlist"; code?: string };
+  signup_gate_dismissed: { preset: "fund" | "watchlist"; code?: string };
   auth_cta_click: {
     target: "login" | "signup" | "google";
     location: string;
@@ -110,6 +131,12 @@ export interface AnalyticsProvider {
   ): void;
   /** Associate subsequent events with a user. */
   identify(userId: string, traits?: UserTraits): void;
+  /**
+   * Set properties on the current (anonymous or signed-in) user without
+   * changing their id. Used for growth segmentation flags like
+   * `has_watchlist` / `has_compared`.
+   */
+  setUserProperties?(traits: UserTraits): void;
   /** Forget the current user (e.g. on sign-out). */
   reset?(): void;
 }

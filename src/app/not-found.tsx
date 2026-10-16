@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Footer } from "@/components/layout/Footer";
 import { NotFoundScreen } from "@/components/layout/NotFoundScreen";
+import { NotFoundTracker } from "@/components/layout/NotFoundTracker";
 import { Page } from "@/components/layout/Shell";
 import { TopNav } from "@/components/layout/TopNav";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -22,6 +23,7 @@ export default async function NotFound() {
       <TopNav user={user} />
       <main className={styles.main}>
         <Page>
+          <NotFoundTracker />
           <NotFoundScreen />
         </Page>
       </main>

@@ -6,6 +6,7 @@ import { ComparePicker, MAX_FUNDS } from "@/components/fund-detail/ComparePicker
 import { CompareTrackBar } from "@/components/fund-detail/CompareTrackBar";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
+import { TrackView } from "@/lib/analytics/Track";
 import { getCurrentUser } from "@/lib/auth/session";
 import { compareRows } from "@/lib/fondeks/compare";
 import { getFund } from "@/lib/fondeks/queries";
@@ -70,6 +71,11 @@ export default async function ComparePage({
           { name: "Keşfet", href: "/" },
           { name: "Karşılaştır", href: "/karsilastir" },
         ])}
+      />
+
+      <TrackView
+        event="compare_board_viewed"
+        params={{ funds: funds.length }}
       />
 
       <SubHeader title="Karşılaştır" />

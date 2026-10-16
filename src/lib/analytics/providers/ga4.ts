@@ -42,6 +42,10 @@ export const ga4Provider: AnalyticsProvider = {
     if (traits) gtag()?.("set", "user_properties", traits);
   },
 
+  setUserProperties(traits) {
+    gtag()?.("set", "user_properties", traits);
+  },
+
   reset() {
     gtag()?.("set", { user_id: null });
   },

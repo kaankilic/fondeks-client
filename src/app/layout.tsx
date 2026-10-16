@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 
 import { Analytics } from "@/components/layout/Analytics";
 import { JsonLd } from "@/components/layout/JsonLd";
+import { OutboundLinkTracker } from "@/lib/analytics/OutboundLinkTracker";
 import { getFundCount } from "@/lib/fondeks/queries";
 import { websiteSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="tr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
         <JsonLd data={websiteSchema()} />
+        <OutboundLinkTracker />
         {children}
       </body>
       <Analytics />

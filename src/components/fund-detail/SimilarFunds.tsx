@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandMark, FundCode, Meter } from "@/components/funds/primitives";
+import { TrackClick } from "@/lib/analytics/Track";
 import { UNKNOWN } from "@/lib/fondeks/constants";
 import { formatPercent } from "@/lib/fondeks/format";
 import type { SimilarFund } from "@/lib/fondeks/types";
@@ -10,7 +11,14 @@ import styles from "./SimilarFunds.module.scss";
 /** Overlap at or above this share is called out in brand gold. */
 const STRONG_OVERLAP = 85;
 
-export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
+export function SimilarFunds({
+  funds,
+  fromCode,
+}: {
+  funds: SimilarFund[];
+  /** The fund being viewed; recorded as the origin of a lateral click. */
+  fromCode?: string;
+}) {
   return (
     <section className={styles.panel}>
       <div className={styles.head}>
@@ -29,7 +37,7 @@ export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
         const meterColor = strong ? "var(--brand)" : "var(--border-strong)";
         const valueColor = strong ? "var(--brand)" : "var(--text-muted)";
 
-        return (
+        const row = (
           <Link
             key={fund.code}
             href={`/fon/${fund.slug}`}
@@ -66,6 +74,18 @@ export function SimilarFunds({ funds }: { funds: SimilarFund[] }) {
               {fund.risk ?? "?"}
             </span>
           </Link>
+        );
+
+        return fromCode ? (
+          <TrackClick
+            key={fund.code}
+            event="fund_similar_click"
+            params={{ from: fromCode, to: fund.code }}
+          >
+            {row}
+          </TrackClick>
+        ) : (
+          row
         );
       })}
     </section>

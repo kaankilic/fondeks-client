@@ -2,8 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { buttonClass } from "@/components/ui/Button";
-import { TrackClick, TrackView } from "@/lib/analytics/Track";
+import { TrackClick } from "@/lib/analytics/Track";
 
+import { SignupGateTracker } from "./SignupGateTracker";
 import styles from "./SignupGate.module.scss";
 
 /** Minimal line icons for the locked-feature list. */
@@ -182,8 +183,7 @@ export function SignupGate(props: GateProps) {
 
   return (
     <div className={styles.stage}>
-      <TrackView
-        event="signup_gate_viewed"
+      <SignupGateTracker
         params={
           props.preset === "fund"
             ? { preset: "fund", code: props.fundCode }
