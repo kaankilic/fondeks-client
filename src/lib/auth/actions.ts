@@ -1,8 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
+
+/**
+ * One-shot cookie the sign-up action drops just before redirecting, read on
+ * the next client load by `SignupCompletionTracker` to fire the
+ * `sign_up_completed` conversion event — the only moment where the client
+ * is alive after `signUpAction` has created the account.
+ */
+const SIGNUP_COMPLETION_COOKIE = "fondeks_signup_completed";
 
 import { db } from "@/db";
 import { users } from "@/db/schema/auth";
@@ -118,6 +127,12 @@ export async function signUpAction(
       .returning({ id: users.id });
 
     await createSession(created.id);
+    const jar = await cookies();
+    jar.set(SIGNUP_COMPLETION_COOKIE, "password", {
+      maxAge: 60,
+      path: "/",
+      sameSite: "lax",
+    });
   } catch {
     return { error: DB_ERROR, values };
   }

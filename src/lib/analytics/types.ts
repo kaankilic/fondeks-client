@@ -107,6 +107,13 @@ export type AnalyticsEvents = {
   login_failed: { reason?: string };
   signup_submitted: { method: "password" };
   signup_failed: { reason?: string };
+  /**
+   * The account-creation conversion event — fires on the first client load
+   * after `signUpAction` finishes, driven by a one-shot cookie the action
+   * sets just before redirecting. The conversion endpoint for the signup
+   * funnel.
+   */
+  sign_up_completed: { method: "password" };
   logout_clicked: Record<string, never>;
 };
 
