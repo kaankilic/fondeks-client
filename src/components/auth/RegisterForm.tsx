@@ -6,7 +6,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { signUpAction, type AuthFormState } from "@/lib/auth/actions";
 import { scorePassword } from "@/lib/auth/password-strength";
 import { Button } from "@/components/ui/Button";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
 import { FieldError } from "./LoginForm";
 import styles from "./LoginForm.module.scss";
@@ -15,7 +15,7 @@ const EMPTY: AuthFormState = {};
 
 export function RegisterForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signUpAction, EMPTY);
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

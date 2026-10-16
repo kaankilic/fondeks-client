@@ -9,7 +9,7 @@ import {
 } from "@/components/funds/FundTable";
 import { SearchInput } from "@/components/funds/SearchInput";
 import { Button } from "@/components/ui/Button";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import {
   FUND_CATEGORIES,
   RISK_MAX as RISK_SCALE_MAX,
@@ -71,7 +71,7 @@ export function SearchWorkspace({
   funds: Fund[];
   initialQuery?: string;
 }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [sort, setSort] = useState<Sort>(DEFAULT_SORT);

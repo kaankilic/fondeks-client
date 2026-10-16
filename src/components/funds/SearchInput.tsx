@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
 import styles from "./SearchInput.module.scss";
 
@@ -31,7 +31,7 @@ export function SearchInput(props: SearchInputProps) {
     compact = false,
   } = props;
   const router = useRouter();
-  const { track } = useEvents();
+  const { track } = useAnalytics();
   const [internal, setInternal] = useState(
     props.value === undefined ? (props.defaultValue ?? "") : "",
   );

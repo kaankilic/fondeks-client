@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { ChangePill, FundIdentity, RiskChip } from "@/components/funds/primitives";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { direction, formatPercent } from "@/lib/fondeks/format";
 import type { Fund } from "@/lib/fondeks/types";
 import { toggleWatch } from "@/lib/watchlist/actions";
@@ -12,7 +12,7 @@ import styles from "./WatchlistTable.module.scss";
 
 /** The signed-in user's tracked funds, each removable in place. */
 export function WatchlistTable({ funds }: { funds: Fund[] }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   if (funds.length === 0) {
     return (

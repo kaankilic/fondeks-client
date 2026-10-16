@@ -10,7 +10,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { direction, formatPercent } from "@/lib/fondeks/format";
 
 import styles from "./TopNav.module.scss";
@@ -56,7 +56,7 @@ export function NavCenter({
   pathname: string;
 }) {
   const router = useRouter();
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");

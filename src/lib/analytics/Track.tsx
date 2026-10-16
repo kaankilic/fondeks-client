@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 import type { AnalyticsEventName, AnalyticsEvents } from "./index";
-import { useEvents } from "./useEvents";
+import { useAnalytics } from "./useAnalytics";
 
 /**
  * Client helpers that let Server Components emit events without becoming client
@@ -18,7 +18,7 @@ export function TrackView<E extends AnalyticsEventName>({
   event: E;
   params: AnalyticsEvents[E];
 }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
   // Guard against a double-fire from React 19 strict-mode remounts.
   const sent = useRef(false);
 
@@ -47,7 +47,7 @@ export function TrackClick<E extends AnalyticsEventName>({
   params: AnalyticsEvents[E];
   children: ReactNode;
 }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   return (
     <span style={{ display: "contents" }} onClick={() => track(event, params)}>

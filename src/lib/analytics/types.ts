@@ -3,7 +3,7 @@
  * typed catalogue of events the product emits.
  *
  * The product only ever talks to the dispatcher in `./index` through the
- * `useEvents` hook; the dispatcher fans each call out to every registered
+ * `useAnalytics` hook; the dispatcher fans each call out to every registered
  * provider. Adding Amplitude or Woopra later is a matter of writing one more
  * object that satisfies `AnalyticsProvider` and registering it — no call site
  * changes.
@@ -110,11 +110,6 @@ export interface AnalyticsProvider {
   ): void;
   /** Associate subsequent events with a user. */
   identify(userId: string, traits?: UserTraits): void;
-  /**
-   * A page/route view. Optional: GA4 enhanced measurement already counts these
-   * from history changes, so its provider leaves this unimplemented.
-   */
-  page?(path: string, params?: EventParams): void;
   /** Forget the current user (e.g. on sign-out). */
   reset?(): void;
 }

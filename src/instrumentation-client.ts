@@ -5,11 +5,19 @@ import { analytics } from "@/lib/analytics";
 
 analytics.init();
 
+// First page_view for the initial hard load — `onRouterTransitionStart` only
+// fires on subsequent client-side navigations.
+if (typeof window !== "undefined") {
+  analytics.page(window.location.pathname + window.location.search, {
+    navigation_type: "initial",
+  });
+}
+
 /**
- * App Router navigations. GA4's enhanced measurement already records page_view
- * on these, so `analytics.page` is a no-op for GA — it exists for providers
- * (Amplitude, Woopra) that need an explicit page call. Kept here so route
- * tracking has one home the day such a provider is added.
+ * App Router navigations. Fires `page_view` through the shared dispatcher so
+ * every provider — GA4 today, Amplitude tomorrow — receives the identical
+ * event shape. GA4 Enhanced measurement's "Page views" toggle must be off to
+ * avoid double-counting.
  */
 export function onRouterTransitionStart(
   url: string,

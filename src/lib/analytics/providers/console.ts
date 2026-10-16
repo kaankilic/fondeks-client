@@ -19,10 +19,6 @@ export const consoleProvider: AnalyticsProvider = {
     console.debug(`%c[analytics] identify ${userId}`, style, traits ?? {});
   },
 
-  page(path, params) {
-    console.debug(`%c[analytics] page ${path}`, style, params ?? {});
-  },
-
   reset() {
     console.debug(`%c[analytics] reset`, style);
   },

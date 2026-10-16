@@ -1,10 +1,10 @@
+import { amplitudeProvider } from "./providers/amplitude";
 import { consoleProvider } from "./providers/console";
 import { ga4Provider } from "./providers/ga4";
 import type {
   AnalyticsEventName,
   AnalyticsEvents,
   AnalyticsProvider,
-  EventParams,
   UserTraits,
 } from "./types";
 
@@ -18,7 +18,7 @@ export type {
 } from "./types";
 
 /**
- * The single dispatcher the whole app talks to (through the `useEvents` hook).
+ * The single dispatcher the whole app talks to (through the `useAnalytics` hook).
  * It holds the registered providers and forwards every call to each of them,
  * swallowing a misbehaving provider so one broken sink can never take down a
  * user interaction.
@@ -57,6 +57,7 @@ function ensureInitialized() {
   if (initialized) return;
   initialized = true;
   register(ga4Provider);
+  register(amplitudeProvider);
   if (debugEnabled) register(consoleProvider);
 }
 
@@ -80,11 +81,11 @@ export const analytics = {
     }
   },
 
-  page(path: string, params?: EventParams) {
-    ensureInitialized();
-    for (const provider of providers) {
-      safely(() => provider.page?.(path, params));
-    }
+  // Route views flow through the same `track` wire every provider implements,
+  // so GA4, Amplitude and future sinks all see the identical `page_view`
+  // event shape. Call sites keep the convenience `page(url, …)` form.
+  page(path: string, params?: Omit<AnalyticsEvents["page_view"], "path">) {
+    this.track("page_view", { path, ...params });
   },
 
   reset() {

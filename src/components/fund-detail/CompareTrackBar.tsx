@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { toggleWatch } from "@/lib/watchlist/actions";
 
 import styles from "./CompareTrackBar.module.scss";
@@ -49,7 +49,7 @@ export function CompareTrackBar({
 }
 
 function TrackButton({ code, isWatched }: { code: string; isWatched: boolean }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   return (
     <form

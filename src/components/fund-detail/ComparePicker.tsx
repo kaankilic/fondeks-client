@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type KeyboardEvent } from "react";
 
 import { markCompared } from "@/lib/analytics/compareTrack";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import type { SearchResult } from "@/lib/fondeks/types";
 
 import styles from "./ComparePicker.module.scss";
@@ -26,7 +26,7 @@ export function ComparePicker({
   selected: { code: string; name: string }[];
 }) {
   const router = useRouter();
-  const { track } = useEvents();
+  const { track } = useAnalytics();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);

@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import type { SurfaceContext } from "@/lib/analytics";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { direction, formatPercent, formatPrice } from "@/lib/fondeks/format";
 import type { Fund, FundCategory } from "@/lib/fondeks/types";
 
@@ -113,7 +113,7 @@ export function FundTable({
   /** Labels this table's events, so each mount is distinct in the funnel. */
   trackContext?: SurfaceContext;
 }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
   const [category, setCategory] = useState<FundCategory | null>(null);
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");

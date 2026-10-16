@@ -5,7 +5,7 @@ import { useActionState, useEffect } from "react";
 
 import { signInAction, type AuthFormState } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/Button";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
 import styles from "./LoginForm.module.scss";
 
@@ -13,7 +13,7 @@ const EMPTY: AuthFormState = {};
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signInAction, EMPTY);
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   // A successful sign-in redirects, so the component unmounts without ever
   // reaching a "success" state here — only failures come back as new state.

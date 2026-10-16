@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import type { SessionUser } from "@/lib/auth/session";
 
-import { useEvents } from "./useEvents";
+import { useAnalytics } from "./useAnalytics";
 
 /**
  * Bridges the server-resolved session to the analytics layer. Mounted in the
@@ -16,7 +16,7 @@ import { useEvents } from "./useEvents";
  * analytics.
  */
 export function IdentifyUser({ user }: { user: SessionUser | null }) {
-  const { identify, reset } = useEvents();
+  const { identify, reset } = useAnalytics();
 
   useEffect(() => {
     if (user) identify(user.id, { logged_in: true });

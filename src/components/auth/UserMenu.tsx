@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { signOutAction } from "@/lib/auth/actions";
 import { buttonClass } from "@/components/ui/Button";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import type { SessionUser } from "@/lib/auth/session";
 
 import styles from "./SessionMenu.module.scss";
@@ -24,7 +24,7 @@ function initialsOf(name: string | null, email: string): string {
  * two entry points for visitors who have no account yet.
  */
 export function UserMenu({ user }: { user: SessionUser | null }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   if (!user) {
     return (

@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button, buttonClass } from "@/components/ui/Button";
 import { wasCompared } from "@/lib/analytics/compareTrack";
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { toggleWatch } from "@/lib/watchlist/actions";
 
 import styles from "./FundHeader.module.scss";
@@ -26,7 +26,7 @@ export function FundActions({
   isAuthed: boolean;
   isWatched: boolean;
 }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   const comparePath = `/karsilastir?fonlar=${code}`;
   const compareHref = isAuthed

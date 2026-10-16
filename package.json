@@ -18,6 +18,7 @@
     "submit-urls": "NODE_OPTIONS='--conditions=react-server' tsx src/db/submit-urls.ts"
   },
   "dependencies": {
+    "@amplitude/analytics-browser": "^2.48.0",
     "@anthropic-ai/sdk": "^0.123.0",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.4",

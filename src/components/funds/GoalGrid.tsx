@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useEvents } from "@/lib/analytics/useEvents";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { GOALS } from "@/lib/fondeks/goals";
 
 import styles from "./GoalGrid.module.scss";
@@ -24,7 +24,7 @@ export function GoalGrid({
   location?: "home" | "category";
   current?: string;
 }) {
-  const { track } = useEvents();
+  const { track } = useAnalytics();
 
   return (
     <section className={styles.wrap} aria-label="Hedefe göre fonlar">
