@@ -2,6 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 
+import sanitizeHtml from "sanitize-html";
+
 import { ApiError, apiFetch, apiFetchOrNull } from "./api-client";
 import { ETF_FUND_TYPE, PENSION_FUND_TYPE } from "./constants";
 import { sparklineFromValues } from "./series";
@@ -53,6 +55,7 @@ type FundDetailResponse = {
   monthly?: MonthlyStat[];
   volatility?: number | null;
   allocation?: FundDetail["allocation"];
+  allocationDate?: string | null;
   similar?: FundDetail["similar"];
   increased?: FundDetail["increased"];
   decreased?: FundDetail["decreased"];
@@ -184,23 +187,33 @@ export const getFundDetail = cache(
   async (code: string): Promise<FundDetail | null> => {
     const path = `/funds/${encodeURIComponent(code)}`;
 
-    // The `detail` bundle (allocation, similar funds, movers, compare) is
-    // computed upstream and returns a 500 for a number of funds. When it does,
-    // drop the `detail` token and fetch series only, so the page still renders
-    // — header, chart, facts, monthly — with the detail sections falling back to
-    // empty, rather than the whole route erroring. A 404 still means the fund
-    // is gone, so it propagates to `notFound()`.
-    let detail: FundDetailResponse | null;
-    try {
-      detail = await apiFetchOrNull<FundDetailResponse>(path, {
-        include: "prices,monthly,detail",
-      });
-    } catch (error) {
-      if (!(error instanceof ApiError) || error.status === 404) throw error;
-      detail = await apiFetchOrNull<FundDetailResponse>(path, {
-        include: "prices,monthly",
-      });
+    // Sections are computed upstream and any of them can 500 for a given fund:
+    // the `detail` bundle (allocation, similar funds, movers, compare) most
+    // often, but the price and monthly series too. So fetch richest-to-leanest
+    // and take the first tier that answers — a broken section drops the page
+    // down a level (header, chart, facts) instead of erroring the whole route,
+    // with the missing sections falling back to empty below. A 404 means the
+    // fund is gone, so it propagates to `notFound()`; only a fund that 500s on
+    // every tier — genuinely unreachable — surfaces the error.
+    const tiers = ["prices,monthly,detail", "prices,monthly", "prices"] as const;
+    let detail: FundDetailResponse | null = null;
+    let lastError: unknown = null;
+
+    for (const include of [...tiers, undefined]) {
+      try {
+        detail = await apiFetchOrNull<FundDetailResponse>(
+          path,
+          include ? { include } : undefined,
+        );
+        lastError = null;
+        break;
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status === 404) throw error;
+        lastError = error; // a 5xx on this tier — try a leaner one
+      }
     }
+
+    if (lastError) throw lastError;
     if (!detail) return null;
 
     return {
@@ -211,6 +224,7 @@ export const getFundDetail = cache(
       increased: detail.increased ?? [],
       decreased: detail.decreased ?? [],
       allocation: detail.allocation ?? [],
+      allocationDate: detail.allocationDate ?? null,
       similar: detail.similar ?? [],
       compare: detail.compare ?? { codes: [], rows: [] },
     };
@@ -353,12 +367,84 @@ export const getForeksNews = cache(
   async (_limit: number = 6): Promise<NewsItem[]> => [],
 );
 
-/** Rehber list. Not exposed by the API yet. */
-export const getGuides = cache(async (_limit?: number): Promise<Guide[]> => []);
+// ── Rehber ────────────────────────────────────────────────────────────────
+//
+// Editorial content served by the API's `/blog` endpoint. The list carries the
+// card fields; the detail adds a `body` of author-entered HTML (Quill output),
+// which is sanitised here — on the server, before it reaches a component — to a
+// known-safe tag set, so the article page can render it directly.
 
-/** One rehber article. Not exposed by the API yet. */
+/** The `publishedAt` the API sends is an ISO string; the UI holds a `Date`. */
+type GuideApi = Omit<Guide, "publishedAt"> & { publishedAt: string };
+type BlogListResponse = { items: GuideApi[]; total: number };
+type BlogDetailResponse = { post: GuideApi & { body: string } };
+
+/** Rehber content changes rarely; cache it an hour rather than the 60s default. */
+const GUIDE_REVALIDATE = 3600;
+
+/**
+ * The tag and attribute set the article body is reduced to. The source is a
+ * Quill editor, so it only ever emits headings, paragraphs, lists, links and
+ * inline emphasis; everything else (scripts, styles, event handlers, the
+ * editor's own `ql-*` helper spans) is dropped. `data-list` is kept so a
+ * Quill bullet list — authored as `<ol><li data-list="bullet">` — can still be
+ * styled as bullets rather than numbers.
+ */
+const GUIDE_SANITIZE: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "h2", "h3", "h4", "p", "ul", "ol", "li", "blockquote",
+    "strong", "em", "b", "i", "u", "s", "a", "br", "code", "pre",
+  ],
+  allowedAttributes: {
+    a: ["href", "title", "target", "rel"],
+    li: ["data-list"],
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  transformTags: {
+    // Force external links safe; the editor does not set rel/target itself.
+    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }),
+  },
+  // Drop Quill's empty helper spans (`<span class="ql-ui">`) and their contents.
+  exclusiveFilter: (frame) =>
+    frame.tag === "span" && frame.text.trim() === "",
+};
+
+function toGuide(item: GuideApi): Guide {
+  return {
+    slug: item.slug,
+    title: item.title,
+    summary: item.summary,
+    category: item.category,
+    readingMinutes: item.readingMinutes,
+    publishedAt: new Date(item.publishedAt),
+  };
+}
+
+/** Rehber list, newest first as the API returns it, optionally capped. */
+export const getGuides = cache(async (limit?: number): Promise<Guide[]> => {
+  const { items } = await apiFetch<BlogListResponse>(
+    "/blog",
+    limit === undefined ? undefined : { limit },
+    GUIDE_REVALIDATE,
+  );
+  return items.map(toGuide);
+});
+
+/** One rehber article by slug, body sanitised to safe HTML. Null when unknown. */
 export const getGuide = cache(
-  async (_slug: string): Promise<GuideDetail | null> => null,
+  async (slug: string): Promise<GuideDetail | null> => {
+    const detail = await apiFetchOrNull<BlogDetailResponse>(
+      `/blog/${encodeURIComponent(slug)}`,
+      undefined,
+      GUIDE_REVALIDATE,
+    );
+    if (!detail) return null;
+
+    return {
+      ...toGuide(detail.post),
+      bodyHtml: sanitizeHtml(detail.post.body, GUIDE_SANITIZE),
+    };
+  },
 );
 
 /**

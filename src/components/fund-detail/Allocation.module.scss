@@ -7,8 +7,25 @@
   padding: 18px 20px;
 }
 
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .title {
   @include section-title;
+}
+
+/* The as-of date sits opposite the title: the breakdown is a snapshot, so when
+ * it was taken belongs next to what it shows. */
+.asOf {
+  flex: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .bar {

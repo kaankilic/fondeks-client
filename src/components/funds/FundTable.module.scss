@@ -241,11 +241,15 @@
   @include numeric(12px, 500);
   color: var(--text-secondary);
   text-align: right;
+  /* Keep a long figure on one line rather than letting it wrap in its cell. */
+  white-space: nowrap;
 }
 
 .return {
   @include numeric(12px, 600);
   text-align: right;
+  /* A long return (e.g. +1.234,56%) stays on one line, never wraps. */
+  white-space: nowrap;
 }
 
 .pos {

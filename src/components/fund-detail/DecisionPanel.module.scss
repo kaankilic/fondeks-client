@@ -1,0 +1,130 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel-raised;
+  overflow: hidden;
+}
+
+.head {
+  @include section-head;
+}
+
+.title {
+  @include section-title;
+}
+
+.hint {
+  @include section-meta;
+}
+
+/* The verdict is the panel's lead: a full-width, tinted sentence that reads
+ * before any figure. Its left edge is coloured by tone so a warning is legible
+ * at a glance without shouting. */
+.verdict {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--text);
+  border-left: 3px solid var(--border-strong);
+  background: var(--surface-raised);
+}
+
+.verdict.good {
+  border-left-color: var(--pos);
+  background: var(--pos-bg);
+}
+
+.verdict.warn {
+  border-left-color: var(--neg);
+  background: var(--neg-bg);
+}
+
+.verdict.neutral {
+  border-left-color: var(--brand);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.cell {
+  padding: 14px 16px;
+  background: var(--surface);
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.value {
+  margin-top: 6px;
+  @include numeric(17px, 700);
+  color: var(--text);
+}
+
+.value.good {
+  color: var(--pos);
+}
+
+.value.warn {
+  color: var(--neg);
+}
+
+.value.neutral {
+  color: var(--text);
+}
+
+/* "Bilinmiyor" is a word, and a quieter one than a figure. */
+.unknownValue {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.detail {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-dim);
+}
+
+.consistency {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--pos-bg);
+  color: var(--pos);
+  font-size: 11px;
+  font-weight: 700;
+}

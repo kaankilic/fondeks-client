@@ -3,11 +3,13 @@ import { redirect } from "next/navigation";
 
 import { CompareTable } from "@/components/fund-detail/CompareTable";
 import { ComparePicker, MAX_FUNDS } from "@/components/fund-detail/ComparePicker";
+import { CompareTrackBar } from "@/components/fund-detail/CompareTrackBar";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getCurrentUser } from "@/lib/auth/session";
 import { compareRows } from "@/lib/fondeks/compare";
 import { getFund } from "@/lib/fondeks/queries";
+import { getWatchedCodes } from "@/lib/watchlist/queries";
 import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
 import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 import type { Fund } from "@/lib/fondeks/types";
@@ -54,7 +56,10 @@ export default async function ComparePage({
   }
 
   const codes = parseCodes(fonlar);
-  const resolved = await Promise.all(codes.map((code) => getFund(code)));
+  const [resolved, watched] = await Promise.all([
+    Promise.all(codes.map((code) => getFund(code))),
+    getWatchedCodes(user.id),
+  ]);
   const funds = resolved.filter((fund): fund is Fund => fund !== null);
 
   return (
@@ -83,6 +88,11 @@ export default async function ComparePage({
               ? "Karşılaştırmak için ikinci bir fon ekle."
               : "Karşılaştırmak için yukarıdan en az iki fon seç."
           }
+        />
+
+        <CompareTrackBar
+          funds={funds.map((fund) => ({ code: fund.code, name: fund.name }))}
+          watched={watched}
         />
       </PageBody>
     </Page>

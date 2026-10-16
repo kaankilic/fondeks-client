@@ -142,7 +142,11 @@ export function guideArticleSchema(guide: GuideDetail): JsonLdObject {
     url: absoluteUrl(`/rehber/${guide.slug}`),
     inLanguage: "tr",
     articleSection: guide.category,
-    wordCount: guide.paragraphs.join(" ").split(/\s+/).length,
+    wordCount: guide.bodyHtml
+      .replace(/<[^>]+>/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length,
     datePublished: guide.publishedAt.toISOString(),
     publisher: ORG,
     isPartOf: { "@type": "WebSite", url: siteUrl() },

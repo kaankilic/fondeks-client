@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useFormStatus } from "react-dom";
 
 import { Button, buttonClass } from "@/components/ui/Button";
+import { wasCompared } from "@/lib/analytics/compareTrack";
 import { useEvents } from "@/lib/analytics/useEvents";
 import { toggleWatch } from "@/lib/watchlist/actions";
 
@@ -46,13 +47,19 @@ export function FundActions({
         <form
           action={toggleWatch.bind(null, code)}
           className={styles.watchForm}
-          onSubmit={() =>
-            track("fund_watch_toggled", {
-              code,
-              action: isWatched ? "remove" : "add",
-              authed: true,
-            })
-          }
+          onSubmit={() => {
+            const action = isWatched ? "remove" : "add";
+            track("fund_watch_toggled", { code, action, authed: true });
+            // Adding a fund you had compared is the Choose→Hold coupling the
+            // north-star metric counts; a removal is not.
+            if (action === "add") {
+              track("compare_to_track", {
+                code,
+                from: "fund",
+                compared: wasCompared(code),
+              });
+            }
+          }}
         >
           <WatchButton isWatched={isWatched} />
         </form>

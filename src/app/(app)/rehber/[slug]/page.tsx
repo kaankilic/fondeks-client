@@ -57,11 +57,11 @@ export default async function GuidePage({
         <article className={styles.article}>
           <p className={styles.lead}>{guide.summary}</p>
 
-          {guide.paragraphs.map((paragraph) => (
-            <p key={paragraph.slice(0, 40)} className={styles.paragraph}>
-              {paragraph}
-            </p>
-          ))}
+          {/* Sanitised server-side in getGuide() against an allowlist. */}
+          <div
+            className={styles.body}
+            dangerouslySetInnerHTML={{ __html: guide.bodyHtml }}
+          />
 
           <p className={styles.note}>
             Bu içerik genel bilgilendirme amaçlıdır; yatırım danışmanlığı

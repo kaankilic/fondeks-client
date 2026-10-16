@@ -95,6 +95,8 @@
   padding: 2px 6px;
   border-radius: $radius-sm;
   @include numeric(11px, 500);
+  /* The daily change stays on one line even when the figure is long. */
+  white-space: nowrap;
 }
 
 .pos {

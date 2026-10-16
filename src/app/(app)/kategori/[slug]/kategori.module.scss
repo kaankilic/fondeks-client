@@ -1,0 +1,56 @@
+@use "abstracts" as *;
+
+.intro {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.featured {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.featuredKicker {
+  @include eyebrow;
+  color: var(--text-dim);
+  @include truncate;
+}
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: $radius-panel;
+  background: var(--grad-surface);
+  box-shadow: var(--shadow-panel);
+
+  @include respond-to("md") {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.ctaText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ctaTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ctaSub {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}

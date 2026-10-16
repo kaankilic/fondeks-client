@@ -4,6 +4,7 @@ import {
   HighlightGrid,
 } from "@/components/funds/FundHighlights";
 import { FundTable } from "@/components/funds/FundTable";
+import { GoalGrid } from "@/components/funds/GoalGrid";
 import { MarketHero } from "@/components/funds/MarketHero";
 import { ReturnLeaderboard } from "@/components/funds/ReturnLeaderboard";
 import { GuidePanel } from "@/components/guides/GuideList";
@@ -81,6 +82,10 @@ export default async function DiscoverPage() {
 
       <div className={styles.body}>
         <MarketHero funds={funds} indices={indices} />
+
+        {/* Goal-based entry leads the screen: "what are you trying to do?"
+            before "what jumped today?" — the v2.1 homepage reframe. */}
+        <GoalGrid location="home" />
 
         <FeaturedFunds funds={featured} sparklines={sparklines} />
 

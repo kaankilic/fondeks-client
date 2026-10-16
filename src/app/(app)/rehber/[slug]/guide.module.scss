@@ -17,13 +17,62 @@
   color: var(--text-secondary);
 }
 
-.paragraph {
-  margin: 0 0 16px;
+.body {
   font-size: 13.5px;
   line-height: 1.8;
   color: var(--text-muted);
 
-  &:last-of-type {
+  // Author-entered HTML from the editor: style the tags it emits directly,
+  // since there are no class hooks on the content.
+  p {
+    margin: 0 0 16px;
+  }
+
+  h2,
+  h3,
+  h4 {
+    margin: 28px 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+
+  ul,
+  ol {
+    margin: 0 0 16px;
+    padding-left: 20px;
+  }
+
+  // Quill marks a bullet list as <ol><li data-list="bullet">, so render those
+  // items with a disc rather than the ordered number the <ol> would give.
+  li {
+    margin: 0 0 8px;
+
+    &[data-list="bullet"] {
+      list-style-type: disc;
+    }
+  }
+
+  strong,
+  b {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  a {
+    color: var(--brand);
+    text-decoration: underline;
+  }
+
+  blockquote {
+    margin: 0 0 16px;
+    padding-left: 14px;
+    border-left: 2px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  > *:last-child {
     margin-bottom: 0;
   }
 }

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type KeyboardEvent } from "react";
 
+import { markCompared } from "@/lib/analytics/compareTrack";
 import { useEvents } from "@/lib/analytics/useEvents";
 import type { SearchResult } from "@/lib/fondeks/types";
 
@@ -32,6 +33,16 @@ export function ComparePicker({
 
   const codes = selected.map((fund) => fund.code);
   const full = codes.length >= MAX_FUNDS;
+
+  // Every fund on the board is a fund the visitor compared this session — the
+  // precondition for the compare-to-track north-star metric. Recorded here
+  // (not only on `add`) so a fund that arrived via the fund page's "Karşılaştır"
+  // link, already selected in the URL, counts too. Keyed on the joined codes so
+  // it runs when the set changes, not on every render.
+  const codeKey = codes.join(",");
+  useEffect(() => {
+    for (const code of codeKey ? codeKey.split(",") : []) markCompared(code);
+  }, [codeKey]);
 
   useEffect(() => {
     const needle = query.trim();

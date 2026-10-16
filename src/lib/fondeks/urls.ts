@@ -2,6 +2,7 @@ import "server-only";
 
 import type { MetadataRoute } from "next";
 
+import { GOALS } from "./goals";
 import { getGuides, getSitemapFunds } from "./queries";
 import { absoluteUrl } from "./site";
 
@@ -66,6 +67,16 @@ export async function listIndexableUrls(): Promise<MetadataRoute.Sitemap> {
       lastModified: today,
       changeFrequency: "daily" as const,
       priority: 0.9,
+    })),
+
+    // Goal-based comparison pages ("en iyi altın fonları", …): evergreen search
+    // intent, and the acquisition surface the strategy leans on, so they rank
+    // above the section pages but below the fund pages themselves.
+    ...GOALS.map((goal) => ({
+      url: absoluteUrl(`/kategori/${goal.slug}`),
+      lastModified: today,
+      changeFrequency: "daily" as const,
+      priority: 0.85,
     })),
 
     ...guides.map((guide) => ({

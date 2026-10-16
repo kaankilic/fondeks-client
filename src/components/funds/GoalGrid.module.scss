@@ -1,0 +1,104 @@
+@use "abstracts" as *;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.sub {
+  margin: 0;
+  max-width: 54ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  @include respond-to("md") {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @include respond-to("lg") {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: $radius-panel;
+  background: var(--grad-surface);
+  box-shadow: var(--shadow-panel);
+  text-decoration: none;
+  transition:
+    border-color $transition-fast,
+    transform $transition-fast;
+
+  &:hover {
+    border-color: var(--brand);
+    transform: translateY(-2px);
+  }
+}
+
+.card.active {
+  border-color: var(--brand);
+  cursor: default;
+
+  &:hover {
+    transform: none;
+  }
+}
+
+.glyph {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tagline {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.arrow {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 14px;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity $transition-fast;
+
+  .card:hover & {
+    opacity: 1;
+  }
+}

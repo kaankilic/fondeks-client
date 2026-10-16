@@ -28,7 +28,7 @@ export function MarketHero({
   const avgY1 = total
     ? funds.reduce((sum, fund) => sum + fund.y1, 0) / total
     : 0;
-  // "Günün Zirvesi" is the day's top mover, so it ranks by the daily change.
+  // "Günün Lideri" is the day's top mover, so it ranks by the daily change.
   const leader = funds.reduce<Fund | null>(
     (best, fund) => (best === null || fund.daily > best.daily ? fund : best),
     null,
@@ -69,7 +69,7 @@ export function MarketHero({
             tone={direction(avgY1)}
           />
           <Stat
-            label="Günün Zirvesi"
+            label="Günün Lideri"
             value={leader ? formatPercent(leader.daily) : "—"}
             tone="brand"
             hero

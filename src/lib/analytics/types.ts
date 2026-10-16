@@ -22,7 +22,9 @@ export type SurfaceContext =
   | "table"
   | "watchlist"
   | "compare"
-  | "leaderboard";
+  | "leaderboard"
+  | "category"
+  | "goal";
 
 /**
  * Every event the product can emit, with its payload. `track` is typed against
@@ -57,6 +59,22 @@ export type AnalyticsEvents = {
   // Compare board
   compare_fund_added: { code: string; total: number };
   compare_fund_removed: { code: string; total: number };
+
+  // Goal-based discovery (v2.1 "Choose")
+  goal_entry_click: { goal: string; location: "home" | "category" };
+  category_page_viewed: { goal: string; funds: number };
+
+  /**
+   * The north-star event: a fund the user had compared is added to their
+   * tracking list — the Choose stage coupling to Hold. `from` says which
+   * surface the add happened on; `compared` is whether this code had been put
+   * on the compare board earlier in the session.
+   */
+  compare_to_track: {
+    code: string;
+    from: "compare" | "fund";
+    compared: boolean;
+  };
 
   // Conversion & auth
   signup_gate_viewed: { preset: "fund" | "watchlist"; code?: string };

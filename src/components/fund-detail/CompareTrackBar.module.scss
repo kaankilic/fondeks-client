@@ -1,0 +1,79 @@
+@use "abstracts" as *;
+
+.bar {
+  @include panel-raised;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+
+  @include respond-to("md") {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.lead {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sub {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: $radius-md;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color $transition-fast,
+    background-color $transition-fast;
+
+  &:hover {
+    border-color: var(--brand);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.btn.on {
+  background: var(--pos-bg);
+  border-color: var(--pos);
+  color: var(--pos);
+}
+
+.btnCode {
+  @include numeric(12px, 700);
+}
+
+.btnLabel {
+  font-size: 12px;
+  font-weight: 600;
+}

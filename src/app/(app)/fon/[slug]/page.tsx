@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import { Allocation } from "@/components/fund-detail/Allocation";
 import { CompareTable } from "@/components/fund-detail/CompareTable";
+import { DecisionPanel } from "@/components/fund-detail/DecisionPanel";
 import { FundFacts } from "@/components/fund-detail/FundFacts";
 import { FundHeader } from "@/components/fund-detail/FundHeader";
 import { HoldingChanges } from "@/components/fund-detail/HoldingChanges";
@@ -96,6 +97,8 @@ export default async function FundDetailPage({
       <FundHeader fund={detail.fund} isAuthed isWatched={watched} />
 
       <PageBody>
+        <DecisionPanel fund={detail.fund} prices={detail.prices} />
+
         <PriceChart prices={detail.prices} />
 
         <FundFacts fund={detail.fund} />
@@ -108,7 +111,7 @@ export default async function FundDetailPage({
         />
 
         <div className={styles.split}>
-          <Allocation slices={detail.allocation} />
+          <Allocation slices={detail.allocation} asOf={detail.allocationDate} />
           <SimilarFunds funds={detail.similar} />
         </div>
 

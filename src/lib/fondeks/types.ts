@@ -46,7 +46,47 @@ export type Fund = {
   risk: RiskLevel | null;
   /** Kuruluş tarihi, ISO date. */
   inceptionDate: string | null;
+
+  // ── Choose-stage decision metrics (v2.1) ──────────────────────────────────
+  //
+  // Everything below is optional and backend-computed: the fund-detail and
+  // compare screens read each field where it is present and fall back to
+  // "Bilinmiyor" where it is not, so the UI ships before the API grows them.
+  // See docs/v2.1-backend-requirements.md for the contract each one expects.
+
+  /**
+   * Toplam gider oranı (TER), % per year — the fund's full cost, not just the
+   * management fee. Computed by BiFon; null until the API publishes it.
+   */
+  ter?: number | null;
+  /**
+   * Stopaj sonrası net getiri, %, by window — the gross return less the
+   * withholding the holder actually pays, which depends on fund type and
+   * holding period. Backend-computed; the client derives a rough estimate only
+   * where it cannot read this.
+   */
+  netReturn?: Partial<Record<ReturnWindow, number>> | null;
+  /**
+   * TÜFE enflasyonundan arındırılmış reel getiri, %, by window. Needs the
+   * official inflation series, so it is backend-only; null until published.
+   */
+  realReturn?: Partial<Record<ReturnWindow, number>> | null;
+  /**
+   * The fund's standing in its own category, 0–100 (higher is better): "100"
+   * is the category's best performer over the window. Backend-computed on the
+   * detail response; the category pages derive their own from the peers they
+   * already load.
+   */
+  categoryPercentile?: number | null;
+  /**
+   * Multi-year consistency: how many of the last `years` the fund beat its
+   * category median. "4 of 5" is the signal that replaces a one-year spike.
+   */
+  consistency?: { beaten: number; years: number } | null;
 };
+
+/** The trailing windows the product shows a return for. */
+export type ReturnWindow = "daily" | "w1" | "m1" | "m3" | "y1";
 
 /** One indexable fund URL: the canonical slug and when its data last moved. */
 export type SitemapFund = { slug: string; lastModified: Date };
@@ -160,6 +200,8 @@ export type FundDetail = {
   increased: HoldingChange[];
   decreased: HoldingChange[];
   allocation: Allocation[];
+  /** The day the allocation breakdown was published, ISO date; null if absent. */
+  allocationDate: string | null;
   similar: SimilarFund[];
   compare: {
     codes: string[];
@@ -191,6 +233,6 @@ export type Guide = {
 };
 
 export type GuideDetail = Guide & {
-  /** Paragraphs, already split. */
-  paragraphs: string[];
+  /** Article body as sanitized HTML, ready to render. */
+  bodyHtml: string;
 };
