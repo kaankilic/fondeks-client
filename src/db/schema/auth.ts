@@ -16,6 +16,14 @@ export const users = pgTable(
     name: text(),
     /** scrypt digest — never the password itself. See lib/auth/password.ts. */
     passwordHash: text().notNull(),
+    /** Kullanıcı Kullanım Şartları onayı — denetim kaydı. */
+    termsAcceptedAt: timestamp({ withTimezone: true }),
+    /** KVKK Aydınlatma onayı. */
+    kvkkAcknowledgedAt: timestamp({ withTimezone: true }),
+    /** 18 yaş beyanı. */
+    ageConfirmedAt: timestamp({ withTimezone: true }),
+    /** 6563 m. 6 — pazarlama iletişimi onayı. Null ise izin yok. */
+    marketingConsentAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

@@ -10,6 +10,7 @@ import {
   type KeyboardEvent,
 } from "react";
 
+import { sanitizeSearchQuery } from "@/lib/analytics/sanitize";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { direction, formatPercent } from "@/lib/fondeks/format";
 
@@ -106,7 +107,13 @@ export function NavCenter({
   function goToResults() {
     const needle = query.trim();
     if (needle) {
-      track("search_submitted", { query: needle, source: "nav" });
+      // Olayı yollamadan önce PII filtrelenir; yalnızca güvenli, kısaltılmış
+      // ifade analitik sağlayıcılarına gider. Yönlendirme için orijinal
+      // ifade kullanılır — PII filtresi analitikte, URL'de değildir.
+      const sanitized = sanitizeSearchQuery(needle);
+      if (sanitized.ok) {
+        track("search_submitted", { query: sanitized.value, source: "nav" });
+      }
       router.push(`/arama?q=${encodeURIComponent(needle)}`);
     }
   }
@@ -132,7 +139,10 @@ export function NavCenter({
   useEffect(() => {
     if (!showEmpty || reportedEmpty.current.has(needle)) return;
     reportedEmpty.current.add(needle);
-    track("search_no_results", { query: needle, source: "nav" });
+    const sanitized = sanitizeSearchQuery(needle);
+    if (sanitized.ok) {
+      track("search_no_results", { query: sanitized.value, source: "nav" });
+    }
   }, [showEmpty, needle, track]);
 
   return (

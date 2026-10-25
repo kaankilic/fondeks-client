@@ -4,13 +4,10 @@ import { JsonLd } from "@/components/layout/JsonLd";
 import { LegalPage } from "@/components/layout/LegalPage";
 import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
 import { legalDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { KULLANIM_SARTLARI } from "@/lib/legal/content";
 
-/** Shown on the page and, trimmed, to a search engine. */
-const LEAD =
-  "Fondeks hesabını kullanırken geçerli olan koşullar, hizmet kapsamı ve sorumluluk sınırları bu sayfada yer alır.";
-
-const TITLE = "Kullanım Şartları";
-const DESCRIPTION = legalDescription(LEAD);
+const TITLE = KULLANIM_SARTLARI.title;
+const DESCRIPTION = legalDescription(KULLANIM_SARTLARI.lead);
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -30,7 +27,7 @@ export default function Page() {
           { name: TITLE, href: "/kullanim-sartlari" },
         ])}
       />
-      <LegalPage title="Kullanım Şartları" lead={LEAD} />
+      <LegalPage document={KULLANIM_SARTLARI} />
     </>
   );
 }

@@ -1,22 +1,32 @@
+"use client";
+
 import Script from "next/script";
+import { useEffect, useState } from "react";
+
+import { getConsent, subscribe } from "@/lib/consent/store";
 
 /**
- * Google Analytics 4, as the gtag.js pair Google hands out.
- *
- * Route changes need nothing from us: GA4's enhanced measurement counts a
- * page view on every history event, which is what App Router navigation is.
- *
- * Development never reports, or a local run would land in the property's live
- * traffic. `yarn build && yarn start` is how to check the tag itself, since
- * that runs with NODE_ENV=production. Setting the env var to an empty string
- * turns the tag off — useful on a preview deployment.
+ * Google Analytics 4 — yalnızca kullanıcı analitik çerez onayı verdikten
+ * sonra yüklenir. Onay yoksa `gtag.js` indirilmez, çerez bırakılmaz. Onay
+ * sonradan geri alınırsa script zaten yüklenmiş olabilir; bu durumda
+ * {@link gtag}('consent', 'update') ile sinyali gönderiyoruz ve
+ * {@link reset} ile mevcut GA client-id'yi yeniliyoruz, böylece ikinci bir
+ * oturum ayrı sayılır.
  */
 
 const MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? "G-WTPD2PRKR0";
 
 export function Analytics() {
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    setAllowed(getConsent().analytics);
+    return subscribe((state) => setAllowed(state.analytics));
+  }, []);
+
   if (!MEASUREMENT_ID || process.env.NODE_ENV !== "production") return null;
+  if (!allowed) return null;
 
   return (
     <>
@@ -28,6 +38,7 @@ export function Analytics() {
         {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
+gtag('consent', 'default', {ad_storage:'denied',analytics_storage:'granted'});
 gtag('config', '${MEASUREMENT_ID}');`}
       </Script>
     </>

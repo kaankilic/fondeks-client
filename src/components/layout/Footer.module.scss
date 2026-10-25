@@ -34,6 +34,31 @@
   color: var(--text-dim);
 }
 
+/* Hizmet sağlayıcı kimlik bilgileri — 6563 s. Kanun m. 3 */
+.entity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.entityLine {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.entityPending {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
 .bottom {
   display: flex;
   align-items: center;

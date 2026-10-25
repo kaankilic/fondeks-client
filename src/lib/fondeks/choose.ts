@@ -180,46 +180,54 @@ export function fundVerdict(
   fund: Fund,
   prices?: PricePoint[],
 ): { tone: VerdictTone; text: string } {
-  // A fund without a full year of history has no one-year figure to speak to;
-  // lead with the record it actually has, and say that the window is short.
+  // SPK III-55.1 / III-39.3 sınırını aşmamak için dil **bilgi odaklı** —
+  // "bak", "katıl", "al" gibi fiil kipleri yerine olgu bildirir ifadeler
+  // kullanılır. Her çıktı yalnızca fonun kendi karnesinin bir okumasıdır,
+  // kişiselleştirilmiş bir tavsiye değildir.
   if (!hasFullYear(fund)) {
     const primary = primaryReturn(fund, prices);
     const tone: VerdictTone = primary.value < 0 ? "warn" : "neutral";
     return {
       tone,
       text:
-        `${primary.label} ${formatPercent(primary.value)} getiri — fon 1 yılını ` +
-        `doldurmadı, bu yüzden kısa bir karneye bakıyorsun.`,
+        `${primary.label} getirisi ${formatPercent(primary.value)}. Fon 1 yılını ` +
+        `doldurmadığı için gösterilen karne kısa dönemlidir.`,
     };
   }
 
   const { y1, daily } = fund;
 
-  // A sharp up-day against a losing year: the case the homepage used to lead
-  // with, named for what it is.
+  // A sharp up-day against a losing year — fact-only phrasing.
   if (y1 < 0 && daily >= 2) {
     return {
       tone: "warn",
       text:
-        `Bugün ${formatPercent(daily)} yükseldi, ama son 1 yılda ` +
-        `${formatPercent(y1)} kayıpta — günlük sıçrama bu tabloyu değiştirmez.`,
+        `Günlük getiri ${formatPercent(daily)}, 1 yıllık getiri ` +
+        `${formatPercent(y1)}. Günlük hareketin 1 yıllık tabloya etkisi sınırlıdır.`,
     };
   }
 
   if (y1 < 0) {
     return {
       tone: "warn",
-      text: `Son 1 yılda ${formatPercent(y1)} kayıpta. Katılmadan önce reel getiriye bak.`,
+      text:
+        `1 yıllık nominal getiri ${formatPercent(y1)}. Reel getiri ve maliyet ` +
+        `kalemleri birlikte değerlendirildiğinde tablo daha net okunabilir.`,
     };
   }
 
   const consistency = consistencyLabel(fund);
   if (consistency) {
-    return { tone: "good", text: `${consistency}. Son 1 yıl: ${formatPercent(y1)}.` };
+    return {
+      tone: "good",
+      text: `${consistency}. 1 yıllık nominal getiri: ${formatPercent(y1)}.`,
+    };
   }
 
   return {
     tone: "neutral",
-    text: `Son 1 yılda ${formatPercent(y1)} getiri. Reel getiri ve maliyetle birlikte değerlendir.`,
+    text:
+      `1 yıllık nominal getiri ${formatPercent(y1)}. Reel getiri ve toplam ` +
+      `gider oranı birlikte okunduğunda değerlendirme tamamlanır.`,
   };
 }

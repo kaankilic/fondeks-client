@@ -59,6 +59,9 @@ export function UserMenu({ user }: { user: SessionUser | null }) {
       <div className={styles.dropdown}>
         {user.name ? <div className={styles.name}>{user.name}</div> : null}
         <div className={styles.email}>{user.email}</div>
+        <Link href="/hesap" className={styles.signOut}>
+          Hesap ayarları
+        </Link>
         <form
           action={signOutAction}
           onSubmit={() => track("logout_clicked", {})}

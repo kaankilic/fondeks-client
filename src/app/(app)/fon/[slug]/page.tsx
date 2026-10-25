@@ -4,6 +4,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Allocation } from "@/components/fund-detail/Allocation";
 import { CompareTable } from "@/components/fund-detail/CompareTable";
 import { DecisionPanel } from "@/components/fund-detail/DecisionPanel";
+import { SpkDisclaimer } from "@/components/legal/SpkDisclaimer";
+import { TefasFreshness } from "@/components/legal/TefasFreshness";
 import { FundFacts } from "@/components/fund-detail/FundFacts";
 import { FundHeader } from "@/components/fund-detail/FundHeader";
 import { HoldingChanges } from "@/components/fund-detail/HoldingChanges";
@@ -122,6 +124,9 @@ export default async function FundDetailPage({
           codes={detail.compare.codes}
           rows={detail.compare.rows}
         />
+
+        <TefasFreshness priceDate={detail.fund.priceDate} />
+        <SpkDisclaimer />
       </PageBody>
     </Page>
   );

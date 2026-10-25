@@ -124,8 +124,8 @@ export function DecisionPanel({
         }}
       />
       <div className={styles.head}>
-        <span className={styles.title}>Karar Paneli</span>
-        <span className={styles.hint}>Doğru fonda mıyım?</span>
+        <span className={styles.title}>Bilgi Paneli</span>
+        <span className={styles.hint}>Bu fonu nasıl okuyabilirim?</span>
       </div>
 
       <p className={`${styles.verdict} ${styles[verdict.tone]}`}>

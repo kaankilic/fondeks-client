@@ -43,3 +43,6 @@ next-env.d.ts
 
 # keep the env template in version control
 !.env.example
+
+# local service-account keys and auth material — never commit
+.claude/auth/

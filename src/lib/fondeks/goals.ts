@@ -23,6 +23,12 @@ export type Goal = {
   tagline: string;
   /** H1 / page title on the landing page. */
   heading: string;
+  /**
+   * The measurable criterion the ranking is built on. Shown next to the
+   * heading so the "öne çıkan" claim is objective and belgelenebilir
+   * (Ticari Reklam Yönetmeliği m. 7).
+   */
+  rankingCriterion: string;
   /** Lead paragraph: what the category is for and how to read the ranking. */
   intro: string;
   /** The securities-fund categories whose funds this goal gathers. */
@@ -43,7 +49,8 @@ export const GOALS: Goal[] = [
     slug: "para-piyasasi-fonlari",
     label: "Nakit & kısa vade",
     tagline: "Paranı kısa vadede değerlendir",
-    heading: "En iyi para piyasası fonları",
+    heading: "Net getiriye göre öne çıkan para piyasası fonları",
+    rankingCriterion: "1 yıllık stopaj sonrası net getiriye göre sıralı",
     intro:
       "Para piyasası fonları, kısa vadeli ve düşük dalgalanmalı araçlarda durur; " +
       "birikimini güvenli tarafta tutup getiriden de tümüyle vazgeçmek istemeyenler " +
@@ -62,7 +69,8 @@ export const GOALS: Goal[] = [
     slug: "altin-fonlari",
     label: "Altın & kıymetli maden",
     tagline: "Altın ve kıymetli madende kal",
-    heading: "En iyi altın ve kıymetli maden fonları",
+    heading: "Net getiriye göre öne çıkan altın ve kıymetli maden fonları",
+    rankingCriterion: "1 yıllık stopaj sonrası net getiriye göre sıralı",
     intro:
       "Kıymetli maden fonları ağırlıklı olarak altın ve gümüşte konumlanır; " +
       "enflasyona ve kur hareketlerine karşı bir sığınak olarak tercih edilir. " +
@@ -81,7 +89,8 @@ export const GOALS: Goal[] = [
     slug: "borclanma-fonlari",
     label: "Tahvil & borçlanma",
     tagline: "Tahvil ve borçlanmada sabit gelir ara",
-    heading: "En iyi borçlanma (tahvil) fonları",
+    heading: "Reel getiriye göre öne çıkan borçlanma (tahvil) fonları",
+    rankingCriterion: "1 yıllık reel (TÜFE sonrası) getiriye göre sıralı",
     intro:
       "Borçlanma araçları fonları tahvil ve bonolarda konumlanır; hisseye göre " +
       "daha istikrarlı, para piyasasına göre daha uzun vadeli bir getiri profili " +
@@ -100,7 +109,9 @@ export const GOALS: Goal[] = [
     slug: "dengeli-fonlar",
     label: "Dengeli & değişken",
     tagline: "Riski dengeli bir karışıma yay",
-    heading: "En iyi dengeli ve değişken fonlar",
+    heading: "Tutarlılığa göre öne çıkan dengeli ve değişken fonlar",
+    rankingCriterion:
+      "Kategorisini düzenli geçen fonlar · 1 yıllık net getiri ile birlikte",
     intro:
       "Değişken fonlar hisse, tahvil ve diğer varlıklar arasında serbestçe " +
       "dağılım yapar; tek bir varlık sınıfına bağlı kalmadan dengeli bir getiri " +
@@ -119,7 +130,9 @@ export const GOALS: Goal[] = [
     slug: "uzun-vadeli-hisse-fonlari",
     label: "Uzun vadeli hisse",
     tagline: "Yıllara yayılan getiri için hisseye yatır",
-    heading: "En iyi uzun vadeli hisse senedi fonları",
+    heading: "Çok yıllı tutarlılığa göre öne çıkan hisse senedi fonları",
+    rankingCriterion:
+      "Çok yıllı tutarlılık · kategorisini yıllara yayan performans",
     intro:
       "Hisse senedi fonları uzun vadede en yüksek getiri potansiyelini taşır, " +
       "ama aynı zamanda en dalgalı kategoridir. Bir günün sıçraması değil, yıllara " +

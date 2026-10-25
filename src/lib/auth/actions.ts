@@ -97,6 +97,10 @@ export async function signUpAction(
     ...values,
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
+    termsAccepted: formData.get("termsAccepted") ?? undefined,
+    kvkkAcknowledged: formData.get("kvkkAcknowledged") ?? undefined,
+    ageConfirmed: formData.get("ageConfirmed") ?? undefined,
+    marketingConsent: formData.get("marketingConsent") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -117,12 +121,17 @@ export async function signUpAction(
       };
     }
 
+    const consentNow = new Date();
     const [created] = await db
       .insert(users)
       .values({
         name: parsed.data.name,
         email: parsed.data.email,
         passwordHash: await hashPassword(parsed.data.password),
+        termsAcceptedAt: consentNow,
+        kvkkAcknowledgedAt: consentNow,
+        ageConfirmedAt: consentNow,
+        marketingConsentAt: parsed.data.marketingConsent ? consentNow : null,
       })
       .returning({ id: users.id });
 
@@ -145,4 +154,29 @@ export async function signOutAction(): Promise<void> {
   await destroySession();
   revalidatePath("/", "layout");
   redirect("/giris");
+}
+
+/**
+ * KVKK m. 11/1-e kapsamında kullanıcının hesap silme hakkı — oturumdaki
+ * kullanıcıyı siler. Oturum tablosunda FK `ON DELETE CASCADE` olduğu için
+ * aktif ve geçmiş oturumlar da birlikte silinir. İşlem geri alınamaz;
+ * UI tarafında ayrı bir onay akışı vardır.
+ */
+export async function deleteAccountAction(): Promise<void> {
+  const { getCurrentUser } = await import("./session");
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/giris");
+  }
+  try {
+    await db.delete(users).where(eq(users.id, user.id));
+  } catch {
+    // Veritabanı erişilmezse yine de oturumu bırakmayalım — kullanıcı
+    // tekrar deneyebilir; sessiz başarısızlık KVKK sürecini bozar, bu yüzden
+    // hata loglanmalı. Burada minimal — gözetim bir sonraki PR'da genişler.
+    throw new Error("Hesap silinirken bir hata oluştu. Lütfen daha sonra tekrar dene.");
+  }
+  await destroySession();
+  revalidatePath("/", "layout");
+  redirect("/giris?silindi=1");
 }

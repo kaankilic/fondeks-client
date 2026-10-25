@@ -1,0 +1,86 @@
+@use "abstracts" as *;
+
+.panel {
+  @include panel;
+  padding: 22px 20px;
+  max-width: 560px;
+
+  @include respond-to("sm") {
+    padding: 28px 28px;
+  }
+}
+
+.title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.body {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.input {
+  padding: 10px 12px;
+  border-radius: $radius-md;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.input:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.alert {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: $radius-md;
+  background: var(--neg-bg);
+  border: 1px solid var(--neg-border, var(--border));
+  color: var(--neg);
+  font-size: 12.5px;
+}
+
+.actions {
+  margin-top: 6px;
+}
+
+.danger {
+  padding: 10px 16px;
+  border-radius: $radius-md;
+  border: 1px solid var(--neg, #c0392b);
+  background: var(--neg, #c0392b);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

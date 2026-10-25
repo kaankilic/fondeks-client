@@ -6,6 +6,8 @@ import { ComparePicker, MAX_FUNDS } from "@/components/fund-detail/ComparePicker
 import { CompareTrackBar } from "@/components/fund-detail/CompareTrackBar";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
+import { SpkDisclaimer } from "@/components/legal/SpkDisclaimer";
+import { TefasFreshness } from "@/components/legal/TefasFreshness";
 import { TrackView } from "@/lib/analytics/Track";
 import { getCurrentUser } from "@/lib/auth/session";
 import { compareRows } from "@/lib/fondeks/compare";
@@ -100,6 +102,11 @@ export default async function ComparePage({
           funds={funds.map((fund) => ({ code: fund.code, name: fund.name }))}
           watched={watched}
         />
+
+        <TefasFreshness
+          priceDate={funds.length > 0 ? funds[0].priceDate : undefined}
+        />
+        <SpkDisclaimer />
       </PageBody>
     </Page>
   );

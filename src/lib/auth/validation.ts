@@ -18,6 +18,17 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Şifreni gir."),
 });
 
+/**
+ * Zorunlu bir onay kutusu için şema parçası — işaretli değilse netleşen hata
+ * mesajı döner. `z.literal(true)` kutunun **ön-işaretli olmaması** şartını
+ * karşılar: formda gelen değer "true" string'i değil, boolean true olmalıdır.
+ */
+const requiredConsent = (message: string) =>
+  z
+    .union([z.literal("on"), z.literal(true)])
+    .transform(() => true)
+    .refine((value) => value === true, { message });
+
 export const registerSchema = z
   .object({
     name: z
@@ -28,6 +39,16 @@ export const registerSchema = z
     email: emailField,
     password: passwordField,
     confirmPassword: z.string().min(1, "Şifreni tekrar gir."),
+    termsAccepted: requiredConsent("Kullanım Şartları'nı kabul etmelisin."),
+    kvkkAcknowledged: requiredConsent(
+      "KVKK Aydınlatma Metni'ni okuduğunu onaylamalısın.",
+    ),
+    ageConfirmed: requiredConsent(
+      "Hesap oluşturmak için 18 yaşından büyük olmalısın.",
+    ),
+    marketingConsent: z
+      .union([z.literal("on"), z.literal(true), z.undefined()])
+      .transform((value) => value === "on" || value === true),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Şifreler eşleşmiyor.",

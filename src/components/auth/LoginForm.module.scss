@@ -243,3 +243,45 @@
   color: var(--brand);
   pointer-events: none;
 }
+
+/* KVKK + Kullanım Şartları + 18+ onay kutuları. Her kutu zorunlu olarak
+ * ön-işaretsiz başlar — KVKK Kurulu rehberine göre işaretli bir onay geçerli
+ * değildir. Pazarlama onayı opsiyoneldir ve ayrı bir kutudur. */
+.consentGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0 6px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+}
+
+.consentLegend {
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.consent input {
+  margin-top: 3px;
+  flex: none;
+}
+
+.consentOptional {
+  color: var(--text-muted);
+}

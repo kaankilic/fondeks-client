@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 
 import { SignupCompletionTracker } from "@/components/auth/SignupCompletionTracker";
+import { ConsentBanner } from "@/components/consent/ConsentBanner";
 import { Analytics } from "@/components/layout/Analytics";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { OutboundLinkTracker } from "@/lib/analytics/OutboundLinkTracker";
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <OutboundLinkTracker />
         <SignupCompletionTracker />
         {children}
+        <ConsentBanner />
       </body>
       <Analytics />
     </html>

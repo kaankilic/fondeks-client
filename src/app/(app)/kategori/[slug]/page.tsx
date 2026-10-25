@@ -7,6 +7,8 @@ import { GoalGrid } from "@/components/funds/GoalGrid";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
+import { SpkDisclaimer } from "@/components/legal/SpkDisclaimer";
+import { TefasFreshness } from "@/components/legal/TefasFreshness";
 import { buttonClass } from "@/components/ui/Button";
 import { TrackView } from "@/lib/analytics/Track";
 import { percentileRank } from "@/lib/fondeks/choose";
@@ -102,7 +104,7 @@ export default async function GoalCategoryPage({
 
       <SubHeader
         title={goal.heading}
-        subtitle={`${formatCount(funds.length)} fon · getiriye göre sıralı`}
+        subtitle={`${formatCount(funds.length)} fon · ${goal.rankingCriterion}`}
       />
 
       <PageBody>
@@ -139,6 +141,9 @@ export default async function GoalCategoryPage({
             </a>
           </div>
         ) : null}
+
+        <TefasFreshness priceDate={featured?.priceDate} />
+        <SpkDisclaimer />
       </PageBody>
     </Page>
   );

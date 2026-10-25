@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ENTITY, displayValue, isEntityReady } from "@/lib/legal/entity";
+
 import styles from "./Footer.module.scss";
 
 const LEGAL_LINKS = [
@@ -9,6 +11,7 @@ const LEGAL_LINKS = [
 ] as const;
 
 export function Footer() {
+  const ready = isEntityReady();
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
@@ -42,9 +45,34 @@ export function Footer() {
           </p>
         </div>
 
+        {ready ? (
+          <div className={styles.entity}>
+            <span className={styles.entityLine}>
+              <strong>{displayValue(ENTITY.commercialName)}</strong>
+            </span>
+            <span className={styles.entityLine}>
+              MERSİS: {displayValue(ENTITY.mersisNo)} · {displayValue(ENTITY.taxOffice)} / {displayValue(ENTITY.taxNo)}
+            </span>
+            <span className={styles.entityLine}>
+              {displayValue(ENTITY.address)}
+            </span>
+            <span className={styles.entityLine}>
+              KEP: {displayValue(ENTITY.kep)} · İletişim:{" "}
+              <a href={`mailto:${ENTITY.email}`} className={styles.link}>
+                {ENTITY.email}
+              </a>
+            </span>
+          </div>
+        ) : (
+          <p className={styles.entityPending}>
+            Veri sorumlusu / hizmet sağlayıcı kimlik bilgileri lansmandan önce
+            doldurulacaktır.
+          </p>
+        )}
+
         <div className={styles.bottom}>
           <span className={styles.copyright}>
-            © {new Date().getFullYear()} Fondeks. Tüm hakları saklıdır.
+            © {new Date().getFullYear()} {ENTITY.brandName}. Tüm hakları saklıdır.
           </span>
 
           <nav className={styles.links} aria-label="Yasal bilgiler">

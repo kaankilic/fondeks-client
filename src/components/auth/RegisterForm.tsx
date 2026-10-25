@@ -165,6 +165,58 @@ export function RegisterForm({ next }: { next?: string }) {
         <FieldError messages={state.fieldErrors?.confirmPassword} />
       )}
 
+      <fieldset className={styles.consentGroup}>
+        <legend className={styles.consentLegend}>Onaylar</legend>
+
+        <label className={styles.consent}>
+          <input
+            type="checkbox"
+            name="termsAccepted"
+            aria-invalid={Boolean(state.fieldErrors?.termsAccepted)}
+          />
+          <span>
+            <Link href="/kullanim-sartlari" className={styles.link} target="_blank">
+              Kullanım Şartları
+            </Link>
+            'nı okudum ve kabul ediyorum.
+          </span>
+        </label>
+        <FieldError messages={state.fieldErrors?.termsAccepted} />
+
+        <label className={styles.consent}>
+          <input
+            type="checkbox"
+            name="kvkkAcknowledged"
+            aria-invalid={Boolean(state.fieldErrors?.kvkkAcknowledged)}
+          />
+          <span>
+            <Link href="/kvkk" className={styles.link} target="_blank">
+              KVKK Aydınlatma Metni
+            </Link>
+            'ni okuduğumu onaylıyorum.
+          </span>
+        </label>
+        <FieldError messages={state.fieldErrors?.kvkkAcknowledged} />
+
+        <label className={styles.consent}>
+          <input
+            type="checkbox"
+            name="ageConfirmed"
+            aria-invalid={Boolean(state.fieldErrors?.ageConfirmed)}
+          />
+          <span>18 yaşından büyük olduğumu beyan ederim.</span>
+        </label>
+        <FieldError messages={state.fieldErrors?.ageConfirmed} />
+
+        <label className={styles.consent}>
+          <input type="checkbox" name="marketingConsent" />
+          <span className={styles.consentOptional}>
+            Fondeks'ten ürün ve kampanya duyurularını e-posta ile almak
+            istiyorum. (İsteğe bağlı — istediğin an iptal edebilirsin.)
+          </span>
+        </label>
+      </fieldset>
+
       <div className={styles.submit}>
         <Button type="submit" size="lg" block disabled={pending}>
           {pending ? "Hesap oluşturuluyor…" : "Hesap Oluştur"}
