@@ -90,7 +90,46 @@ export default async function DiscoverPage() {
         <FeaturedFunds funds={featured} sparklines={sparklines} />
 
         <div className={styles.split}>
-          <FundTable funds={funds} limit={PREVIEW_ROWS} />
+          <div className={styles.main}>
+            <FundTable funds={funds} limit={PREVIEW_ROWS} />
+
+            <HighlightGrid>
+              <FundHighlightPanel
+                title="En Çok Kazandıran Fonlar"
+                hint="1 yıllık getiri"
+                items={byReturn(gainers)}
+              />
+
+              <FundHighlightPanel
+                title="En Az Kazandıran Fonlar"
+                hint="1 yıllık getiri"
+                items={byReturn(smallestGainers)}
+              />
+
+              <FundHighlightPanel
+                title="Yatırımcısı En Çok Artan Fonlar"
+                hint="Son bir ay"
+                items={growth.map((row) => ({
+                  fund: row.fund,
+                  value: formatCompactCount(row.investors),
+                  detail: `${formatPercent(row.growth)} artış · yatırımcı`,
+                }))}
+              />
+
+              <FundHighlightPanel
+                title="Son Çıkan Fonlar"
+                hint="3 aylık getiri"
+                items={newest.map((fund) => ({
+                  fund,
+                  value: formatPercent(fund.m3),
+                  tone: direction(fund.m3),
+                  detail: `${
+                    fund.inceptionDate ? formatDate(fund.inceptionDate) : "—"
+                  } · ${formatCountOrUnknown(fund.investors)} yatırımcı`,
+                }))}
+              />
+            </HighlightGrid>
+          </div>
 
           <div className={styles.rail}>
             <ReturnLeaderboard
@@ -101,43 +140,6 @@ export default async function DiscoverPage() {
             <GuidePanel guides={guides} />
           </div>
         </div>
-
-        <HighlightGrid>
-          <FundHighlightPanel
-            title="En Çok Kazandıran Fonlar"
-            hint="1 yıllık getiri"
-            items={byReturn(gainers)}
-          />
-
-          <FundHighlightPanel
-            title="En Az Kazandıran Fonlar"
-            hint="1 yıllık getiri"
-            items={byReturn(smallestGainers)}
-          />
-
-          <FundHighlightPanel
-            title="Yatırımcısı En Çok Artan Fonlar"
-            hint="Son bir ay"
-            items={growth.map((row) => ({
-              fund: row.fund,
-              value: formatCompactCount(row.investors),
-              detail: `${formatPercent(row.growth)} artış · yatırımcı`,
-            }))}
-          />
-
-          <FundHighlightPanel
-            title="Son Çıkan Fonlar"
-            hint="3 aylık getiri"
-            items={newest.map((fund) => ({
-              fund,
-              value: formatPercent(fund.m3),
-              tone: direction(fund.m3),
-              detail: `${
-                fund.inceptionDate ? formatDate(fund.inceptionDate) : "—"
-              } · ${formatCountOrUnknown(fund.investors)} yatırımcı`,
-            }))}
-          />
-        </HighlightGrid>
       </div>
     </Page>
   );
