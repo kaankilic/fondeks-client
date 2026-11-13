@@ -5,7 +5,7 @@ import Link from "next/link";
 import { signOutAction } from "@/lib/auth/actions";
 import { buttonClass } from "@/components/ui/Button";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
-import type { SessionUser } from "@/lib/auth/session";
+import type { SessionState } from "@/lib/auth/useSession";
 
 import styles from "./SessionMenu.module.scss";
 
@@ -21,10 +21,21 @@ function initialsOf(name: string | null, email: string): string {
 
 /**
  * Right-hand side of the top navigation: the signed-in user's avatar, or the
- * two entry points for visitors who have no account yet.
+ * two entry points for visitors who have no account yet. Session is resolved
+ * on the client, so the component carries a `loading` state too — in that
+ * window it renders an invisible placeholder with the avatar's footprint so
+ * the row layout does not jump when the session arrives.
  */
-export function UserMenu({ user }: { user: SessionUser | null }) {
+export function UserMenu({ session }: { session: SessionState }) {
   const { track } = useAnalytics();
+
+  if (session.status === "loading") {
+    // A fixed-size hole where the avatar or the auth buttons will land, so
+    // the nav row keeps its measured width and does not flash signed-out.
+    return <div className={styles.placeholder} aria-hidden />;
+  }
+
+  const user = session.user;
 
   if (!user) {
     return (

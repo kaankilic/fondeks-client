@@ -2,26 +2,28 @@
 
 import { useEffect } from "react";
 
-import type { SessionUser } from "@/lib/auth/session";
+import { useSession } from "@/lib/auth/useSession";
 
 import { useAnalytics } from "./useAnalytics";
 
 /**
- * Bridges the server-resolved session to the analytics layer. Mounted in the
- * authenticated layout: when a user is present it calls `identify` with the
- * opaque account id, and on sign-out it resets.
+ * Bridges the client-resolved session to the analytics layer. When the
+ * handshake lands with a user it calls `identify` with the opaque account id;
+ * when it lands empty it resets.
  *
  * Note what is NOT sent — email and name never leave the server. GA4 forbids
  * personally identifying data, so only the id and coarse, non-PII flags go to
  * analytics.
  */
-export function IdentifyUser({ user }: { user: SessionUser | null }) {
+export function IdentifyUser() {
+  const session = useSession();
   const { identify, reset } = useAnalytics();
 
   useEffect(() => {
-    if (user) identify(user.id, { logged_in: true });
+    if (session.status !== "ready") return;
+    if (session.user) identify(session.user.id, { logged_in: true });
     else reset();
-  }, [user, identify, reset]);
+  }, [session, identify, reset]);
 
   return null;
 }

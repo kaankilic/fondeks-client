@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { UserMenu } from "@/components/auth/UserMenu";
-import type { SessionUser } from "@/lib/auth/session";
+import { useSession } from "@/lib/auth/useSession";
 
 import { Logo } from "./Logo";
 import { NavCenter, type NavItem } from "./NavCenter";
@@ -19,8 +19,15 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/rehber", label: "Rehber" },
 ];
 
-export function TopNav({ user }: { user: SessionUser | null }) {
+/**
+ * Session is resolved on the client via `useSession` so the server render
+ * path stays stateless and the page can be edge-cached. UserMenu accepts
+ * the loading state and renders a neutral placeholder while the handshake
+ * is in flight, so the nav never flashes "signed out" to a signed-in user.
+ */
+export function TopNav() {
   const pathname = usePathname();
+  const session = useSession();
 
   return (
     <header className={styles.bar}>
@@ -33,7 +40,7 @@ export function TopNav({ user }: { user: SessionUser | null }) {
         {/* Keyed by route: navigating collapses an open search. */}
         <NavCenter key={pathname} items={NAV_ITEMS} pathname={pathname} />
 
-        <UserMenu user={user} />
+        <UserMenu session={session} />
       </div>
     </header>
   );

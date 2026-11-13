@@ -4,6 +4,20 @@
   position: relative;
 }
 
+/*
+ * Reserved space while the session handshake is in flight. Wide enough that
+ * the nav row does not jump when either variant (avatar, or the login +
+ * signup pair) lands.
+ */
+.placeholder {
+  width: 160px;
+  height: 32px;
+
+  @include respond-to("sm") {
+    width: 180px;
+  }
+}
+
 .avatar {
   list-style: none;
   width: 32px;
