@@ -8,7 +8,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions, users, type User } from "@/db/schema/auth";
 
-export const SESSION_COOKIE = "fondeks_session";
+export { SESSION_COOKIE } from "./cookie";
+import { SESSION_COOKIE } from "./cookie";
 
 const SESSION_DAYS = 30;
 /** Sessions inside this window are extended on use. */

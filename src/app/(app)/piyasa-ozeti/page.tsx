@@ -19,7 +19,12 @@ import {
   getNews,
 } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
-import { marketDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import {
+  canonicalMeta,
+  marketDescription,
+  ogMeta,
+  twitterMeta,
+} from "@/lib/fondeks/seo";
 
 import styles from "./piyasa.module.scss";
 
@@ -27,6 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const indices = await getMarketIndices();
   const title = "Piyasa Özeti";
   const description = marketDescription(indices.map((index) => index.name));
+  const canonical = canonicalMeta("/piyasa-ozeti");
 
   return {
     title,
@@ -38,7 +44,11 @@ export async function generateMetadata(): Promise<Metadata> {
       "piyasa haberleri",
       "KAP",
     ],
-    openGraph: ogMeta(title, description),
+    alternates: canonical.alternates,
+    openGraph: {
+      ...ogMeta(title, description, "/piyasa-ozeti"),
+      ...canonical.openGraph,
+    },
     twitter: twitterMeta(title, description),
   };
 }

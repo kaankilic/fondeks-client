@@ -16,7 +16,7 @@ import { formatCount } from "@/lib/fondeks/format";
 import { GOALS, goalBySlug } from "@/lib/fondeks/goals";
 import { getFundPrices, getFunds } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, fundCollectionSchema } from "@/lib/fondeks/schema";
-import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { canonicalMeta, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 import styles from "./kategori.module.scss";
 
@@ -38,11 +38,17 @@ export async function generateMetadata({
   if (!goal) return { title: "Kategori" };
 
   const description = metaDescription(goal.heading);
+  const path = `/kategori/${goal.slug}`;
+  const canonical = canonicalMeta(path);
   return {
     title: goal.heading,
     description,
     keywords: goal.keywords,
-    openGraph: ogMeta(goal.heading, description),
+    alternates: canonical.alternates,
+    openGraph: {
+      ...ogMeta(goal.heading, description, path),
+      ...canonical.openGraph,
+    },
     twitter: twitterMeta(goal.heading, description),
   };
 }

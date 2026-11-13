@@ -3,17 +3,25 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/layout/JsonLd";
 import { LegalPage } from "@/components/layout/LegalPage";
 import { breadcrumbSchema, webPageSchema } from "@/lib/fondeks/schema";
-import { legalDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import {
+  canonicalMeta,
+  legalDescription,
+  ogMeta,
+  twitterMeta,
+} from "@/lib/fondeks/seo";
 import { KVKK_AYDINLATMA } from "@/lib/legal/content";
 
 const TITLE = KVKK_AYDINLATMA.title;
+const PATH = "/kvkk";
 const DESCRIPTION = legalDescription(KVKK_AYDINLATMA.lead);
+const canonical = canonicalMeta(PATH);
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   keywords: ["KVKK", "kişisel veri", "aydınlatma metni", "veri sorumlusu"],
-  openGraph: ogMeta(TITLE, DESCRIPTION),
+  alternates: canonical.alternates,
+  openGraph: { ...ogMeta(TITLE, DESCRIPTION, PATH), ...canonical.openGraph },
   twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 

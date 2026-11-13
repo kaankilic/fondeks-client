@@ -185,3 +185,29 @@
   font-size: 12px;
   color: var(--text-dim);
 }
+
+/*
+ * Dimensions match the live chart so the layout does not shift when the
+ * client bundle swaps the skeleton out.
+ */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeletonCanvas {
+  width: 100%;
+  aspect-ratio: 680 / 200;
+  background: var(--track);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+}
+
+.skeletonControls {
+  width: 180px;
+  height: 28px;
+  background: var(--track);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-sm;
+}

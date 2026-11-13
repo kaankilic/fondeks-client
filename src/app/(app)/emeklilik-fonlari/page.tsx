@@ -7,12 +7,15 @@ import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
 import { getPensionFunds } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, fundCollectionSchema } from "@/lib/fondeks/schema";
-import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { canonicalMeta, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Emeklilik Fonları";
+const PATH = "/emeklilik-fonlari";
 const DESCRIPTION =
   "Bireysel emeklilik sistemindeki yatırım fonlarının güncel fiyatları, " +
   "getirileri ve fon büyüklükleri — kategoriye göre filtrelenebilir liste.";
+
+const canonical = canonicalMeta(PATH);
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -23,7 +26,8 @@ export const metadata: Metadata = {
     "bireysel emeklilik",
     "emeklilik yatırım fonu",
   ],
-  openGraph: ogMeta(TITLE, DESCRIPTION),
+  alternates: canonical.alternates,
+  openGraph: { ...ogMeta(TITLE, DESCRIPTION, PATH), ...canonical.openGraph },
   twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 

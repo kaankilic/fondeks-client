@@ -8,7 +8,7 @@ import { JsonLd } from "@/components/layout/JsonLd";
 import { OutboundLinkTracker } from "@/lib/analytics/OutboundLinkTracker";
 import { getFundCount } from "@/lib/fondeks/queries";
 import { websiteSchema } from "@/lib/fondeks/schema";
-import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { canonicalMeta, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 import { siteUrl } from "@/lib/fondeks/site";
 
 import "./globals.css";
@@ -29,6 +29,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = "Fondeks — BIST fonlarını tek ekranda tara";
   const description = `${total} TEFAS fonu, canlı getiri sıralaması ve risk analizi. Yatırım kararlarını veriyle ver.`;
 
+  const canonical = canonicalMeta("/");
+
   return {
     metadataBase: new URL(siteUrl()),
     title: {
@@ -44,7 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
       "BIST",
       "borsa",
     ],
-    openGraph: ogMeta(title, description),
+    alternates: canonical.alternates,
+    openGraph: { ...ogMeta(title, description, "/"), ...canonical.openGraph },
     twitter: twitterMeta(title, description),
   };
 }

@@ -10,7 +10,7 @@ import { FundFacts } from "@/components/fund-detail/FundFacts";
 import { FundHeader } from "@/components/fund-detail/FundHeader";
 import { HoldingChanges } from "@/components/fund-detail/HoldingChanges";
 import { MonthlyTrends } from "@/components/fund-detail/MonthlyTrends";
-import { PriceChart } from "@/components/fund-detail/PriceChart";
+import { PriceChartLazy as PriceChart } from "@/components/fund-detail/PriceChartLazy";
 import { SignupGate } from "@/components/fund-detail/SignupGate";
 import { SimilarFunds } from "@/components/fund-detail/SimilarFunds";
 import { JsonLd } from "@/components/layout/JsonLd";
@@ -20,7 +20,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getFund, getFundDetail } from "@/lib/fondeks/queries";
 import { isWatched } from "@/lib/watchlist/queries";
 import { breadcrumbSchema, fundSchema } from "@/lib/fondeks/schema";
-import { fundDescription, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import {
+  canonicalMeta,
+  fundDescription,
+  ogMeta,
+  twitterMeta,
+} from "@/lib/fondeks/seo";
 import { codeFromSlug } from "@/lib/fondeks/slug";
 
 import styles from "./fon.module.scss";
@@ -35,12 +40,15 @@ export async function generateMetadata({
 
   const title = `${fund.code} — ${fund.name}`;
   const description = fundDescription(fund);
+  const path = `/fon/${fund.slug}`;
+  const canonical = canonicalMeta(path);
 
   return {
     title,
     description,
     keywords: [fund.code, fund.name, fund.category, fund.founder, "fon analizi"],
-    openGraph: ogMeta(title, description),
+    alternates: canonical.alternates,
+    openGraph: { ...ogMeta(title, description, path), ...canonical.openGraph },
     twitter: twitterMeta(title, description),
   };
 }

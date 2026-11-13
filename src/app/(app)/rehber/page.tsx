@@ -5,11 +5,14 @@ import { JsonLd } from "@/components/layout/JsonLd";
 import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { getGuides } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, guideListSchema } from "@/lib/fondeks/schema";
-import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { canonicalMeta, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Rehber";
+const PATH = "/rehber";
 const DESCRIPTION =
   "Yatırım fonlarının nasıl çalıştığını anlatan kısa rehber içerikleri.";
+
+const canonical = canonicalMeta(PATH);
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -20,7 +23,8 @@ export const metadata: Metadata = {
     "fon eğitimi",
     "yatırım fonu nedir",
   ],
-  openGraph: ogMeta(TITLE, DESCRIPTION),
+  alternates: canonical.alternates,
+  openGraph: { ...ogMeta(TITLE, DESCRIPTION, PATH), ...canonical.openGraph },
   twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 

@@ -36,6 +36,16 @@ import styles from "./screener.module.scss";
 /** Rows the discover page previews before the reader drills into a full list. */
 const PREVIEW_ROWS = 10;
 
+/**
+ * Catalogue rows passed to the client-side FundTable. The full universe is
+ * ~2,000 funds, but FundTable is a client component — every row we ship
+ * serializes into the RSC payload, so sending the whole catalogue made the
+ * homepage HTML ~2 MB. The homepage's table is a preview; the real screener
+ * lives at `/arama`, which is built for that volume. Fifty rows covers the
+ * default view (top 10) plus one "show more" expand without another request.
+ */
+const HOME_PREVIEW_UNIVERSE = 50;
+
 /** Ranked by one-year return, with the issuer as the supporting line. */
 function byReturn(funds: Fund[]): FundHighlight[] {
   return funds.map((fund) => ({
@@ -91,7 +101,10 @@ export default async function DiscoverPage() {
 
         <div className={styles.split}>
           <div className={styles.main}>
-            <FundTable funds={funds} limit={PREVIEW_ROWS} />
+            <FundTable
+              funds={funds.slice(0, HOME_PREVIEW_UNIVERSE)}
+              limit={PREVIEW_ROWS}
+            />
 
             <HighlightGrid>
               <FundHighlightPanel

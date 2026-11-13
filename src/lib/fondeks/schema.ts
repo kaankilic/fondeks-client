@@ -79,7 +79,25 @@ export function fundSchema(fund: Fund): JsonLdObject {
     },
     category: fund.category,
     feesAndCommissionsSpecification: `Yıllık yönetim ücreti: ${formatPercentPrefixed(fund.managementFee, 2)}`,
-    ...(fund.isin ? { identifier: fund.isin } : {}),
+    // ISIN is the globally recognised identifier for the fund; TEFAS code is a
+    // secondary id — Google reads either as the product's own identifier.
+    ...(fund.isin
+      ? { identifier: fund.isin, isbn: undefined, productID: fund.isin }
+      : { identifier: fund.code }),
+    // The daily unit price, as published by TEFAS. `priceSpecification` carries
+    // the currency and the session the price belongs to, so a crawler can
+    // reason about freshness rather than guessing from the markup.
+    offers: {
+      "@type": "Offer",
+      price: fund.price.toFixed(6),
+      priceCurrency: "TRY",
+      validFrom: fund.priceDate,
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: fund.founder,
+      },
+    },
   };
 }
 

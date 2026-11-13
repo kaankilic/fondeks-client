@@ -141,16 +141,38 @@ export function legalDescription(lead: string): string {
  */
 const SITE_NAME = "Fondeks";
 
+/**
+ * Every indexable page gets a canonical pointer and an `og:url`, both pinned
+ * to the clean path. Google uses canonical as the tiebreaker for slug variants
+ * (case, trailing slash, UTM, ?ref=) and `og:url` is what social platforms
+ * carry around. The two are kept in lockstep so a share and a crawl agree on
+ * the same URL.
+ */
+export function canonicalMeta(
+  path: string,
+): Pick<Metadata, "alternates" | "openGraph"> {
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://fondeks.com"}${path.startsWith("/") ? path : `/${path}`}`;
+  return {
+    alternates: { canonical: url },
+    openGraph: { url },
+  };
+}
+
 export function ogMeta(
   title: string,
   description: string,
+  path?: string,
 ): NonNullable<Metadata["openGraph"]> {
+  const url = path
+    ? `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://fondeks.com"}${path.startsWith("/") ? path : `/${path}`}`
+    : undefined;
   return {
     title,
     description,
     siteName: SITE_NAME,
     locale: "tr_TR",
     type: "website",
+    ...(url ? { url } : {}),
   };
 }
 

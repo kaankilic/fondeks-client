@@ -7,18 +7,22 @@ import { Page, PageBody, SubHeader } from "@/components/layout/Shell";
 import { formatCount } from "@/lib/fondeks/format";
 import { getEtfFunds } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, fundCollectionSchema } from "@/lib/fondeks/schema";
-import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { canonicalMeta, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 const TITLE = "Borsa Yatırım Fonları";
+const PATH = "/borsa-yatirim-fonlari";
 const DESCRIPTION =
   "Borsa İstanbul'da işlem gören yatırım fonlarının güncel fiyatları, " +
   "getirileri ve fon büyüklükleri — kategoriye göre filtrelenebilir liste.";
+
+const canonical = canonicalMeta(PATH);
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   keywords: ["borsa yatırım fonu", "BYF", "ETF", "BIST fon", "hisse fonu"],
-  openGraph: ogMeta(TITLE, DESCRIPTION),
+  alternates: canonical.alternates,
+  openGraph: { ...ogMeta(TITLE, DESCRIPTION, PATH), ...canonical.openGraph },
   twitter: twitterMeta(TITLE, DESCRIPTION),
 };
 

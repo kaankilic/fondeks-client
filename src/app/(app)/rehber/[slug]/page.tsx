@@ -8,7 +8,7 @@ import { ScrollDepthTracker } from "@/lib/analytics/ScrollDepthTracker";
 import { TrackView } from "@/lib/analytics/Track";
 import { getGuide, getGuides } from "@/lib/fondeks/queries";
 import { breadcrumbSchema, guideArticleSchema } from "@/lib/fondeks/schema";
-import { ogMeta, twitterMeta } from "@/lib/fondeks/seo";
+import { canonicalMeta, ogMeta, twitterMeta } from "@/lib/fondeks/seo";
 
 import styles from "./guide.module.scss";
 
@@ -20,11 +20,18 @@ export async function generateMetadata({
 
   if (!guide) return { title: "Rehber" };
 
+  const path = `/rehber/${guide.slug}`;
+  const canonical = canonicalMeta(path);
+
   return {
     title: guide.title,
     description: guide.summary,
     keywords: [guide.title, guide.category, "yatırım rehberi"],
-    openGraph: ogMeta(guide.title, guide.summary),
+    alternates: canonical.alternates,
+    openGraph: {
+      ...ogMeta(guide.title, guide.summary, path),
+      ...canonical.openGraph,
+    },
     twitter: twitterMeta(guide.title, guide.summary),
   };
 }
