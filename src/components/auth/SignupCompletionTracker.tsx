@@ -24,7 +24,11 @@ export function SignupCompletionTracker() {
     const method = match?.[1];
     if (!method) return;
     fired.current = true;
-    track("sign_up_completed", { method: "password" });
+    // The action writes "password" or "google" into the cookie's value so
+    // the funnel can attribute the conversion to the right path.
+    track("sign_up_completed", {
+      method: method === "google" ? "google" : "password",
+    });
     document.cookie = `${COOKIE}=; path=/; max-age=0; samesite=lax`;
   }, [track]);
 

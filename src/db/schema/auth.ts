@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   index,
   pgTable,
@@ -14,8 +15,19 @@ export const users = pgTable(
     /** Stored lower-cased; the unique index enforces one account per address. */
     email: text().notNull(),
     name: text(),
-    /** scrypt digest — never the password itself. See lib/auth/password.ts. */
-    passwordHash: text().notNull(),
+    /**
+     * scrypt digest — never the password itself. See lib/auth/password.ts.
+     * Nullable: an account created through Google OAuth has no password
+     * until the user chooses to add one.
+     */
+    passwordHash: text(),
+    /**
+     * Google account id (`sub` claim from the ID token). Set when the user
+     * authenticates through Google OAuth; stays null for password-only
+     * accounts. One Google account per Fondeks user, enforced by the
+     * `users_google_id_key` partial unique index.
+     */
+    googleId: text(),
     /** Kullanıcı Kullanım Şartları onayı — denetim kaydı. */
     termsAcceptedAt: timestamp({ withTimezone: true }),
     /** KVKK Aydınlatma onayı. */
@@ -27,7 +39,12 @@ export const users = pgTable(
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("users_email_key").on(table.email)],
+  (table) => [
+    uniqueIndex("users_email_key").on(table.email),
+    uniqueIndex("users_google_id_key")
+      .on(table.googleId)
+      .where(sql`${table.googleId} is not null`),
+  ],
 );
 
 export const sessions = pgTable(

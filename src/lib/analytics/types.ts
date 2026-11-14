@@ -103,17 +103,17 @@ export type AnalyticsEvents = {
     target: "login" | "signup" | "google";
     location: string;
   };
-  login_submitted: { method: "password" };
+  login_submitted: { method: "password" | "google" };
   login_failed: { reason?: string };
-  signup_submitted: { method: "password" };
+  signup_submitted: { method: "password" | "google" };
   signup_failed: { reason?: string };
   /**
    * The account-creation conversion event — fires on the first client load
-   * after `signUpAction` finishes, driven by a one-shot cookie the action
-   * sets just before redirecting. The conversion endpoint for the signup
-   * funnel.
+   * after signup finishes, driven by a one-shot cookie the action sets
+   * just before redirecting. `method` says which path funnelled through:
+   * the email/password form or Google OAuth.
    */
-  sign_up_completed: { method: "password" };
+  sign_up_completed: { method: "password" | "google" };
   logout_clicked: Record<string, never>;
 };
 

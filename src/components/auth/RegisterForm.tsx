@@ -8,6 +8,7 @@ import { scorePassword } from "@/lib/auth/password-strength";
 import { Button } from "@/components/ui/Button";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
+import { GoogleButton } from "./GoogleButton";
 import { FieldError } from "./LoginForm";
 import styles from "./LoginForm.module.scss";
 
@@ -64,6 +65,8 @@ export function RegisterForm({ next }: { next?: string }) {
           {state.error}
         </p>
       ) : null}
+
+      <GoogleButton next={next} intent="signup" />
 
       <label className={styles.label} htmlFor="name">
         Ad Soyad

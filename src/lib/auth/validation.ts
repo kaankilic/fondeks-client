@@ -55,5 +55,24 @@ export const registerSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Google signup collects only the three required consents + optional
+ * marketing — the identity (email, name, sub) rides on the signed
+ * pending-signup cookie, not the form.
+ */
+export const googleConsentSchema = z.object({
+  termsAccepted: requiredConsent("Kullanım Şartları'nı kabul etmelisin."),
+  kvkkAcknowledged: requiredConsent(
+    "KVKK Aydınlatma Metni'ni okuduğunu onaylamalısın.",
+  ),
+  ageConfirmed: requiredConsent(
+    "Hesap oluşturmak için 18 yaşından büyük olmalısın.",
+  ),
+  marketingConsent: z
+    .union([z.literal("on"), z.literal(true), z.undefined()])
+    .transform((value) => value === "on" || value === true),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type GoogleConsentInput = z.infer<typeof googleConsentSchema>;

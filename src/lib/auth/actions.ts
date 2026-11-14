@@ -16,9 +16,10 @@ const SIGNUP_COMPLETION_COOKIE = "fondeks_signup_completed";
 import { db } from "@/db";
 import { users } from "@/db/schema/auth";
 
+import { PENDING_SIGNUP_COOKIE, verifyPendingSignup } from "./google";
 import { hashPassword, verifyPassword } from "./password";
 import { createSession, destroySession } from "./session";
-import { loginSchema, registerSchema } from "./validation";
+import { googleConsentSchema, loginSchema, registerSchema } from "./validation";
 
 export type AuthFormState = {
   error?: string;
@@ -71,7 +72,15 @@ export async function signInAction(
       .where(eq(users.email, parsed.data.email))
       .limit(1);
 
-    if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    // No passwordHash means this account was created through Google OAuth
+    // and never set a password — the password check cannot succeed on
+    // principle. Return the same generic error so an attacker cannot
+    // enumerate which accounts are Google-only.
+    if (
+      !user ||
+      !user.passwordHash ||
+      !(await verifyPassword(parsed.data.password, user.passwordHash))
+    ) {
       return { error: BAD_CREDENTIALS, values: { email: typedEmail } };
     }
 
@@ -148,6 +157,95 @@ export async function signUpAction(
 
   revalidatePath("/", "layout");
   redirect(safeNext(formData));
+}
+
+/**
+ * Completes a Google-initiated signup. The verified identity rides on the
+ * HMAC-signed pending-signup cookie (set by the OAuth callback), so the
+ * form can only supply the four consent fields — the user cannot
+ * substitute a different email or Google account between the OAuth round
+ * trip and this action.
+ */
+export async function completeGoogleSignupAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const jar = await cookies();
+  const pending = verifyPendingSignup(jar.get(PENDING_SIGNUP_COOKIE)?.value);
+
+  if (!pending) {
+    // Cookie missing, tampered with, or past its 15-minute window — the
+    // user has to restart the Google flow. The form itself cannot recover.
+    redirect("/kayit?hata=oturum_dustu");
+  }
+
+  const parsed = googleConsentSchema.safeParse({
+    termsAccepted: formData.get("termsAccepted") ?? undefined,
+    kvkkAcknowledged: formData.get("kvkkAcknowledged") ?? undefined,
+    ageConfirmed: formData.get("ageConfirmed") ?? undefined,
+    marketingConsent: formData.get("marketingConsent") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  let userId: string;
+  try {
+    // Race guard: between the OAuth callback and this action a password
+    // signup could have raced in on the same email. Check again, and stitch
+    // the googleId onto that account if so — Google already verified the
+    // email so linking is safe.
+    const [existing] = await db
+      .select({ id: users.id, googleId: users.googleId })
+      .from(users)
+      .where(eq(users.email, pending.email))
+      .limit(1);
+
+    if (existing) {
+      if (!existing.googleId) {
+        await db
+          .update(users)
+          .set({ googleId: pending.sub })
+          .where(eq(users.id, existing.id));
+      }
+      userId = existing.id;
+    } else {
+      const consentNow = new Date();
+      const [created] = await db
+        .insert(users)
+        .values({
+          name: pending.name,
+          email: pending.email,
+          // No password: Google owns the credential for this account.
+          passwordHash: null,
+          googleId: pending.sub,
+          termsAcceptedAt: consentNow,
+          kvkkAcknowledgedAt: consentNow,
+          ageConfirmedAt: consentNow,
+          marketingConsentAt: parsed.data.marketingConsent ? consentNow : null,
+        })
+        .returning({ id: users.id });
+      userId = created.id;
+    }
+
+    await createSession(userId);
+    jar.set(SIGNUP_COMPLETION_COOKIE, "google", {
+      maxAge: 60,
+      path: "/",
+      sameSite: "lax",
+    });
+    jar.delete(PENDING_SIGNUP_COOKIE);
+  } catch {
+    return { error: DB_ERROR };
+  }
+
+  revalidatePath("/", "layout");
+  redirect(
+    pending.next && pending.next.startsWith("/") && !pending.next.startsWith("//")
+      ? pending.next
+      : "/",
+  );
 }
 
 export async function signOutAction(): Promise<void> {

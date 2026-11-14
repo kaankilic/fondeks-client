@@ -1,0 +1,73 @@
+@use "abstracts" as *;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/*
+ * Neutral surface so Google's own four-colour mark does the talking; the
+ * row stays consistent with the password submit button's rhythm (same
+ * height, same radius).
+ */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: $radius-md;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color $transition-fast, border-color $transition-fast;
+
+  @include focus-ring;
+
+  &:hover {
+    background: var(--track);
+    border-color: var(--text-muted);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.mark {
+  flex: none;
+}
+
+/*
+ * "or" hairline between the Google button and the email field. One line,
+ * one label — reads as a divider rather than a UI chrome element.
+ */
+.divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11.5px;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  span {
+    padding: 0 10px;
+  }
+}

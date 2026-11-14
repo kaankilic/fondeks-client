@@ -148,6 +148,13 @@
       "when": 1792917600058,
       "tag": "0020_true_black_tom",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794636496453,
+      "tag": "0021_secret_black_bolt",
+      "breakpoints": true
     }
   ]
 }

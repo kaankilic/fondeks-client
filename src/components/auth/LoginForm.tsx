@@ -7,6 +7,7 @@ import { signInAction, type AuthFormState } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/Button";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
+import { GoogleButton } from "./GoogleButton";
 import styles from "./LoginForm.module.scss";
 
 const EMPTY: AuthFormState = {};
@@ -50,6 +51,8 @@ export function LoginForm({ next }: { next?: string }) {
         </p>
       ) : null}
 
+      <GoogleButton next={next} intent="signin" />
+
       <label className={styles.label} htmlFor="email">
         E-posta
       </label>
@@ -85,26 +88,6 @@ export function LoginForm({ next }: { next?: string }) {
       <div className={styles.submit}>
         <Button type="submit" size="lg" block disabled={pending}>
           {pending ? "Giriş yapılıyor…" : "Giriş Yap"}
-        </Button>
-      </div>
-
-      <div className={styles.divider}>
-        <span>veya</span>
-      </div>
-
-      <div className={styles.social}>
-        <span className={styles.soon}>Çok Yakında</span>
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-          block
-          disabled
-          aria-disabled
-          title="Google ile giriş çok yakında"
-        >
-          <span className={styles.googleMark} aria-hidden />
-          Google ile devam et
         </Button>
       </div>
     </form>
