@@ -19,6 +19,7 @@ import { users } from "@/db/schema/auth";
 import { PENDING_SIGNUP_COOKIE, verifyPendingSignup } from "./google";
 import { hashPassword, verifyPassword } from "./password";
 import { createSession, destroySession } from "./session";
+import { syncUserToApi } from "./user-sync";
 import { googleConsentSchema, loginSchema, registerSchema } from "./validation";
 
 export type AuthFormState = {
@@ -240,6 +241,11 @@ export async function completeGoogleSignupAction(
     console.error("[google-oauth] consent signup failed", err);
     return { error: DB_ERROR };
   }
+
+  // Fire-and-forget sync to api.fondeks.com/user. The session is already
+  // open at this point — a failure here must not roll the signup back, so
+  // we do not await it, and errors only log.
+  void syncUserToApi({ name: pending.name, email: pending.email });
 
   revalidatePath("/", "layout");
   redirect(
