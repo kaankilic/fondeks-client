@@ -256,6 +256,21 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-raised);
+
+  /*
+   * FieldError renders a 16px .spacer when there is no error, which doubles
+   * the vertical rhythm between consent rows on top of the group's own gap.
+   * Inside the consent group the group's gap is enough — collapse both the
+   * placeholder spacer and the error's own vertical margin so adjacent rows
+   * sit at the intended 10px apart, no more.
+   */
+  .spacer {
+    display: none;
+  }
+
+  .fieldError {
+    margin: 0;
+  }
 }
 
 .consentLegend {
