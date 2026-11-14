@@ -236,7 +236,8 @@ export async function completeGoogleSignupAction(
       sameSite: "lax",
     });
     jar.delete(PENDING_SIGNUP_COOKIE);
-  } catch {
+  } catch (err) {
+    console.error("[google-oauth] consent signup failed", err);
     return { error: DB_ERROR };
   }
 
