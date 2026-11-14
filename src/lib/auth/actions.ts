@@ -191,68 +191,33 @@ export async function completeGoogleSignupAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  let userId: string;
-  try {
-    // Race guard: between the OAuth callback and this action a password
-    // signup could have raced in on the same email. Check again, and stitch
-    // the googleId onto that account if so — Google already verified the
-    // email so linking is safe.
-    const [existing] = await db
-      .select({ id: users.id, googleId: users.googleId })
-      .from(users)
-      .where(eq(users.email, pending.email))
-      .limit(1);
+  // The account lives on api.fondeks.com — nothing is written locally for
+  // a Google signup, so no `users` row, no local session. After the POST
+  // succeeds the user is sent to /giris to sign in (where api.fondeks.com
+  // will mint the actual session).
+  const ok = await syncUserToApi({
+    name: pending.name,
+    email: pending.email,
+  });
 
-    if (existing) {
-      if (!existing.googleId) {
-        await db
-          .update(users)
-          .set({ googleId: pending.sub })
-          .where(eq(users.id, existing.id));
-      }
-      userId = existing.id;
-    } else {
-      const consentNow = new Date();
-      const [created] = await db
-        .insert(users)
-        .values({
-          name: pending.name,
-          email: pending.email,
-          // No password: Google owns the credential for this account.
-          passwordHash: null,
-          googleId: pending.sub,
-          termsAcceptedAt: consentNow,
-          kvkkAcknowledgedAt: consentNow,
-          ageConfirmedAt: consentNow,
-          marketingConsentAt: parsed.data.marketingConsent ? consentNow : null,
-        })
-        .returning({ id: users.id });
-      userId = created.id;
-    }
-
-    await createSession(userId);
-    jar.set(SIGNUP_COMPLETION_COOKIE, "google", {
-      maxAge: 60,
-      path: "/",
-      sameSite: "lax",
-    });
-    jar.delete(PENDING_SIGNUP_COOKIE);
-  } catch (err) {
-    console.error("[google-oauth] consent signup failed", err);
-    return { error: DB_ERROR };
+  if (!ok) {
+    return {
+      error:
+        "Hesap oluşturulamadı. Lütfen birkaç saniye sonra tekrar dene.",
+    };
   }
 
-  // Fire-and-forget sync to api.fondeks.com/user. The session is already
-  // open at this point — a failure here must not roll the signup back, so
-  // we do not await it, and errors only log.
-  void syncUserToApi({ name: pending.name, email: pending.email });
+  // SignupCompletionTracker reads this one-shot cookie on the next page
+  // load and fires the `sign_up_completed` conversion. Keep it even though
+  // there is no local session, so the funnel still attributes the signup.
+  jar.set(SIGNUP_COMPLETION_COOKIE, "google", {
+    maxAge: 60,
+    path: "/",
+    sameSite: "lax",
+  });
+  jar.delete(PENDING_SIGNUP_COOKIE);
 
-  revalidatePath("/", "layout");
-  redirect(
-    pending.next && pending.next.startsWith("/") && !pending.next.startsWith("//")
-      ? pending.next
-      : "/",
-  );
+  redirect("/giris?kayit=1");
 }
 
 export async function signOutAction(): Promise<void> {
