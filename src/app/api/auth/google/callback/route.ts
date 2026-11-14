@@ -68,7 +68,8 @@ export async function GET(request: NextRequest) {
       codeVerifier: verifier,
       redirectUri: googleRedirectUri(request.nextUrl.origin),
     });
-  } catch {
+  } catch (err) {
+    console.error("[google-oauth] exchange failed", err);
     return redirectWithError(request, "google_exchange_failed");
   }
 
@@ -102,7 +103,8 @@ export async function GET(request: NextRequest) {
       await createSession(existing.id);
       return cleanRedirect(request, next);
     }
-  } catch {
+  } catch (err) {
+    console.error("[google-oauth] user lookup failed", err);
     return redirectWithError(request, "google_lookup_failed");
   }
 
