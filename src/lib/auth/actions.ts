@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
 
 /**
  * One-shot cookie the sign-up action drops just before redirecting, read on
@@ -13,13 +12,8 @@ import { eq } from "drizzle-orm";
  */
 const SIGNUP_COMPLETION_COOKIE = "fondeks_signup_completed";
 
-import { db } from "@/db";
-import { users } from "@/db/schema/auth";
-
 import { PENDING_SIGNUP_COOKIE, verifyPendingSignup } from "./google";
-import { hashPassword, verifyPassword } from "./password";
-import { createSession, destroySession } from "./session";
-import { syncUserToApi } from "./user-sync";
+import { destroySession, setSessionCookie } from "./session";
 import { googleConsentSchema, loginSchema, registerSchema } from "./validation";
 
 export type AuthFormState = {
@@ -29,11 +23,23 @@ export type AuthFormState = {
   values?: { name?: string; email?: string };
 };
 
-const DB_ERROR =
-  "Veritabanına ulaşılamadı. DATABASE_URL ayarlı mı ve şema yüklü mü kontrol et.";
+const NETWORK_ERROR =
+  "Sunucuya ulaşılamadı. Lütfen birkaç saniye sonra tekrar dene.";
 
 /** Generic on purpose: never reveal whether an address is registered. */
 const BAD_CREDENTIALS = "E-posta veya şifre hatalı.";
+
+function apiBase(): string {
+  return (process.env.NEXT_PUBLIC_API_URL ?? "https://api.fondeks.com").replace(
+    /\/$/,
+    "",
+  );
+}
+
+type LoginResponse = {
+  token: string;
+  user: { id: string; email: string; name: string | null };
+};
 
 /**
  * Where to land after auth. Only in-app absolute paths are honoured, so a
@@ -66,29 +72,39 @@ export async function signInAction(
     };
   }
 
+  let response: Response;
   try {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, parsed.data.email))
-      .limit(1);
-
-    // No passwordHash means this account was created through Google OAuth
-    // and never set a password — the password check cannot succeed on
-    // principle. Return the same generic error so an attacker cannot
-    // enumerate which accounts are Google-only.
-    if (
-      !user ||
-      !user.passwordHash ||
-      !(await verifyPassword(parsed.data.password, user.passwordHash))
-    ) {
-      return { error: BAD_CREDENTIALS, values: { email: typedEmail } };
-    }
-
-    await createSession(user.id);
-  } catch {
-    return { error: DB_ERROR, values: { email: typedEmail } };
+    response = await fetch(`${apiBase()}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        device_name: "web",
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch (err) {
+    console.error("[auth] POST /login failed", err);
+    return { error: NETWORK_ERROR, values: { email: typedEmail } };
   }
+
+  if (response.status === 401) {
+    return { error: BAD_CREDENTIALS, values: { email: typedEmail } };
+  }
+  if (!response.ok) {
+    console.error(
+      `[auth] POST /login returned ${response.status}`,
+      await response.text().catch(() => ""),
+    );
+    return { error: NETWORK_ERROR, values: { email: typedEmail } };
+  }
+
+  const data = (await response.json()) as LoginResponse;
+  await setSessionCookie(data.token);
 
   revalidatePath("/", "layout");
   redirect(safeNext(formData));
@@ -117,55 +133,74 @@ export async function signUpAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors, values };
   }
 
+  let response: Response;
   try {
-    const [existing] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, parsed.data.email))
-      .limit(1);
-
-    if (existing) {
-      return {
-        fieldErrors: { email: ["Bu e-posta ile bir hesap zaten var."] },
-        values,
-      };
-    }
-
-    const consentNow = new Date();
-    const [created] = await db
-      .insert(users)
-      .values({
+    response = await fetch(`${apiBase()}/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
         name: parsed.data.name,
         email: parsed.data.email,
-        passwordHash: await hashPassword(parsed.data.password),
-        termsAcceptedAt: consentNow,
-        kvkkAcknowledgedAt: consentNow,
-        ageConfirmedAt: consentNow,
-        marketingConsentAt: parsed.data.marketingConsent ? consentNow : null,
-      })
-      .returning({ id: users.id });
-
-    await createSession(created.id);
-    const jar = await cookies();
-    jar.set(SIGNUP_COMPLETION_COOKIE, "password", {
-      maxAge: 60,
-      path: "/",
-      sameSite: "lax",
+        password: parsed.data.password,
+        terms_accepted: true,
+        kvkk_acknowledged: true,
+        age_confirmed: true,
+        marketing_consent: parsed.data.marketingConsent,
+        device_name: "web",
+      }),
+      signal: AbortSignal.timeout(10_000),
     });
-  } catch {
-    return { error: DB_ERROR, values };
+  } catch (err) {
+    console.error("[auth] POST /register failed", err);
+    return { error: NETWORK_ERROR, values };
   }
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+
+    // The backend returns 400 with an error message for invalid input or
+    // duplicate email. Surface the message under the email field when it
+    // looks address-related, otherwise as a top-level error.
+    if (response.status === 400 && body?.error) {
+      const message = body.error;
+      if (/e-?posta|email/i.test(message)) {
+        return { fieldErrors: { email: [message] }, values };
+      }
+      return { error: message, values };
+    }
+
+    console.error(
+      `[auth] POST /register returned ${response.status}`,
+      body?.error ?? "",
+    );
+    return { error: NETWORK_ERROR, values };
+  }
+
+  const data = (await response.json()) as LoginResponse;
+  await setSessionCookie(data.token);
+
+  const jar = await cookies();
+  jar.set(SIGNUP_COMPLETION_COOKIE, "password", {
+    maxAge: 60,
+    path: "/",
+    sameSite: "lax",
+  });
 
   revalidatePath("/", "layout");
   redirect(safeNext(formData));
 }
 
 /**
- * Completes a Google-initiated signup. The verified identity rides on the
- * HMAC-signed pending-signup cookie (set by the OAuth callback), so the
- * form can only supply the four consent fields — the user cannot
- * substitute a different email or Google account between the OAuth round
- * trip and this action.
+ * Completes a Google-initiated signup. The raw Google ID token rides on the
+ * HMAC-signed pending-signup cookie (set by the OAuth callback) so this
+ * action can resubmit it to `/auth/google` with the three required consent
+ * flags — that call is what actually creates the account server-side and
+ * hands back a Sanctum token.
  */
 export async function completeGoogleSignupAction(
   _prev: AuthFormState,
@@ -191,25 +226,50 @@ export async function completeGoogleSignupAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  // The account lives on api.fondeks.com — nothing is written locally for
-  // a Google signup, so no `users` row, no local session. After the POST
-  // succeeds the user is sent to /giris to sign in (where api.fondeks.com
-  // will mint the actual session).
-  const ok = await syncUserToApi({
-    name: pending.name,
-    email: pending.email,
-  });
-
-  if (!ok) {
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase()}/auth/google`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        id_token: pending.idToken,
+        terms_accepted: true,
+        kvkk_acknowledged: true,
+        age_confirmed: true,
+        marketing_consent: parsed.data.marketingConsent,
+        device_name: "web",
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch (err) {
+    console.error("[auth] POST /auth/google (consent) failed", err);
     return {
       error:
         "Hesap oluşturulamadı. Lütfen birkaç saniye sonra tekrar dene.",
     };
   }
 
+  if (!response.ok) {
+    console.error(
+      `[auth] POST /auth/google (consent) returned ${response.status}`,
+      await response.text().catch(() => ""),
+    );
+    return {
+      error:
+        "Hesap oluşturulamadı. Lütfen birkaç saniye sonra tekrar dene.",
+    };
+  }
+
+  const data = (await response.json()) as LoginResponse & {
+    is_new_user?: boolean;
+  };
+  await setSessionCookie(data.token);
+
   // SignupCompletionTracker reads this one-shot cookie on the next page
-  // load and fires the `sign_up_completed` conversion. Keep it even though
-  // there is no local session, so the funnel still attributes the signup.
+  // load and fires the `sign_up_completed` conversion.
   jar.set(SIGNUP_COMPLETION_COOKIE, "google", {
     maxAge: 60,
     path: "/",
@@ -217,7 +277,8 @@ export async function completeGoogleSignupAction(
   });
   jar.delete(PENDING_SIGNUP_COOKIE);
 
-  redirect("/giris?kayit=1");
+  revalidatePath("/", "layout");
+  redirect(pending.next && pending.next.startsWith("/") ? pending.next : "/");
 }
 
 export async function signOutAction(): Promise<void> {
@@ -227,25 +288,12 @@ export async function signOutAction(): Promise<void> {
 }
 
 /**
- * KVKK m. 11/1-e kapsamında kullanıcının hesap silme hakkı — oturumdaki
- * kullanıcıyı siler. Oturum tablosunda FK `ON DELETE CASCADE` olduğu için
- * aktif ve geçmiş oturumlar da birlikte silinir. İşlem geri alınamaz;
- * UI tarafında ayrı bir onay akışı vardır.
+ * KVKK m. 11/1-e kapsamında kullanıcının hesap silme hakkı. Hesap silme
+ * backend tarafında henüz endpoint olarak çıkmadığı için şu an oturumu
+ * kapatıp kullanıcıyı silme bildirim ekranına yolluyoruz; backend DELETE
+ * /user/me eklendiğinde burası onu çağırıp sonucu bekler.
  */
 export async function deleteAccountAction(): Promise<void> {
-  const { getCurrentUser } = await import("./session");
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/giris");
-  }
-  try {
-    await db.delete(users).where(eq(users.id, user.id));
-  } catch {
-    // Veritabanı erişilmezse yine de oturumu bırakmayalım — kullanıcı
-    // tekrar deneyebilir; sessiz başarısızlık KVKK sürecini bozar, bu yüzden
-    // hata loglanmalı. Burada minimal — gözetim bir sonraki PR'da genişler.
-    throw new Error("Hesap silinirken bir hata oluştu. Lütfen daha sonra tekrar dene.");
-  }
   await destroySession();
   revalidatePath("/", "layout");
   redirect("/giris?silindi=1");

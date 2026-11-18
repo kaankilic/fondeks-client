@@ -1,9 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { eq, or } from "drizzle-orm";
 
-import { db } from "@/db";
-import { users } from "@/db/schema/auth";
-import { createSession } from "@/lib/auth/session";
+import { setSessionCookie } from "@/lib/auth/session";
 import {
   exchangeCodeForIdentity,
   googleRedirectUri,
@@ -24,18 +21,22 @@ export const dynamic = "force-dynamic";
  *      set — this is what prevents cross-site request forgery here.
  *   2. Exchange the authorization code for an ID token and verify the
  *      token's claims (issuer, audience, expiry, email_verified).
- *   3. Look up the Fondeks user by googleId, and fall back to matching an
- *      existing password account by email.
- *
- * Found by googleId  → open a session and go.
- * Found by email     → stitch the googleId onto that account (verified
- *                      email means Google can prove ownership) and open a
- *                      session.
- * Not found          → drop a signed pending-signup cookie carrying the
- *                      verified identity, redirect to /kayit/onay where the
- *                      KVKK / terms / age consents get captured before the
- *                      user row is inserted.
+ *   3. POST the raw ID token to `api.fondeks.com/auth/google`. The backend
+ *      resolves the account:
+ *        - existing user     → 200 with { token, is_new_user: false }
+ *        - never-seen user   → 400 because the required consents are
+ *                              missing. Stash the ID token in a signed
+ *                              pending-signup cookie and send the user to
+ *                              `/kayit/onay` to capture consent before the
+ *                              account is created.
  */
+function apiBase(): string {
+  return (process.env.NEXT_PUBLIC_API_URL ?? "https://api.fondeks.com").replace(
+    /\/$/,
+    "",
+  );
+}
+
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams;
   const error = search.get("error");
@@ -61,9 +62,9 @@ export async function GET(request: NextRequest) {
       ? nextCookie
       : "/";
 
-  let identity;
+  let exchange;
   try {
-    identity = await exchangeCodeForIdentity({
+    exchange = await exchangeCodeForIdentity({
       code,
       codeVerifier: verifier,
       redirectUri: googleRedirectUri(request.nextUrl.origin),
@@ -73,62 +74,70 @@ export async function GET(request: NextRequest) {
     return redirectWithError(request, "google_exchange_failed");
   }
 
+  // Probe the backend with just the ID token. Existing accounts get a
+  // session; new accounts come back as 400 because consent flags are
+  // required for first sign-in. The consent form resends the ID token
+  // alongside the three required consent flags.
+  let response: Response;
   try {
-    // One round-trip looks up both possible hits; the application decides
-    // which wins (googleId before email).
-    const matches = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        googleId: users.googleId,
-      })
-      .from(users)
-      .where(or(eq(users.googleId, identity.sub), eq(users.email, identity.email)))
-      .limit(2);
-
-    const byGoogle = matches.find((row) => row.googleId === identity.sub);
-    const byEmail = matches.find((row) => row.email === identity.email);
-    const existing = byGoogle ?? byEmail;
-
-    if (existing) {
-      // Stitch googleId onto an email-matched password account the first
-      // time that user comes in through Google. Email verification by
-      // Google is what justifies linking without a second confirmation.
-      if (!existing.googleId && byEmail) {
-        await db
-          .update(users)
-          .set({ googleId: identity.sub })
-          .where(eq(users.id, existing.id));
-      }
-      await createSession(existing.id);
-      return cleanRedirect(request, next);
-    }
+    response = await fetch(`${apiBase()}/auth/google`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        id_token: exchange.idToken,
+        device_name: "web",
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
   } catch (err) {
-    console.error("[google-oauth] user lookup failed", err);
-    return redirectWithError(request, "google_lookup_failed");
+    console.error("[google-oauth] POST /auth/google failed", err);
+    return redirectWithError(request, "google_exchange_failed");
   }
 
-  // Brand-new account: hand control to the consent step before anything is
-  // written. The pending-signup cookie is HMAC-signed so the user cannot
-  // edit their own email or sub between here and the next POST.
+  if (response.ok) {
+    const data = (await response.json()) as {
+      token: string;
+      is_new_user: boolean;
+    };
+    await setSessionCookie(data.token);
+    return cleanRedirect(request, next);
+  }
+
+  if (response.status !== 400) {
+    console.error(
+      `[google-oauth] POST /auth/google returned ${response.status}`,
+      await response.text().catch(() => ""),
+    );
+    return redirectWithError(request, "google_exchange_failed");
+  }
+
+  // First sign-in: hand control to the consent step before the account is
+  // created. The pending-signup cookie is HMAC-signed so the user cannot
+  // edit their own email / sub / id_token between here and the next POST.
   const pending = signPendingSignup({
-    sub: identity.sub,
-    email: identity.email,
-    name: identity.name,
+    sub: exchange.identity.sub,
+    email: exchange.identity.email,
+    name: exchange.identity.name,
+    idToken: exchange.idToken,
     iat: Math.floor(Date.now() / 1000),
     next,
   });
 
-  const response = NextResponse.redirect(new URL("/kayit/onay", request.nextUrl.origin));
-  clearFlowCookies(response);
-  response.cookies.set(PENDING_SIGNUP_COOKIE, pending, {
+  const redirectResponse = NextResponse.redirect(
+    new URL("/kayit/onay", request.nextUrl.origin),
+  );
+  clearFlowCookies(redirectResponse);
+  redirectResponse.cookies.set(PENDING_SIGNUP_COOKIE, pending, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: PENDING_SIGNUP_MAX_AGE,
   });
-  return response;
+  return redirectResponse;
 }
 
 function redirectWithError(request: NextRequest, reason: string) {

@@ -1,102 +1,103 @@
 import "server-only";
 
-import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { eq } from "drizzle-orm";
-
-import { db } from "@/db";
-import { sessions, users, type User } from "@/db/schema/auth";
 
 export { SESSION_COOKIE } from "./cookie";
 import { SESSION_COOKIE } from "./cookie";
 
 const SESSION_DAYS = 30;
-/** Sessions inside this window are extended on use. */
-const REFRESH_DAYS = 15;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** The cookie carries the raw token; the database only ever sees its hash. */
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
+function apiBase(): string {
+  return (process.env.NEXT_PUBLIC_API_URL ?? "https://api.fondeks.com").replace(
+    /\/$/,
+    "",
+  );
 }
 
-export type SessionUser = Pick<User, "id" | "email" | "name">;
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string | null;
+};
 
-export async function createSession(userId: string): Promise<void> {
-  const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * DAY_MS);
-
-  await db.insert(sessions).values({
-    id: hashToken(token),
-    userId,
-    expiresAt,
-  });
-
+/**
+ * Writes the Sanctum bearer token from a /login, /register or /auth/google
+ * response as our HttpOnly session cookie. The cookie carries the token
+ * verbatim — getCurrentUser hands it straight to `Authorization: Bearer`
+ * when it calls GET /user.
+ */
+export async function setSessionCookie(token: string): Promise<void> {
+  const expires = new Date(Date.now() + SESSION_DAYS * DAY_MS);
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    expires: expiresAt,
+    expires,
   });
 }
 
+/**
+ * Revokes the token server-side via POST /logout, then deletes the cookie.
+ * The POST is best-effort — if it fails we still drop the cookie so the
+ * user is signed out locally.
+ */
 export async function destroySession(): Promise<void> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
 
   if (token) {
-    await db.delete(sessions).where(eq(sessions.id, hashToken(token)));
+    try {
+      await fetch(`${apiBase()}/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(5_000),
+      });
+    } catch (err) {
+      console.error("[auth] POST /logout failed", err);
+    }
   }
 
   store.delete(SESSION_COOKIE);
 }
 
 /**
- * Resolves the signed-in user for this request. Cached per request so several
- * components can call it without repeating the query.
+ * Resolves the signed-in user for this request by calling GET /user with
+ * the stored bearer token. Cached per request so several components can
+ * call it without repeating the round-trip.
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const id = hashToken(token);
-
   try {
-    const [row] = await db
-      .select({
-        sessionId: sessions.id,
-        expiresAt: sessions.expiresAt,
-        id: users.id,
-        email: users.email,
-        name: users.name,
-      })
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .where(eq(sessions.id, id))
-      .limit(1);
+    const response = await fetch(`${apiBase()}/user`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8_000),
+    });
 
-    if (!row) return null;
+    if (!response.ok) return null;
 
-    if (row.expiresAt.getTime() <= Date.now()) {
-      await db.delete(sessions).where(eq(sessions.id, id));
-      return null;
-    }
-
-    // Sliding expiry: extend long-lived sessions that are still in use.
-    if (row.expiresAt.getTime() - Date.now() < REFRESH_DAYS * DAY_MS) {
-      await db
-        .update(sessions)
-        .set({ expiresAt: new Date(Date.now() + SESSION_DAYS * DAY_MS) })
-        .where(eq(sessions.id, id));
-    }
-
-    return { id: row.id, email: row.email, name: row.name };
+    const data = (await response.json()) as { user?: SessionUser };
+    if (!data.user) return null;
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      name: data.user.name ?? null,
+    };
   } catch {
-    // A missing or unreachable database must not break public pages.
     return null;
   }
 });

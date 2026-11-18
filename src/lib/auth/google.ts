@@ -140,12 +140,15 @@ function decodeJwtPayload<T>(jwt: string): T {
  * here: the token comes back over TLS from Google's token endpoint directly,
  * and we only trust claims that arrived through that channel, so an attacker
  * cannot forge a signed token for us.
+ *
+ * Returns both the parsed identity (for cookie / routing decisions) and the
+ * raw ID token, which is what the backend `/auth/google` endpoint wants.
  */
 export async function exchangeCodeForIdentity(options: {
   code: string;
   codeVerifier: string;
   redirectUri: string;
-}): Promise<GoogleIdentity> {
+}): Promise<{ identity: GoogleIdentity; idToken: string }> {
   const response = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -188,9 +191,12 @@ export async function exchangeCodeForIdentity(options: {
   }
 
   return {
-    sub: claims.sub,
-    email: claims.email.trim().toLowerCase(),
-    name: claims.name?.trim() || null,
+    identity: {
+      sub: claims.sub,
+      email: claims.email.trim().toLowerCase(),
+      name: claims.name?.trim() || null,
+    },
+    idToken: token.id_token,
   };
 }
 
@@ -206,6 +212,12 @@ export type PendingSignup = {
   sub: string;
   email: string;
   name: string | null;
+  /**
+   * The raw Google ID token. Carried forward so the consent step can POST
+   * it to `/auth/google` with the chosen consent flags and finish the
+   * account creation server-side.
+   */
+  idToken: string;
   /** Issued-at, in seconds, so we can reject stale consent attempts. */
   iat: number;
   /** Optional post-signup redirect, if the start route was passed `next`. */
